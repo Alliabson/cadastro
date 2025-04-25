@@ -1,22 +1,19 @@
+# Sistema de Cadastro Imobiliário
 
-### 5. Para publicar no Streamlit Sharing
+Aplicativo Streamlit para gerenciamento de fichas cadastrais de clientes (pessoas físicas e jurídicas) para imobiliárias.
 
-Quando for publicar no Streamlit Sharing, você precisará:
+## Funcionalidades
 
-1. Ter todos os arquivos no GitHub (app.py, requirements.txt, README.md)
-2. Conectar sua conta do GitHub ao Streamlit Sharing
-3. Selecionar o repositório e o arquivo principal (app.py)
+- Cadastro de clientes (Pessoa Física e Pessoa Jurídica)
+- Geração automática de fichas cadastrais em PDF
+- Consulta e filtro de registros
+- Exportação de dados para Excel
+- Validação de CPF/CNPJ
+- Busca automática de endereço por CEP
 
-O Streamlit vai automaticamente:
-- Instalar as dependências do requirements.txt
-- Executar seu aplicativo
+## Instalação
 
-### Observações Adicionais
-
-1. Certifique-se de que todas as colunas mencionadas no código existam nas tabelas do banco de dados. Você já tem a função `criar_tabelas()` que parece estar completa.
-
-2. Para o campo de e-mail, você pode adicionar validação simples:
-
-```python
-def validar_email(email):
-    return re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email) is not None
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/seu-usuario/sistema-imobiliario.git
+   cd sistema-imobiliario
