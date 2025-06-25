@@ -579,4 +579,3 @@ elif ficha_tipo == "Pessoa Jurídica":
             pdf_b64_pj = gerar_pdf_pj(dados_pj)
             href = f'<a href="data:application/pdf;base64,{pdf_b64_pj}" download="Ficha_Cadastral_Pessoa_Juridica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Jurídica</a>'
             st.markdown(href, unsafe_allow_html=True)
-�
