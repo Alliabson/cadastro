@@ -5,14 +5,10 @@ import base64
 import pandas as pd
 import socket
 import time
-import locale
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-# Configuração para suporte a caracteres especiais
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-
-# Configuração de sessão com retry
+# Configuração de sessão com retry para requisições HTTP
 session = requests.Session()
 retry = Retry(
     total=3,
@@ -159,8 +155,8 @@ def gerar_pdf_pf(dados):
     pdf.ln(5)
 
     try:
-        pdf_output = pdf.output(dest='S').encode('latin1', errors='replace')
-        b64_pdf = base64.b64encode(pdf_output).decode('latin1')
+        pdf_output = pdf.output(dest='S')
+        b64_pdf = base64.b64encode(pdf_output).decode('utf-8')
         return b64_pdf
     except Exception as e:
         st.error(f"Erro ao gerar PDF: {str(e)}")
@@ -248,8 +244,8 @@ def gerar_pdf_pj(dados):
     pdf.ln(5)
 
     try:
-        pdf_output = pdf.output(dest='S').encode('latin1', errors='replace')
-        b64_pdf = base64.b64encode(pdf_output).decode('latin1')
+        pdf_output = pdf.output(dest='S')
+        b64_pdf = base64.b64encode(pdf_output).decode('utf-8')
         return b64_pdf
     except Exception as e:
         st.error(f"Erro ao gerar PDF: {str(e)}")
