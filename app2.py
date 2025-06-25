@@ -34,7 +34,7 @@ def criar_tabelas():
         quitado INTEGER, -- Alterado de BOOLEAN para INTEGER
         corretor TEXT,
         imobiliaria TEXT,
-        # COMPRADOR(A)
+
         nome_comprador TEXT NOT NULL,
         profissao_comprador TEXT,
         nacionalidade_comprador TEXT,
@@ -86,7 +86,7 @@ def criar_tabelas():
         quitado INTEGER, -- Alterado de BOOLEAN para INTEGER
         corretor TEXT,
         imobiliaria TEXT,
-        # COMPRADOR(A) (neste caso, a empresa que está cedendo/transferindo)
+ (neste caso, a empresa que está cedendo/transferindo)
         nome_comprador_pj TEXT NOT NULL, # Nome da empresa
         fone_resid_comprador_pj TEXT,
         fone_com_comprador_pj TEXT,
