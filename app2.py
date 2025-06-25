@@ -34,7 +34,7 @@ def criar_tabelas():
         quitado INTEGER, -- Alterado de BOOLEAN para INTEGER
         corretor TEXT,
         imobiliaria TEXT,
-        -- COMPRADOR(A)
+        # COMPRADOR(A)
         nome_comprador TEXT NOT NULL,
         profissao_comprador TEXT,
         nacionalidade_comprador TEXT,
@@ -51,7 +51,7 @@ def criar_tabelas():
         data_casamento_comprador TEXT,
         regime_casamento_comprador TEXT,
         condicao_convivencia_comprador INTEGER, -- Alterado de BOOLEAN para INTEGER
-        -- CÔNJUGE/SÓCIO(A)
+        # CÔNJUGE/SÓCIO(A)
         nome_conjuge TEXT,
         profissao_conjuge TEXT,
         nacionalidade_conjuge TEXT,
@@ -66,11 +66,11 @@ def criar_tabelas():
         cep_conjuge TEXT,
         cpf_conjuge TEXT,
         data_nascimento_conjuge TEXT,
-        -- Documentos Necessários (simplificado para texto, pode ser mais detalhado)
+        # Documentos Necessários (simplificado para texto, pode ser mais detalhado)
         documentos_necessarios TEXT,
         # Condomínio/Loteamento Fechado
         condomino_indicado TEXT,
-        -- Dados de cadastro
+        # Dados de cadastro
         data_cadastro TEXT
     )
     ''')
@@ -86,7 +86,7 @@ def criar_tabelas():
         quitado INTEGER, -- Alterado de BOOLEAN para INTEGER
         corretor TEXT,
         imobiliaria TEXT,
-        -- COMPRADOR(A) (neste caso, a empresa que está cedendo/transferindo)
+        # COMPRADOR(A) (neste caso, a empresa que está cedendo/transferindo)
         nome_comprador_pj TEXT NOT NULL, # Nome da empresa
         fone_resid_comprador_pj TEXT,
         fone_com_comprador_pj TEXT,
@@ -97,7 +97,7 @@ def criar_tabelas():
         cidade_comprador_pj TEXT,
         estado_comprador_pj TEXT,
         cep_comprador_pj TEXT,
-        -- REPRESENTANTE
+        # REPRESENTANTE
         nome_representante TEXT,
         profissao_representante TEXT,
         nacionalidade_representante TEXT,
@@ -125,12 +125,12 @@ def criar_tabelas():
         cidade_socio TEXT,
         estado_socio TEXT,
         cep_socio TEXT,
-       -- Documentos Necessários (simplificado para texto)
+        # Documentos Necessários (simplificado para texto)
         documentos_empresa TEXT,
         documentos_socios TEXT,
         # Condomínio/Loteamento Fechado
         condomino_indicado_pj TEXT,
-        -- Dados de cadastro
+        # Dados de cadastro
         data_cadastro TEXT
     )
     ''')
