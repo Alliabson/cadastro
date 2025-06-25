@@ -949,7 +949,7 @@ with tab1: # Cadastro de Compradores (Pessoa Física)
             
             st.markdown("---")
             st.subheader("Informações de Condomínio/Loteamento Fechado")
-            st.markdown("📌 No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes, é necessário indicar qual dos dois será o(a) condômino(a) �")
+            st.markdown("📌 No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes, é necessário indicar qual dos dois será o(a) condômino(a)  ")
             condomino_indicado = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_comprador")
             
             # Botão de cadastro
@@ -1469,4 +1469,4 @@ with tab3: # Consulta de Registros
             file_name=f"{tipo_consulta.lower().replace(' ', '_').replace('(pessoa_física)', '').replace('(pessoa_jurídica)', '')}_completo_{datetime.now().strftime('%d%m%Y')}.csv",
             mime='text/csv'
         )
-�
+ 
