@@ -12,10 +12,10 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
---- --- Configuração da página ---
+# --- Configuração da página ---
 st.set_page_config(page_title="Sistema Imobiliário", layout="wide")
 
---- --- Configuração do banco de dados ---
+# --- Configuração do banco de dados ---
 DB_NAME = "imobiliaria.db"
 
 def criar_tabelas():
@@ -23,7 +23,7 @@ def criar_tabelas():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
-   --- Tabela de compradores (Pessoa Física) - Baseada em 'Ficha Cadastral Cessão Pessoa Física.docx'
+    # Tabela de compradores (Pessoa Física) - Baseada em 'Ficha Cadastral Cessão Pessoa Física.docx'
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS compradores (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,7 +34,7 @@ def criar_tabelas():
         quitado INTEGER, -- Alterado de BOOLEAN para INTEGER
         corretor TEXT,
         imobiliaria TEXT,
-        --- COMPRADOR(A)
+        -- COMPRADOR(A)
         nome_comprador TEXT NOT NULL,
         profissao_comprador TEXT,
         nacionalidade_comprador TEXT,
@@ -68,14 +68,14 @@ def criar_tabelas():
         data_nascimento_conjuge TEXT,
         -- Documentos Necessários (simplificado para texto, pode ser mais detalhado)
         documentos_necessarios TEXT,
-        -- Condomínio/Loteamento Fechado
+        # Condomínio/Loteamento Fechado
         condomino_indicado TEXT,
         -- Dados de cadastro
         data_cadastro TEXT
     )
     ''')
 
-    --- Tabela de vendedores (Pessoa Jurídica) - Baseada em 'Ficha Cadastral_Cessão_Pessoa Jurídica.docx'
+    # Tabela de vendedores (Pessoa Jurídica) - Baseada em 'Ficha Cadastral_Cessão_Pessoa Jurídica.docx'
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS vendedores (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,8 +86,8 @@ def criar_tabelas():
         quitado INTEGER, -- Alterado de BOOLEAN para INTEGER
         corretor TEXT,
         imobiliaria TEXT,
-        --- COMPRADOR(A) (neste caso, a empresa que está cedendo/transferindo)
-        nome_comprador_pj TEXT NOT NULL, --- Nome da empresa
+        -- COMPRADOR(A) (neste caso, a empresa que está cedendo/transferindo)
+        nome_comprador_pj TEXT NOT NULL, # Nome da empresa
         fone_resid_comprador_pj TEXT,
         fone_com_comprador_pj TEXT,
         celular_comprador_pj TEXT,
@@ -97,7 +97,7 @@ def criar_tabelas():
         cidade_comprador_pj TEXT,
         estado_comprador_pj TEXT,
         cep_comprador_pj TEXT,
-        --- REPRESENTANTE
+        -- REPRESENTANTE
         nome_representante TEXT,
         profissao_representante TEXT,
         nacionalidade_representante TEXT,
@@ -110,7 +110,7 @@ def criar_tabelas():
         cidade_representante TEXT,
         estado_representante TEXT,
         cep_representante TEXT,
-        --- CÔNJUGE/SÓCIO(A)
+        # CÔNJUGE/SÓCIO(A)
         nome_socio TEXT,
         cpf_socio TEXT,
         data_nascimento_socio TEXT,
@@ -125,17 +125,17 @@ def criar_tabelas():
         cidade_socio TEXT,
         estado_socio TEXT,
         cep_socio TEXT,
-        --- Documentos Necessários (simplificado para texto)
+       -- Documentos Necessários (simplificado para texto)
         documentos_empresa TEXT,
         documentos_socios TEXT,
-        --- Condomínio/Loteamento Fechado
+        # Condomínio/Loteamento Fechado
         condomino_indicado_pj TEXT,
-        --- Dados de cadastro
+        -- Dados de cadastro
         data_cadastro TEXT
     )
     ''')
 
-    --- Tabela para Dependentes - para ligar a Compradores ou Vendedores (Pessoa Física ou Jurídica)
+    # Tabela para Dependentes - para ligar a Compradores ou Vendedores (Pessoa Física ou Jurídica)
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS dependentes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -154,23 +154,23 @@ def criar_tabelas():
     conn.commit()
     conn.close()
 
---- Criar tabelas se não existirem
+# Criar tabelas se não existirem
 criar_tabelas()
 
---- --- Funções auxiliares ---
+# --- Funções auxiliares ---
 def formatar_data_ptbr(data):
     """Formata datetime ou string YYYY-MM-DD para string dd/mm/yyyy."""
     if pd.isna(data) or data == "" or data is None:
         return ""
     if isinstance(data, str):
-        --- Se já estiver no formato brasileiro, retorna como está
+        # Se já estiver no formato brasileiro, retorna como está
         if re.match(r'\d{2}/\d{2}/\d{4}', data):
             return data
         try:
-            --- Tenta converter de formato ISO (YYYY-MM-DD)
+            # Tenta converter de formato ISO (YYYY-MM-DD)
             return datetime.strptime(data, '%Y-%m-%d').strftime('%d/%m/%Y')
         except ValueError:
-            return data --- Retorna a string original se não puder converter
+            return data # Retorna a string original se não puder converter
     return data.strftime('%d/%m/%Y')
 
 def parse_data_para_db(data_str):
@@ -180,9 +180,9 @@ def parse_data_para_db(data_str):
     try:
         return datetime.strptime(data_str, '%d/%m/%Y').strftime('%Y-%m-%d')
     except ValueError:
-        return data_str --- Retorna a string original se for inválida ou já no formato ISO
+        return data_str # Retorna a string original se for inválida ou já no formato ISO
 
---- --- Funções de banco de dados ---
+# --- Funções de banco de dados ---
 def carregar_compradores():
     conn = sqlite3.connect(DB_NAME)
     df = pd.read_sql('SELECT * FROM compradores', conn)
@@ -419,7 +419,7 @@ def deletar_dependente(id_dependente):
     conn.commit()
     conn.close()
 
---- --- Funções de Geração de PDF ---
+# --- Funções de Geração de PDF ---
 def gerar_pdf_comprador(data):
     """Gera um PDF para a ficha de Comprador (Pessoa Física)."""
     file_name = f"Ficha_Comprador_{data['nome_comprador'].replace(' ', '_')}.pdf"
@@ -428,7 +428,7 @@ def gerar_pdf_comprador(data):
                             topMargin=inch/2, bottomMargin=inch/2)
     styles = getSampleStyleSheet()
     
-    --- Custom styles
+    # Custom styles
     styles.add(ParagraphStyle(name='TitleStyle', fontSize=18, leading=22, alignment=TA_CENTER,
                               spaceAfter=14, fontName='Helvetica-Bold'))
     styles.add(ParagraphStyle(name='SubtitleStyle', fontSize=14, leading=18, alignment=TA_LEFT,
@@ -442,16 +442,16 @@ def gerar_pdf_comprador(data):
 
     story = []
 
-    --- Title
+    # Title
     story.append(Paragraph("Ficha Cadastral Pessoa Física – Cessão e Transferência de Direitos", styles['TitleStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
-    --- Empreendimento Info
+    # Empreendimento Info
     story.append(Paragraph(f"<b>Empreendimento:</b> {data.get('empreendimento', '')} <b>QD:</b> {data.get('qd', '')} <b>LT:</b> {data.get('lt', '')} <b>Ativo:</b> {'(X)' if data.get('ativo') else '( )'} <b>Quitado:</b> {'(X)' if data.get('quitado') else '( )'}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>Corretor(a):</b> {data.get('corretor', '')} <b>Imobiliária:</b> {data.get('imobiliaria', '')}", styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
-    --- COMPRADOR(A)
+    # COMPRADOR(A)
     story.append(Paragraph("COMPRADOR(A):", styles['SubtitleStyle']))
     story.append(Paragraph(f"<b>Nome:</b> {data.get('nome_comprador', '')}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>Profissão:</b> {data.get('profissao_comprador', '')} <b>Nacionalidade:</b> {data.get('nacionalidade_comprador', '')}", styles['NormalStyle']))
@@ -469,7 +469,7 @@ def gerar_pdf_comprador(data):
     story.append(Paragraph(f"<b>Condição de Convivência:</b> {condicao_convivencia_text}", styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
-    --- CÔNJUGE/SÓCIO(A)
+    # CÔNJUGE/SÓCIO(A)
     story.append(Paragraph("CÔNJUGE/SÓCIO(A):", styles['SubtitleStyle']))
     if data.get('nome_conjuge'):
         story.append(Paragraph(f"<b>Nome:</b> {data.get('nome_conjuge', '')}", styles['NormalStyle']))
@@ -481,17 +481,17 @@ def gerar_pdf_comprador(data):
         story.append(Paragraph("Não informado", styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
-    --- Documentos Necessários
+    # Documentos Necessários
     story.append(Paragraph("DOCUMENTOS NECESSÁRIOS:", styles['SubtitleStyle']))
     story.append(Paragraph(data.get('documentos_necessarios', ''), styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
     
-    --- Condomínio / Loteamento Fechado
+    # Condomínio / Loteamento Fechado
     story.append(Paragraph("📌 No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes, é necessário indicar qual dos dois será o(a) condômino(a) 📌", styles['NormalStyle']))
     story.append(Paragraph(f"➡️ indique aqui quem será o(a) condômino(a): <u>{data.get('condomino_indicado', '')}</u>", styles['NormalStyle']))
     story.append(Spacer(1, 0.4 * inch))
 
-    --- Assinaturas
+    # Assinaturas
     today = datetime.now().strftime('%d/%m/%Y')
     story.append(Paragraph(f"Cidade/Estado, ____ de ___________________ de ________.", styles['NormalStyle']))
     story.append(Spacer(1, 0.5 * inch))
@@ -503,10 +503,10 @@ def gerar_pdf_comprador(data):
     story.append(Paragraph("_____________________________________", styles['CenteredSmallText']))
     story.append(Paragraph("Imobiliária Celeste", styles['CenteredSmallText']))
 
-    --- Listagem de Dependentes (Nova Página ou continuar)
+    # Listagem de Dependentes (Nova Página ou continuar)
     dependentes_df = carregar_dependentes(data['id'], 'comprador')
     if not dependentes_df.empty:
-        story.append(Spacer(1, 0.5 * inch)) --- Add some space before new section
+        story.append(Spacer(1, 0.5 * inch)) # Add some space before new section
         story.append(Paragraph("LISTAGEM DE DEPENDENTES:", styles['SubtitleStyle']))
         story.append(Paragraph(f"<b>CONDÔMINO(A):</b> {data.get('condomino_indicado', '')}", styles['NormalStyle']))
         story.append(Spacer(1, 0.1 * inch))
@@ -548,7 +548,7 @@ def gerar_pdf_vendedor(data):
                             topMargin=inch/2, bottomMargin=inch/2)
     styles = getSampleStyleSheet()
 
-    --- Custom styles
+    # Custom styles
     styles.add(ParagraphStyle(name='TitleStyle', fontSize=18, leading=22, alignment=TA_CENTER,
                               spaceAfter=14, fontName='Helvetica-Bold'))
     styles.add(ParagraphStyle(name='SubtitleStyle', fontSize=14, leading=18, alignment=TA_LEFT,
@@ -562,16 +562,16 @@ def gerar_pdf_vendedor(data):
 
     story = []
 
-    --- Title
+    # Title
     story.append(Paragraph("Ficha Cadastral Pessoa Jurídica – Cessão e Transferência de Direitos", styles['TitleStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
-    --- Empreendimento Info
+    # Empreendimento Info
     story.append(Paragraph(f"<b>Empreendimento:</b> {data.get('empreendimento', '')} <b>QD:</b> {data.get('qd', '')} <b>LT:</b> {data.get('lt', '')} <b>Ativo:</b> {'(X)' if data.get('ativo') else '( )'} <b>Quitado:</b> {'(X)' if data.get('quitado') else '( )'}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>Corretor(a):</b> {data.get('corretor', '')} <b>Imobiliária:</b> {data.get('imobiliaria', '')}", styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
-    --- COMPRADOR(A) (Empresa)
+    # COMPRADOR(A) (Empresa)
     story.append(Paragraph("COMPRADOR(A):", styles['SubtitleStyle']))
     story.append(Paragraph(f"<b>Nome da Empresa:</b> {data.get('nome_comprador_pj', '')}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>Fone Resid.:</b> {data.get('fone_resid_comprador_pj', '')} <b>Fone Com.:</b> {data.get('fone_com_comprador_pj', '')} <b>Celular:</b> {data.get('celular_comprador_pj', '')} <b>E-mail:</b> {data.get('email_comprador_pj', '')}", styles['NormalStyle']))
@@ -579,7 +579,7 @@ def gerar_pdf_vendedor(data):
     story.append(Paragraph(f"<b>Cidade:</b> {data.get('cidade_comprador_pj', '')} <b>Estado:</b> {data.get('estado_comprador_pj', '')} <b>CEP:</b> {data.get('cep_comprador_pj', '')}", styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
-    --- REPRESENTANTE
+    # REPRESENTANTE
     story.append(Paragraph("REPRESENTANTE:", styles['SubtitleStyle']))
     if data.get('nome_representante'):
         story.append(Paragraph(f"<b>Nome:</b> {data.get('nome_representante', '')}", styles['NormalStyle']))
@@ -591,7 +591,7 @@ def gerar_pdf_vendedor(data):
         story.append(Paragraph("Não informado", styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
-    --- CÔNJUGE/SÓCIO(A)
+    # CÔNJUGE/SÓCIO(A)
     story.append(Paragraph("CÔNJUGE/SÓCIO(A):", styles['SubtitleStyle']))
     if data.get('nome_socio'):
         story.append(Paragraph(f"<b>Nome:</b> {data.get('nome_socio', '')}", styles['NormalStyle']))
@@ -603,18 +603,18 @@ def gerar_pdf_vendedor(data):
         story.append(Paragraph("Não informado", styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
-    --- DOCUMENTOS NECESSÁRIOS
+    # DOCUMENTOS NECESSÁRIOS
     story.append(Paragraph("DOCUMENTOS NECESSÁRIOS:", styles['SubtitleStyle']))
     story.append(Paragraph(f"<b>DA EMPRESA:</b> {data.get('documentos_empresa', '')}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>DOS SÓCIOS E SEUS CÔNJUGES:</b> {data.get('documentos_socios', '')}", styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
     
-    --- Condomínio / Loteamento Fechado
+    # Condomínio / Loteamento Fechado
     story.append(Paragraph("📌 No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a) 📌", styles['NormalStyle']))
     story.append(Paragraph(f"➡️ indique aqui quem será o(a) condômino(a): <u>{data.get('condomino_indicado_pj', '')}</u>", styles['NormalStyle']))
     story.append(Spacer(1, 0.4 * inch))
 
-    --- Assinaturas
+    # Assinaturas
     today = datetime.now().strftime('%d/%m/%Y')
     story.append(Paragraph(f"Cidade/Estado, ____ de ___________________ de ________.", styles['NormalStyle']))
     story.append(Spacer(1, 0.5 * inch))
@@ -626,10 +626,10 @@ def gerar_pdf_vendedor(data):
     story.append(Paragraph("_____________________________________", styles['CenteredSmallText']))
     story.append(Paragraph("Imobiliária Celeste", styles['CenteredSmallText']))
 
-    --- Listagem de Dependentes (Nova Página ou continuar)
-    dependentes_df = carregar_dependentes(data['id'], 'vendedor') --- Assumindo que PJ também pode ter dependentes associados
+    # Listagem de Dependentes (Nova Página ou continuar)
+    dependentes_df = carregar_dependentes(data['id'], 'vendedor') # Assumindo que PJ também pode ter dependentes associados
     if not dependentes_df.empty:
-        story.append(Spacer(1, 0.5 * inch)) --- Add some space before new section
+        story.append(Spacer(1, 0.5 * inch)) # Add some space before new section
         story.append(Paragraph("LISTAGEM DE DEPENDENTES:", styles['SubtitleStyle']))
         story.append(Paragraph(f"<b>CONDÔMINO(A):</b> {data.get('condomino_indicado_pj', '')}", styles['NormalStyle']))
         story.append(Spacer(1, 0.1 * inch))
@@ -663,27 +663,27 @@ def gerar_pdf_vendedor(data):
     doc.build(story)
     return file_name
 
---- --- Carregar dados iniciais ---
+# --- Carregar dados iniciais ---
 if 'compradores' not in st.session_state:
     st.session_state.compradores = carregar_compradores()
 
 if 'vendedores' not in st.session_state:
     st.session_state.vendedores = carregar_vendedores()
 
---- --- Interface principal ---
+# --- Interface principal ---
 st.title("Sistema de Cadastro Imobiliário")
 
---- Abas
+# Abas
 tab1, tab2, tab3 = st.tabs([
     "Cadastro de Compradores (Pessoa Física)",
     "Cadastro de Vendedores (Pessoa Jurídica)",
     "Consulta de Registros"
 ])
 
-with tab1: --- Cadastro de Compradores (Pessoa Física)
+with tab1: # Cadastro de Compradores (Pessoa Física)
     st.header("Cadastro de Compradores (Pessoa Física)")
 
-    --- Verifica se está em modo de edição
+    # Verifica se está em modo de edição
     if 'editando_comprador' in st.session_state:
         registro_comprador = st.session_state.editando_comprador
         dependentes_existentes = carregar_dependentes(registro_comprador['id'], 'comprador')
@@ -701,10 +701,10 @@ with tab1: --- Cadastro de Compradores (Pessoa Física)
             with col3:
                 lt = st.text_input("LT", value=registro_comprador.get('lt', ''))
             with col4:
-                --- O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
+                # O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
                 ativo = st.checkbox("Ativo", value=bool(registro_comprador.get('ativo', False)))
             with col5:
-                --- O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
+                # O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
                 quitado = st.checkbox("Quitado", value=bool(registro_comprador.get('quitado', False)))
 
             col1, col2 = st.columns(2)
@@ -734,7 +734,7 @@ with tab1: --- Cadastro de Compradores (Pessoa Física)
             estado_civil_comprador = st.selectbox("Estado Civil", ["", "Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"], index=["", "Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"].index(registro_comprador.get('estado_civil_comprador', '')))
             data_casamento_comprador = st.text_input("Data do Casamento (dd/mm/aaaa)", value=formatar_data_ptbr(registro_comprador.get('data_casamento_comprador', '')))
             regime_casamento_comprador = st.text_input("Regime de Casamento", value=registro_comprador.get('regime_casamento_comprador', ''))
-            --- O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
+            # O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
             condicao_convivencia_comprador = st.checkbox("Declara conviver em união estável – Apresentar comprovante de estado civil de cada um e a declaração de convivência em união estável com as assinaturas reconhecidas em Cartório.", value=bool(registro_comprador.get('condicao_convivencia_comprador', False)))
 
             st.markdown("---")
@@ -768,7 +768,7 @@ with tab1: --- Cadastro de Compradores (Pessoa Física)
 
             st.markdown("---")
             st.subheader("Dependentes")
-            --- Exibe dependentes existentes para edição/remoção
+            # Exibe dependentes existentes para edição/remoção
             for i, dep in dependentes_existentes.iterrows():
                 with st.expander(f"Dependente: {dep['nome']}"):
                     col_dep1, col_dep2 = st.columns(2)
@@ -785,7 +785,7 @@ with tab1: --- Cadastro de Compradores (Pessoa Física)
                     if st.button("Remover Dependente", key=f"remove_dep_{dep['id']}"):
                         deletar_dependente(dep['id'])
                         st.success("Dependente removido!")
-                        st.session_state.compradores = carregar_compradores() --- Refresh to update counts
+                        st.session_state.compradores = carregar_compradores() # Refresh to update counts
                         st.rerun()
 
             st.subheader("Adicionar Novo Dependente")
@@ -811,7 +811,7 @@ with tab1: --- Cadastro de Compradores (Pessoa Física)
                             'grau_parentesco': novo_dep_grau_parentesco
                         })
                         st.success("Novo dependente adicionado!")
-                        st.session_state.compradores = carregar_compradores() --- Refresh to update counts
+                        st.session_state.compradores = carregar_compradores() # Refresh to update counts
                         st.rerun()
                     else:
                         st.warning("Nome do dependente é obrigatório.")
@@ -821,7 +821,7 @@ with tab1: --- Cadastro de Compradores (Pessoa Física)
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 if st.form_submit_button("Salvar Alterações"):
-                    --- Converter valores booleanos para INTEGER (0 ou 1) antes de salvar no DB
+                    # Converter valores booleanos para INTEGER (0 ou 1) antes de salvar no DB
                     dados_atualizados = {
                         'empreendimento': empreendimento, 'qd': qd, 'lt': lt, 'ativo': int(ativo),
                         'quitado': int(quitado), 'corretor': corretor, 'imobiliaria': imobiliaria,
@@ -879,7 +879,7 @@ with tab1: --- Cadastro de Compradores (Pessoa Física)
                     st.success("Comprador removido com sucesso!")
                     st.rerun()
 
-    else: --- Modo de cadastro
+    else: # Modo de cadastro
         with st.form("form_comprador"):
             st.subheader("Informações do Empreendimento")
             col1, col2, col3, col4, col5 = st.columns([2,1,1,1,1])
@@ -952,7 +952,7 @@ with tab1: --- Cadastro de Compradores (Pessoa Física)
             st.markdown("📌 No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes, é necessário indicar qual dos dois será o(a) condômino(a) 📌")
             condomino_indicado = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_comprador")
             
-            --- Botão de cadastro
+            # Botão de cadastro
             submitted = st.form_submit_button("Cadastrar Comprador")
 
             if submitted:
@@ -960,8 +960,8 @@ with tab1: --- Cadastro de Compradores (Pessoa Física)
                     st.error("Por favor, preencha os campos obrigatórios (Nome Completo e E-mail do Comprador).")
                 else:
                     novo_comprador = {
-                        'empreendimento': empreendimento, 'qd': qd, 'lt': lt, 'ativo': int(ativo), --- Converter para INTEGER
-                        'quitado': int(quitado), --- Converter para INTEGER
+                        'empreendimento': empreendimento, 'qd': qd, 'lt': lt, 'ativo': int(ativo), # Converter para INTEGER
+                        'quitado': int(quitado), # Converter para INTEGER
                         'corretor': corretor, 'imobiliaria': imobiliaria,
                         'nome_comprador': nome_comprador, 'profissao_comprador': profissao_comprador,
                         'nacionalidade_comprador': nacionalidade_comprador,
@@ -974,7 +974,7 @@ with tab1: --- Cadastro de Compradores (Pessoa Física)
                         'estado_civil_comprador': estado_civil_comprador,
                         'data_casamento_comprador': data_casamento_comprador,
                         'regime_casamento_comprador': regime_casamento_comprador,
-                        'condicao_convivencia_comprador': int(condicao_convivencia_comprador), --- Converter para INTEGER
+                        'condicao_convivencia_comprador': int(condicao_convivencia_comprador), # Converter para INTEGER
                         'nome_conjuge': nome_conjuge, 'profissao_conjuge': profissao_conjuge,
                         'nacionalidade_conjuge': nacionalidade_conjuge,
                         'fone_resid_conjuge': fone_resid_conjuge,
@@ -990,10 +990,10 @@ with tab1: --- Cadastro de Compradores (Pessoa Física)
                     salvar_comprador(novo_comprador)
                     st.session_state.compradores = carregar_compradores()
                     st.success("Comprador cadastrado com sucesso!")
-                    st.rerun() --- Recarrega para limpar o formulário e atualizar a tabela
+                    st.rerun() # Recarrega para limpar o formulário e atualizar a tabela
 
 
-with tab2: --- Cadastro de Vendedores (Pessoa Jurídica)
+with tab2: # Cadastro de Vendedores (Pessoa Jurídica)
     st.header("Cadastro de Vendedores (Pessoa Jurídica)")
 
     if 'editando_vendedor' in st.session_state:
@@ -1013,10 +1013,10 @@ with tab2: --- Cadastro de Vendedores (Pessoa Jurídica)
             with col3:
                 lt_v = st.text_input("LT", value=registro_vendedor.get('lt', ''), key="v_lt")
             with col4:
-                --- O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
+                # O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
                 ativo_v = st.checkbox("Ativo", value=bool(registro_vendedor.get('ativo', False)), key="v_ativo")
             with col5:
-                --- O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
+                # O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
                 quitado_v = st.checkbox("Quitado", value=bool(registro_vendedor.get('quitado', False)), key="v_quitado")
 
             col1, col2 = st.columns(2)
@@ -1112,7 +1112,7 @@ with tab2: --- Cadastro de Vendedores (Pessoa Jurídica)
                     if st.button("Remover Dependente", key=f"remove_dep_v_{dep['id']}"):
                         deletar_dependente(dep['id'])
                         st.success("Dependente removido!")
-                        st.session_state.vendedores = carregar_vendedores() --- Refresh to update counts
+                        st.session_state.vendedores = carregar_vendedores() # Refresh to update counts
                         st.rerun()
 
             st.subheader("Adicionar Novo Dependente (para Vendedor - PJ)")
@@ -1147,7 +1147,7 @@ with tab2: --- Cadastro de Vendedores (Pessoa Jurídica)
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 if st.form_submit_button("Salvar Alterações"):
-                    --- Converter valores booleanos para INTEGER (0 ou 1) antes de salvar no DB
+                    # Converter valores booleanos para INTEGER (0 ou 1) antes de salvar no DB
                     dados_atualizados = {
                         'empreendimento': empreendimento_v, 'qd': qd_v, 'lt': lt_v, 'ativo': int(ativo_v),
                         'quitado': int(quitado_v), 'corretor': corretor_v, 'imobiliaria': imobiliaria_v,
@@ -1217,7 +1217,7 @@ with tab2: --- Cadastro de Vendedores (Pessoa Jurídica)
                     st.success("Vendedor removido com sucesso!")
                     st.rerun()
 
-    else: --- Modo de cadastro
+    else: # Modo de cadastro
         with st.form("form_vendedor"):
             st.subheader("Informações do Empreendimento")
             col1, col2, col3, col4, col5 = st.columns([2,1,1,1,1])
@@ -1307,7 +1307,7 @@ with tab2: --- Cadastro de Vendedores (Pessoa Jurídica)
             st.markdown("📌 No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a) 📌")
             condomino_indicado_pj = st.text_input("Indique aqui quem será o(a) condômino(a) para Pessoa Jurídica", key="condomino_indicado_vendedor_pj")
 
-            --- Botão de cadastro
+            # Botão de cadastro
             submitted = st.form_submit_button("Cadastrar Vendedor")
 
             if submitted:
@@ -1315,8 +1315,8 @@ with tab2: --- Cadastro de Vendedores (Pessoa Jurídica)
                     st.error("Por favor, preencha os campos obrigatórios (Nome da Empresa e E-mail da Empresa).")
                 else:
                     novo_vendedor = {
-                        'empreendimento': empreendimento_v, 'qd': qd_v, 'lt': lt_v, 'ativo': int(ativo_v), --- Converter para INTEGER
-                        'quitado': int(quitado_v), --- Converter para INTEGER
+                        'empreendimento': empreendimento_v, 'qd': qd_v, 'lt': lt_v, 'ativo': int(ativo_v), # Converter para INTEGER
+                        'quitado': int(quitado_v), # Converter para INTEGER
                         'corretor': corretor_v, 'imobiliaria': imobiliaria_v,
                         'nome_comprador_pj': nome_comprador_pj,
                         'fone_resid_comprador_pj': fone_resid_comprador_pj,
@@ -1357,9 +1357,9 @@ with tab2: --- Cadastro de Vendedores (Pessoa Jurídica)
                     salvar_vendedor(novo_vendedor)
                     st.session_state.vendedores = carregar_vendedores()
                     st.success("Vendedor cadastrado com sucesso!")
-                    st.rerun() --- Recarrega para limpar o formulário e atualizar a tabela
+                    st.rerun() # Recarrega para limpar o formulário e atualizar a tabela
 
-with tab3: --- Consulta de Registros
+with tab3: # Consulta de Registros
     st.header("Consulta de Registros")
 
     tipo_consulta = st.radio("Tipo de Consulta",
@@ -1370,30 +1370,30 @@ with tab3: --- Consulta de Registros
     if tipo_consulta == "Compradores (Pessoa Física)":
         df = st.session_state.compradores.copy()
         if not df.empty:
-            --- Seleciona e renomeia colunas para exibição amigável
+            # Seleciona e renomeia colunas para exibição amigável
             df_display = df[['id', 'nome_comprador', 'email_comprador', 'celular_comprador', 'cidade_comprador', 'estado_comprador', 'data_cadastro']].copy()
             df_display.columns = ['ID', 'Nome', 'E-mail', 'Celular', 'Cidade', 'Estado', 'Data de Cadastro']
-    else: --- Vendedores (Pessoa Jurídica)
+    else: # Vendedores (Pessoa Jurídica)
         df = st.session_state.vendedores.copy()
         if not df.empty:
-            --- Seleciona e renomeia colunas para exibição amigável
+            # Seleciona e renomeia colunas para exibição amigável
             df_display = df[['id', 'nome_comprador_pj', 'email_comprador_pj', 'celular_comprador_pj', 'cidade_comprador_pj', 'estado_comprador_pj', 'data_cadastro']].copy()
             df_display.columns = ['ID', 'Nome da Empresa', 'E-mail da Empresa', 'Celular da Empresa', 'Cidade da Empresa', 'Estado da Empresa', 'Data de Cadastro']
 
     if not df_display.empty:
-        --- Filtros
+        # Filtros
         col1, col2 = st.columns(2)
         with col1:
             filtro_nome = st.text_input("Filtrar por nome/empresa", key=f"filtro_nome_{tipo_consulta}")
 
-        --- Aplicar filtros
+        # Aplicar filtros
         if filtro_nome:
             if tipo_consulta == "Compradores (Pessoa Física)":
                 df_filtered = df[df['nome_comprador'].str.contains(filtro_nome, case=False, na=False)]
             else:
                 df_filtered = df[df['nome_comprador_pj'].str.contains(filtro_nome, case=False, na=False)]
             
-            --- Recria df_display com as colunas corretas após o filtro
+            # Recria df_display com as colunas corretas após o filtro
             if tipo_consulta == "Compradores (Pessoa Física)":
                 df_display = df_filtered[['id', 'nome_comprador', 'email_comprador', 'celular_comprador', 'cidade_comprador', 'estado_comprador', 'data_cadastro']].copy()
                 df_display.columns = ['ID', 'Nome', 'E-mail', 'Celular', 'Cidade', 'Estado', 'Data de Cadastro']
@@ -1401,16 +1401,16 @@ with tab3: --- Consulta de Registros
                 df_display = df_filtered[['id', 'nome_comprador_pj', 'email_comprador_pj', 'celular_comprador_pj', 'cidade_comprador_pj', 'estado_comprador_pj', 'data_cadastro']].copy()
                 df_display.columns = ['ID', 'Nome da Empresa', 'E-mail da Empresa', 'Celular da Empresa', 'Cidade da Empresa', 'Estado da Empresa', 'Data de Cadastro']
         else:
-             df_filtered = df --- Se não há filtro de nome, use o DataFrame original
+             df_filtered = df # Se não há filtro de nome, use o DataFrame original
 
-        --- Formatar datas antes de exibir na tabela
+        # Formatar datas antes de exibir na tabela
         for col in df_display.columns:
-            if 'Data' in col: --- Verifica se a coluna tem 'Data' no nome
+            if 'Data' in col: # Verifica se a coluna tem 'Data' no nome
                 df_display[col] = df_display[col].apply(formatar_data_ptbr)
         
         st.dataframe(df_display)
 
-        --- Seleção de registro para edição/exclusão
+        # Seleção de registro para edição/exclusão
         if not df_filtered.empty:
             registros = df_filtered.to_dict('records')
             options = [f"{r['id']} - {r.get('nome_comprador', r.get('nome_comprador_pj', ''))}"
@@ -1456,13 +1456,13 @@ with tab3: --- Consulta de Registros
                                     mime="application/pdf"
                                 )
                             st.success(f"PDF gerado para {registro_selecionado.get('nome_comprador', registro_selecionado.get('nome_comprador_pj'))}!")
-                            --- Optional: Clean up the generated PDF file if not needed after download
-                            --- os.remove(pdf_file)
+                            # Optional: Clean up the generated PDF file if not needed after download
+                            # os.remove(pdf_file)
     else:
         st.warning("Nenhum registro encontrado para esta categoria.")
 
-    --- Opções de exportação
-    if not df.empty: --- Exporta o DataFrame completo, não o filtrado para exibição
+    # Opções de exportação
+    if not df.empty: # Exporta o DataFrame completo, não o filtrado para exibição
         st.download_button(
             label="Exportar todos os dados para CSV",
             data=df.to_csv(index=False, sep=';').encode('utf-8'),
