@@ -254,6 +254,7 @@ if ficha_tipo == "Pessoa Física":
             with col_ec:
                 comprador_estado_civil_pf = st.selectbox("Estado Civil", ["", "Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)"], key="comprador_estado_civil_pf", index=["", "Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)"].index(st.session_state.get("comprador_estado_civil_pf", "")))
             
+            # Inicializa a variável antes do if
             comprador_data_casamento_pf = None
             comprador_regime_casamento_pf = ""
 
@@ -264,8 +265,7 @@ if ficha_tipo == "Pessoa Física":
             else:
                 with col_rb: # Adiciona um placeholder para manter o alinhamento
                     st.empty() # Garante que a coluna continue existindo para layout
-                comprador_data_casamento_pf = None
-                comprador_regime_casamento_pf = "" # Garante que o valor seja resetado se mudar para não casado
+                # As variáveis já estão None e "" se não for casado, então não precisa de reatribuição aqui
             
             # Condição de Convivência no formulário
             st.markdown("**Condição de Convivência:**")
