@@ -57,6 +57,14 @@ def gerar_pdf_pf(dados):
         if key.startswith("comprador_") and key not in ["comprador_nome_conjuge_pf"]: # Exclui campo de cônjuge
             pdf.cell(0, 7, f"{key.replace('comprador_', '').replace('_', ' ').title()}: {value}", 0, 1)
     pdf.ln(5)
+    
+    # Adicionando a Condição de Convivência no PDF de PF
+    pdf.set_font("Arial", "B", 10)
+    pdf.cell(0, 7, "Condição de Convivência:", 0, 1)
+    pdf.set_font("Arial", "", 9)
+    [cite_start]pdf.multi_cell(0, 5, "Declara conviver em união estável – Apresentar comprovante de estado civil de cada um e a declaração de convivência em união estável com as assinaturas reconhecidas em Cartório. [cite: 3]", 0, "L")
+    pdf.ln(5)
+
 
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, "Dados do CÔNJUGE/SÓCIO(A)", 0, 1, "L")
@@ -64,6 +72,13 @@ def gerar_pdf_pf(dados):
     for key, value in dados.items():
         if key.startswith("conjuge_") or key == "condomino_indicado_pf":
             pdf.cell(0, 7, f"{key.replace('conjuge_', '').replace('_', ' ').title()}: {value}", 0, 1)
+    pdf.ln(5)
+
+    # Adicionando Documentos Necessários no PDF de PF
+    pdf.set_font("Arial", "B", 10)
+    pdf.cell(0, 7, "DOCUMENTOS NECESSÁRIOS:", 0, 1)
+    pdf.set_font("Arial", "", 9)
+    [cite_start]pdf.multi_cell(0, 5, "CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação. [cite: 3]", 0, "L")
     pdf.ln(5)
 
     pdf_output = pdf.output(dest='S').encode('latin-1') # Saída como string de bytes
@@ -112,13 +127,21 @@ def gerar_pdf_pj(dados):
         if key.startswith("conjuge_") or key == "condomino_indicado_pj":
             pdf.cell(0, 7, f"{key.replace('conjuge_', '').replace('_', ' ').title()}: {value}", 0, 1)
     pdf.ln(5)
+    
+    # Adicionando Documentos Necessários no PDF de PJ
+    pdf.set_font("Arial", "B", 10)
+    [cite_start]pdf.cell(0, 7, "DOCUMENTOS NECESSÁRIOS: [cite: 8]", 0, 1)
+    pdf.set_font("Arial", "", 9)
+    [cite_start]pdf.multi_cell(0, 5, "DA EMPRESA: CONTRATO SOCIAL E ALTERAÇÕES, COMPROVANTE DE ENDEREÇO, DECLARAÇÃO DE FATURAMENTO; [cite: 8]", 0, "L")
+    [cite_start]pdf.multi_cell(0, 5, "DOS SÓCIOS E SEUS CÔNJUGES: CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação. [cite: 8]", 0, "L")
+    pdf.ln(5)
 
     pdf_output = pdf.output(dest='S').encode('latin-1')
     b64_pdf = base64.b64encode(pdf_output).decode('latin-1')
     return b64_pdf
 
 
-st.set_page_config(layout="centered", page_title="Ficha Cadastral")
+st.set_page_config(layout="wide", page_title="Ficha Cadastral") # Alterado para layout="wide"
 
 st.title("Ficha Cadastral - Imobiliária Celeste")
 st.markdown("Selecione o tipo de cadastro e preencha as informações.")
@@ -130,35 +153,41 @@ if ficha_tipo == "Pessoa Física":
     st.header("Ficha Cadastral Pessoa Física")
 
     with st.form("form_pf"):
-        st.subheader("Dados do Empreendimento e Imobiliária")
+        [cite_start]st.subheader("Dados do Empreendimento e Imobiliária") [cite: 1, 2]
         col1, col2 = st.columns(2)
         with col1:
-            empreendimento_pf = st.text_input("Empreendimento", key="empreendimento_pf")
-            corretor_pf = st.text_input("Corretor(a)", key="corretor_pf")
-            qd_pf = st.text_input("QD", key="qd_pf")
+            [cite_start]empreendimento_pf = st.text_input("Empreendimento", key="empreendimento_pf", value=st.session_state.get("empreendimento_pf", "")) [cite: 1]
+            [cite_start]corretor_pf = st.text_input("Corretor(a)", key="corretor_pf", value=st.session_state.get("corretor_pf", "")) [cite: 1]
+            [cite_start]qd_pf = st.text_input("QD", key="qd_pf", value=st.session_state.get("qd_pf", "")) [cite: 1]
         with col2:
-            imobiliaria_pf = st.text_input("Imobiliária", key="imobiliaria_pf")
-            lt_pf = st.text_input("LT", key="lt_pf")
+            [cite_start]imobiliaria_pf = st.text_input("Imobiliária", key="imobiliaria_pf", value=st.session_state.get("imobiliaria_pf", "")) [cite: 2]
+            [cite_start]lt_pf = st.text_input("LT", key="lt_pf", value=st.session_state.get("lt_pf", "")) [cite: 1]
             st.markdown("<br>", unsafe_allow_html=True) # Espaçamento para alinhar
-            ativo_pf = st.checkbox("Ativo", key="ativo_pf")
-            quitado_pf = st.checkbox("Quitado", key="quitado_pf")
+            [cite_start]ativo_pf = st.checkbox("Ativo", key="ativo_pf", value=st.session_state.get("ativo_pf", False)) [cite: 1]
+            [cite_start]quitado_pf = st.checkbox("Quitado", key="quitado_pf", value=st.session_state.get("quitado_pf", False)) [cite: 1]
 
-        st.subheader("Dados do COMPRADOR(A)")
+        [cite_start]st.subheader("Dados do COMPRADOR(A)") [cite: 3]
         col1, col2 = st.columns(2)
         with col1:
-            comprador_nome_pf = st.text_input("Nome Completo", key="comprador_nome_pf")
-            comprador_profissao_pf = st.text_input("Profissão", key="comprador_profissao_pf")
-            comprador_fone_residencial_pf = st.text_input("Fone Residencial", key="comprador_fone_residencial_pf")
-            comprador_celular_pf = st.text_input("Celular", key="comprador_celular_pf")
-            comprador_estado_civil_pf = st.selectbox("Estado Civil", ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)"], key="comprador_estado_civil_pf")
+            comprador_nome_pf = st.text_input("Nome Completo", key="comprador_nome_pf", value=st.session_state.get("comprador_nome_pf", ""))
+            [cite_start]comprador_profissao_pf = st.text_input("Profissão", key="comprador_profissao_pf", value=st.session_state.get("comprador_profissao_pf", "")) [cite: 3]
+            [cite_start]comprador_fone_residencial_pf = st.text_input("Fone Residencial", key="comprador_fone_residencial_pf", value=st.session_state.get("comprador_fone_residencial_pf", "")) [cite: 3]
+            [cite_start]comprador_celular_pf = st.text_input("Celular", key="comprador_celular_pf", value=st.session_state.get("comprador_celular_pf", "")) [cite: 3]
+            [cite_start]comprador_estado_civil_pf = st.selectbox("Estado Civil", ["", "Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)"], key="comprador_estado_civil_pf", index=["", "Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)"].index(st.session_state.get("comprador_estado_civil_pf", ""))) [cite: 3]
+            
             if comprador_estado_civil_pf == "Casado(a)":
-                comprador_data_casamento_pf = st.date_input("Data do Casamento", key="comprador_data_casamento_pf")
-                comprador_regime_casamento_pf = st.text_input("Regime de Casamento", key="comprador_regime_casamento_pf")
+                [cite_start]comprador_data_casamento_pf = st.date_input("Data do Casamento", key="comprador_data_casamento_pf", value=st.session_state.get("comprador_data_casamento_pf", None)) [cite: 3]
+                [cite_start]comprador_regime_casamento_pf = st.text_input("Regime de Casamento", key="comprador_regime_casamento_pf", value=st.session_state.get("comprador_regime_casamento_pf", "")) [cite: 3]
             else:
-                comprador_data_casamento_pf = ""
+                comprador_data_casamento_pf = None
                 comprador_regime_casamento_pf = ""
-            comprador_uniao_estavel_pf = st.checkbox("Declara conviver em união estável", key="comprador_uniao_estavel_pf")
-            comprador_cep_pf = st.text_input("CEP", help="Digite o CEP e pressione Enter para buscar o endereço.", key="comprador_cep_pf")
+            
+            # Adicionando a "Condição de Convivência" aqui no formulário
+            [cite_start]st.markdown("**Condição de Convivência:**") [cite: 3]
+            [cite_start]comprador_uniao_estavel_pf = st.checkbox("( ) Declara conviver em união estável", key="comprador_uniao_estavel_pf", value=st.session_state.get("comprador_uniao_estavel_pf", False)) [cite: 3]
+            [cite_start]st.markdown("– Apresentar comprovante de estado civil de cada um e a declaração de convivência em união estável com as assinaturas reconhecidas em Cartório. [cite: 3]")
+            
+            [cite_start]comprador_cep_pf = st.text_input("CEP", help="Digite o CEP e pressione Enter para buscar o endereço.", key="comprador_cep_pf", value=st.session_state.get("comprador_cep_pf", "")) [cite: 3]
             
             # Botão para buscar CEP do comprador
             if st.form_submit_button("Buscar Endereço Comprador"):
@@ -174,28 +203,28 @@ if ficha_tipo == "Pessoa Física":
                     st.warning("Por favor, digite um CEP para buscar.")
 
         with col2:
-            comprador_nacionalidade_pf = st.text_input("Nacionalidade", key="comprador_nacionalidade_pf")
-            comprador_email_pf = st.text_input("E-mail", key="comprador_email_pf")
-            comprador_fone_comercial_pf = st.text_input("Fone Comercial", key="comprador_fone_comercial_pf")
-            comprador_cpf_pf = st.text_input("CPF", key="comprador_cpf_pf")
-            comprador_rg_pf = st.text_input("RG", key="comprador_rg_pf")
+            [cite_start]comprador_nacionalidade_pf = st.text_input("Nacionalidade", key="comprador_nacionalidade_pf", value=st.session_state.get("comprador_nacionalidade_pf", "")) [cite: 3]
+            [cite_start]comprador_email_pf = st.text_input("E-mail", key="comprador_email_pf", value=st.session_state.get("comprador_email_pf", "")) [cite: 3]
+            [cite_start]comprador_fone_comercial_pf = st.text_input("Fone Comercial", key="comprador_fone_comercial_pf", value=st.session_state.get("comprador_fone_comercial_pf", "")) [cite: 3]
+            [cite_start]comprador_cpf_pf = st.text_input("CPF", key="comprador_cpf_pf", value=st.session_state.get("comprador_cpf_pf", "")) [cite: 3]
+            [cite_start]comprador_rg_pf = st.text_input("RG", key="comprador_rg_pf", value=st.session_state.get("comprador_rg_pf", "")) [cite: 3]
 
         # Campos preenchidos automaticamente após a busca do CEP
-        comprador_end_residencial_pf = st.text_input("Endereço Residencial", value=st.session_state.get("comprador_end_residencial_pf", ""), key="comprador_end_residencial_pf")
-        comprador_bairro_pf = st.text_input("Bairro", value=st.session_state.get("comprador_bairro_pf", ""), key="comprador_bairro_pf")
-        comprador_cidade_pf = st.text_input("Cidade", value=st.session_state.get("comprador_cidade_pf", ""), key="comprador_cidade_pf")
-        comprador_estado_pf = st.text_input("Estado", value=st.session_state.get("comprador_estado_pf", ""), key="comprador_estado_pf")
+        [cite_start]comprador_end_residencial_pf = st.text_input("Endereço Residencial", value=st.session_state.get("comprador_end_residencial_pf", ""), key="comprador_end_residencial_pf") [cite: 3]
+        [cite_start]comprador_bairro_pf = st.text_input("Bairro", value=st.session_state.get("comprador_bairro_pf", ""), key="comprador_bairro_pf") [cite: 3]
+        [cite_start]comprador_cidade_pf = st.text_input("Cidade", value=st.session_state.get("comprador_cidade_pf", ""), key="comprador_cidade_pf") [cite: 3]
+        [cite_start]comprador_estado_pf = st.text_input("Estado", value=st.session_state.get("comprador_estado_pf", ""), key="comprador_estado_pf") [cite: 3]
 
-        st.subheader("Dados do CÔNJUGE/SÓCIO(A)")
+        [cite_start]st.subheader("Dados do CÔNJUGE/SÓCIO(A)") [cite: 3]
         col1, col2 = st.columns(2)
         with col1:
-            conjuge_nome_pf = st.text_input("Nome Completo Cônjuge/Sócio(a)", key="conjuge_nome_pf")
-            conjuge_profissao_pf = st.text_input("Profissão Cônjuge/Sócio(a)", key="conjuge_profissao_pf")
-            conjuge_fone_residencial_pf = st.text_input("Fone Residencial Cônjuge/Sócio(a)", key="conjuge_fone_residencial_pf")
-            conjuge_celular_pf = st.text_input("Celular Cônjuge/Sócio(a)", key="conjuge_celular_pf")
-            conjuge_cpf_pf = st.text_input("CPF Cônjuge/Sócio(a)", key="conjuge_cpf_pf")
-            conjuge_rg_pf = st.text_input("RG Cônjuge/Sócio(a)", key="conjuge_rg_pf")
-            conjuge_cep_pf = st.text_input("CEP Cônjuge/Sócio(a)", help="Digite o CEP e pressione Enter para buscar o endereço.", key="conjuge_cep_pf")
+            conjuge_nome_pf = st.text_input("Nome Completo Cônjuge/Sócio(a)", key="conjuge_nome_pf", value=st.session_state.get("conjuge_nome_pf", ""))
+            [cite_start]conjuge_profissao_pf = st.text_input("Profissão Cônjuge/Sócio(a)", key="conjuge_profissao_pf", value=st.session_state.get("conjuge_profissao_pf", "")) [cite: 3]
+            [cite_start]conjuge_fone_residencial_pf = st.text_input("Fone Residencial Cônjuge/Sócio(a)", key="conjuge_fone_residencial_pf", value=st.session_state.get("conjuge_fone_residencial_pf", "")) [cite: 3]
+            [cite_start]conjuge_celular_pf = st.text_input("Celular Cônjuge/Sócio(a)", key="conjuge_celular_pf", value=st.session_state.get("conjuge_celular_pf", "")) [cite: 3]
+            [cite_start]conjuge_cpf_pf = st.text_input("CPF Cônjuge/Sócio(a)", key="conjuge_cpf_pf", value=st.session_state.get("conjuge_cpf_pf", "")) [cite: 3]
+            [cite_start]conjuge_rg_pf = st.text_input("RG Cônjuge/Sócio(a)", key="conjuge_rg_pf", value=st.session_state.get("conjuge_rg_pf", "")) [cite: 3]
+            [cite_start]conjuge_cep_pf = st.text_input("CEP Cônjuge/Sócio(a)", help="Digite o CEP e pressione Enter para buscar o endereço.", key="conjuge_cep_pf", value=st.session_state.get("conjuge_cep_pf", "")) [cite: 3]
 
             # Botão para buscar CEP do cônjuge
             if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a)"):
@@ -211,21 +240,24 @@ if ficha_tipo == "Pessoa Física":
                     st.warning("Por favor, digite um CEP para buscar.")
 
         with col2:
-            conjuge_nacionalidade_pf = st.text_input("Nacionalidade Cônjuge/Sócio(a)", key="conjuge_nacionalidade_pf")
-            conjuge_email_pf = st.text_input("E-mail Cônjuge/Sócio(a)", key="conjuge_email_pf")
-            conjuge_fone_comercial_pf = st.text_input("Fone Comercial Cônjuge/Sócio(a)", key="conjuge_fone_comercial_pf")
-            conjuge_data_nascimento_pf = st.date_input("Data de Nascimento Cônjuge/Sócio(a)", key="conjuge_data_nascimento_pf")
+            [cite_start]conjuge_nacionalidade_pf = st.text_input("Nacionalidade Cônjuge/Sócio(a)", key="conjuge_nacionalidade_pf", value=st.session_state.get("conjuge_nacionalidade_pf", "")) [cite: 3]
+            [cite_start]conjuge_email_pf = st.text_input("E-mail Cônjuge/Sócio(a)", key="conjuge_email_pf", value=st.session_state.get("conjuge_email_pf", "")) [cite: 3]
+            [cite_start]conjuge_fone_comercial_pf = st.text_input("Fone Comercial Cônjuge/Sócio(a)", key="conjuge_fone_comercial_pf", value=st.session_state.get("conjuge_fone_comercial_pf", "")) [cite: 3]
+            conjuge_data_nascimento_pf = st.date_input("Data de Nascimento Cônjuge/Sócio(a)", key="conjuge_data_nascimento_pf", value=st.session_state.get("conjuge_data_nascimento_pf", None))
 
         # Campos preenchidos automaticamente após a busca do CEP
-        conjuge_end_residencial_pf = st.text_input("Endereço Residencial Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_end_residencial_pf", ""), key="conjuge_end_residencial_pf")
-        conjuge_bairro_pf = st.text_input("Bairro Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_bairro_pf", ""), key="conjuge_bairro_pf")
-        conjuge_cidade_pf = st.text_input("Cidade Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_cidade_pf", ""), key="conjuge_cidade_pf")
-        conjuge_estado_pf = st.text_input("Estado Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_estado_pf", ""), key="conjuge_estado_pf")
-
+        [cite_start]conjuge_end_residencial_pf = st.text_input("Endereço Residencial Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_end_residencial_pf", ""), key="conjuge_end_residencial_pf") [cite: 3]
+        [cite_start]conjuge_bairro_pf = st.text_input("Bairro Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_bairro_pf", ""), key="conjuge_bairro_pf") [cite: 3]
+        [cite_start]conjuge_cidade_pf = st.text_input("Cidade Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_cidade_pf", ""), key="conjuge_cidade_pf") [cite: 3]
+        [cite_start]conjuge_estado_pf = st.text_input("Estado Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_estado_pf", ""), key="conjuge_estado_pf") [cite: 3]
 
         st.markdown("---")
-        st.write("No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a):")
-        condomino_indicado_pf = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pf")
+        [cite_start]st.markdown("**DOCUMENTOS NECESSÁRIOS:** [cite: 3]")
+        [cite_start]st.markdown("- CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação. [cite: 3]")
+        st.markdown("---")
+
+        [cite_start]st.write("📌 No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a): 📌 [cite: 3, 14]")
+        [cite_start]condomino_indicado_pf = st.text_input("➡️ Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pf", value=st.session_state.get("condomino_indicado_pf", "")) [cite: 3, 14]
 
         submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
         if submitted_pf:
@@ -250,7 +282,7 @@ if ficha_tipo == "Pessoa Física":
                 "comprador_estado_pf": comprador_estado_pf,
                 "comprador_cep_pf": comprador_cep_pf,
                 "comprador_estado_civil_pf": comprador_estado_civil_pf,
-                "comprador_data_casamento_pf": comprador_data_casamento_pf.strftime("%d/%m/%Y") if isinstance(comprador_data_casamento_pf, (pd.Timestamp, pd.Timedelta)) else comprador_data_casamento_pf,
+                "comprador_data_casamento_pf": comprador_data_casamento_pf.strftime("%d/%m/%Y") if comprador_data_casamento_pf else "",
                 "comprador_regime_casamento_pf": comprador_regime_casamento_pf,
                 "comprador_uniao_estavel_pf": "Sim" if comprador_uniao_estavel_pf else "Não",
                 "comprador_cpf_pf": comprador_cpf_pf,
@@ -269,7 +301,7 @@ if ficha_tipo == "Pessoa Física":
                 "conjuge_cep_pf": conjuge_cep_pf,
                 "conjuge_cpf_pf": conjuge_cpf_pf,
                 "conjuge_rg_pf": conjuge_rg_pf,
-                "conjuge_data_nascimento_pf": conjuge_data_nascimento_pf.strftime("%d/%m/%Y") if isinstance(conjuge_data_nascimento_pf, (pd.Timestamp, pd.Timedelta)) else conjuge_data_nascimento_pf,
+                "conjuge_data_nascimento_pf": conjuge_data_nascimento_pf.strftime("%d/%m/%Y") if conjuge_data_nascimento_pf else "",
                 "condomino_indicado_pf": condomino_indicado_pf,
             }
             pdf_b64_pf = gerar_pdf_pf(dados_pf)
@@ -280,27 +312,27 @@ elif ficha_tipo == "Pessoa Jurídica":
     st.header("Ficha Cadastral Pessoa Jurídica")
 
     with st.form("form_pj"):
-        st.subheader("Dados do Empreendimento e Imobiliária")
+        [cite_start]st.subheader("Dados do Empreendimento e Imobiliária") [cite: 6, 7]
         col1, col2 = st.columns(2)
         with col1:
-            empreendimento_pj = st.text_input("Empreendimento", key="empreendimento_pj")
-            corretor_pj = st.text_input("Corretor(a)", key="corretor_pj")
-            qd_pj = st.text_input("QD", key="qd_pj")
+            [cite_start]empreendimento_pj = st.text_input("Empreendimento", key="empreendimento_pj", value=st.session_state.get("empreendimento_pj", "")) [cite: 6]
+            [cite_start]corretor_pj = st.text_input("Corretor(a)", key="corretor_pj", value=st.session_state.get("corretor_pj", "")) [cite: 7]
+            [cite_start]qd_pj = st.text_input("QD", key="qd_pj", value=st.session_state.get("qd_pj", "")) [cite: 6]
         with col2:
-            imobiliaria_pj = st.text_input("Imobiliária", key="imobiliaria_pj")
-            lt_pj = st.text_input("LT", key="lt_pj")
+            [cite_start]imobiliaria_pj = st.text_input("Imobiliária", key="imobiliaria_pj", value=st.session_state.get("imobiliaria_pj", "")) [cite: 7]
+            [cite_start]lt_pj = st.text_input("LT", key="lt_pj", value=st.session_state.get("lt_pj", "")) [cite: 6]
             st.markdown("<br>", unsafe_allow_html=True)
-            ativo_pj = st.checkbox("Ativo", key="ativo_pj")
-            quitado_pj = st.checkbox("Quitado", key="quitado_pj")
+            [cite_start]ativo_pj = st.checkbox("Ativo", key="ativo_pj", value=st.session_state.get("ativo_pj", False)) [cite: 7]
+            [cite_start]quitado_pj = st.checkbox("Quitado", key="quitado_pj", value=st.session_state.get("quitado_pj", False)) [cite: 7]
 
-        st.subheader("Dados do COMPRADOR(A)")
+        [cite_start]st.subheader("Dados do COMPRADOR(A)") [cite: 8]
         col1, col2 = st.columns(2)
         with col1:
-            comprador_razao_social_pj = st.text_input("Razão Social", key="comprador_razao_social_pj")
-            comprador_cnpj_pj = st.text_input("CNPJ", key="comprador_cnpj_pj")
-            comprador_fone_residencial_pj = st.text_input("Fone Residencial", key="comprador_fone_residencial_pj")
-            comprador_celular_pj = st.text_input("Celular", key="comprador_celular_pj")
-            comprador_cep_pj = st.text_input("CEP", help="Digite o CEP e pressione Enter para buscar o endereço.", key="comprador_cep_pj")
+            comprador_razao_social_pj = st.text_input("Razão Social", key="comprador_razao_social_pj", value=st.session_state.get("comprador_razao_social_pj", ""))
+            comprador_cnpj_pj = st.text_input("CNPJ", key="comprador_cnpj_pj", value=st.session_state.get("comprador_cnpj_pj", ""))
+            [cite_start]comprador_fone_residencial_pj = st.text_input("Fone Residencial", key="comprador_fone_residencial_pj", value=st.session_state.get("comprador_fone_residencial_pj", "")) [cite: 8]
+            [cite_start]comprador_celular_pj = st.text_input("Celular", key="comprador_celular_pj", value=st.session_state.get("comprador_celular_pj", "")) [cite: 8]
+            [cite_start]comprador_cep_pj = st.text_input("CEP", help="Digite o CEP e pressione Enter para buscar o endereço.", key="comprador_cep_pj", value=st.session_state.get("comprador_cep_pj", "")) [cite: 8]
             
             # Botão para buscar CEP do comprador
             if st.form_submit_button("Buscar Endereço Comprador PJ"):
@@ -316,25 +348,25 @@ elif ficha_tipo == "Pessoa Jurídica":
                     st.warning("Por favor, digite um CEP para buscar.")
 
         with col2:
-            comprador_nome_fantasia_pj = st.text_input("Nome Fantasia", key="comprador_nome_fantasia_pj")
-            comprador_inscricao_estadual_pj = st.text_input("Inscrição Estadual", key="comprador_inscricao_estadual_pj")
-            comprador_fone_comercial_pj = st.text_input("Fone Comercial", key="comprador_fone_comercial_pj")
-            comprador_email_pj = st.text_input("E-mail", key="comprador_email_pj")
+            comprador_nome_fantasia_pj = st.text_input("Nome Fantasia", key="comprador_nome_fantasia_pj", value=st.session_state.get("comprador_nome_fantasia_pj", ""))
+            comprador_inscricao_estadual_pj = st.text_input("Inscrição Estadual", key="comprador_inscricao_estadual_pj", value=st.session_state.get("comprador_inscricao_estadual_pj", ""))
+            [cite_start]comprador_fone_comercial_pj = st.text_input("Fone Comercial", key="comprador_fone_comercial_pj", value=st.session_state.get("comprador_fone_comercial_pj", "")) [cite: 8]
+            [cite_start]comprador_email_pj = st.text_input("E-mail", key="comprador_email_pj", value=st.session_state.get("comprador_email_pj", "")) [cite: 8]
 
         # Campos preenchidos automaticamente após a busca do CEP
-        comprador_end_residencial_comercial_pj = st.text_input("Endereço Residencial/Comercial", value=st.session_state.get("comprador_end_residencial_comercial_pj", ""), key="comprador_end_residencial_comercial_pj")
-        comprador_bairro_pj = st.text_input("Bairro", value=st.session_state.get("comprador_bairro_pj", ""), key="comprador_bairro_pj")
-        comprador_cidade_pj = st.text_input("Cidade", value=st.session_state.get("comprador_cidade_pj", ""), key="comprador_cidade_pj")
-        comprador_estado_pj = st.text_input("Estado", value=st.session_state.get("comprador_estado_pj", ""), key="comprador_estado_pj")
+        [cite_start]comprador_end_residencial_comercial_pj = st.text_input("Endereço Residencial/Comercial", value=st.session_state.get("comprador_end_residencial_comercial_pj", ""), key="comprador_end_residencial_comercial_pj") [cite: 8]
+        [cite_start]comprador_bairro_pj = st.text_input("Bairro", value=st.session_state.get("comprador_bairro_pj", ""), key="comprador_bairro_pj") [cite: 8]
+        [cite_start]comprador_cidade_pj = st.text_input("Cidade", value=st.session_state.get("comprador_cidade_pj", ""), key="comprador_cidade_pj") [cite: 8]
+        [cite_start]comprador_estado_pj = st.text_input("Estado", value=st.session_state.get("comprador_estado_pj", ""), key="comprador_estado_pj") [cite: 8]
 
-        st.subheader("Dados do REPRESENTANTE")
+        [cite_start]st.subheader("Dados do REPRESENTANTE") [cite: 8]
         col1, col2 = st.columns(2)
         with col1:
-            representante_nome_pj = st.text_input("Nome Completo Representante", key="representante_nome_pj")
-            representante_profissao_pj = st.text_input("Profissão Representante", key="representante_profissao_pj")
-            representante_fone_residencial_pj = st.text_input("Fone Residencial Representante", key="representante_fone_residencial_pj")
-            representante_celular_pj = st.text_input("Celular Representante", key="representante_celular_pj")
-            representante_cep_pj = st.text_input("CEP Representante", help="Digite o CEP e pressione Enter para buscar o endereço.", key="representante_cep_pj")
+            representante_nome_pj = st.text_input("Nome Completo Representante", key="representante_nome_pj", value=st.session_state.get("representante_nome_pj", ""))
+            [cite_start]representante_profissao_pj = st.text_input("Profissão Representante", key="representante_profissao_pj", value=st.session_state.get("representante_profissao_pj", "")) [cite: 8]
+            [cite_start]representante_fone_residencial_pj = st.text_input("Fone Residencial Representante", key="representante_fone_residencial_pj", value=st.session_state.get("representante_fone_residencial_pj", "")) [cite: 8]
+            [cite_start]representante_celular_pj = st.text_input("Celular Representante", key="representante_celular_pj", value=st.session_state.get("representante_celular_pj", "")) [cite: 8]
+            [cite_start]representante_cep_pj = st.text_input("CEP Representante", help="Digite o CEP e pressione Enter para buscar o endereço.", key="representante_cep_pj", value=st.session_state.get("representante_cep_pj", "")) [cite: 8]
             
             # Botão para buscar CEP do representante
             if st.form_submit_button("Buscar Endereço Representante"):
@@ -350,28 +382,28 @@ elif ficha_tipo == "Pessoa Jurídica":
                     st.warning("Por favor, digite um CEP para buscar.")
 
         with col2:
-            representante_nacionalidade_pj = st.text_input("Nacionalidade Representante", key="representante_nacionalidade_pj")
-            representante_email_pj = st.text_input("E-mail Representante", key="representante_email_pj")
-            representante_fone_comercial_pj = st.text_input("Fone Comercial Representante", key="representante_fone_comercial_pj")
-            representante_cpf_pj = st.text_input("CPF Representante", key="representante_cpf_pj")
-            representante_rg_pj = st.text_input("RG Representante", key="representante_rg_pj")
+            [cite_start]representante_nacionalidade_pj = st.text_input("Nacionalidade Representante", key="representante_nacionalidade_pj", value=st.session_state.get("representante_nacionalidade_pj", "")) [cite: 8]
+            [cite_start]representante_email_pj = st.text_input("E-mail Representante", key="representante_email_pj", value=st.session_state.get("representante_email_pj", "")) [cite: 8]
+            [cite_start]representante_fone_comercial_pj = st.text_input("Fone Comercial Representante", key="representante_fone_comercial_pj", value=st.session_state.get("representante_fone_comercial_pj", "")) [cite: 8]
+            [cite_start]representante_cpf_pj = st.text_input("CPF Representante", key="representante_cpf_pj", value=st.session_state.get("representante_cpf_pj", "")) [cite: 8]
+            [cite_start]representante_rg_pj = st.text_input("RG Representante", key="representante_rg_pj", value=st.session_state.get("representante_rg_pj", "")) [cite: 8]
         
         # Campos preenchidos automaticamente após a busca do CEP
-        representante_end_residencial_pj = st.text_input("Endereço Residencial Representante", value=st.session_state.get("representante_end_residencial_pj", ""), key="representante_end_residencial_pj")
-        representante_bairro_pj = st.text_input("Bairro Representante", value=st.session_state.get("representante_bairro_pj", ""), key="representante_bairro_pj")
-        representante_cidade_pj = st.text_input("Cidade Representante", value=st.session_state.get("representante_cidade_pj", ""), key="representante_cidade_pj")
-        representante_estado_pj = st.text_input("Estado Representante", value=st.session_state.get("representante_estado_pj", ""), key="representante_estado_pj")
+        [cite_start]representante_end_residencial_pj = st.text_input("Endereço Residencial Representante", value=st.session_state.get("representante_end_residencial_pj", ""), key="representante_end_residencial_pj") [cite: 8]
+        [cite_start]representante_bairro_pj = st.text_input("Bairro Representante", value=st.session_state.get("representante_bairro_pj", ""), key="representante_bairro_pj") [cite: 8]
+        [cite_start]representante_cidade_pj = st.text_input("Cidade Representante", value=st.session_state.get("representante_cidade_pj", ""), key="representante_cidade_pj") [cite: 8]
+        [cite_start]representante_estado_pj = st.text_input("Estado Representante", value=st.session_state.get("representante_estado_pj", ""), key="representante_estado_pj") [cite: 8]
 
-        st.subheader("Dados do CÔNJUGE/SÓCIO(A)")
+        [cite_start]st.subheader("Dados do CÔNJUGE/SÓCIO(A)") [cite: 8]
         col1, col2 = st.columns(2)
         with col1:
-            conjuge_nome_pj = st.text_input("Nome Completo Cônjuge/Sócio(a) PJ", key="conjuge_nome_pj")
-            conjuge_profissao_pj = st.text_input("Profissão Cônjuge/Sócio(a) PJ", key="conjuge_profissao_pj")
-            conjuge_fone_residencial_pj = st.text_input("Fone Residencial Cônjuge/Sócio(a) PJ", key="conjuge_fone_residencial_pj")
-            conjuge_celular_pj = st.text_input("Celular Cônjuge/Sócio(a) PJ", key="conjuge_celular_pj")
-            conjuge_cpf_pj = st.text_input("CPF Cônjuge/Sócio(a) PJ", key="conjuge_cpf_pj")
-            conjuge_rg_pj = st.text_input("RG Cônjuge/Sócio(a) PJ", key="conjuge_rg_pj")
-            conjuge_cep_pj = st.text_input("CEP Cônjuge/Sócio(a) PJ", help="Digite o CEP e pressione Enter para buscar o endereço.", key="conjuge_cep_pj")
+            conjuge_nome_pj = st.text_input("Nome Completo Cônjuge/Sócio(a) PJ", key="conjuge_nome_pj", value=st.session_state.get("conjuge_nome_pj", ""))
+            [cite_start]conjuge_profissao_pj = st.text_input("Profissão Cônjuge/Sócio(a) PJ", key="conjuge_profissao_pj", value=st.session_state.get("conjuge_profissao_pj", "")) [cite: 8]
+            [cite_start]conjuge_fone_residencial_pj = st.text_input("Fone Residencial Cônjuge/Sócio(a) PJ", key="conjuge_fone_residencial_pj", value=st.session_state.get("conjuge_fone_residencial_pj", "")) [cite: 8]
+            [cite_start]conjuge_celular_pj = st.text_input("Celular Cônjuge/Sócio(a) PJ", key="conjuge_celular_pj", value=st.session_state.get("conjuge_celular_pj", "")) [cite: 8]
+            [cite_start]conjuge_cpf_pj = st.text_input("CPF Cônjuge/Sócio(a) PJ", key="conjuge_cpf_pj", value=st.session_state.get("conjuge_cpf_pj", "")) [cite: 8]
+            [cite_start]conjuge_rg_pj = st.text_input("RG Cônjuge/Sócio(a) PJ", key="conjuge_rg_pj", value=st.session_state.get("conjuge_rg_pj", "")) [cite: 8]
+            [cite_start]conjuge_cep_pj = st.text_input("CEP Cônjuge/Sócio(a) PJ", help="Digite o CEP e pressione Enter para buscar o endereço.", key="conjuge_cep_pj", value=st.session_state.get("conjuge_cep_pj", "")) [cite: 8]
             
             # Botão para buscar CEP do cônjuge/sócio PJ
             if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a) PJ"):
@@ -387,20 +419,25 @@ elif ficha_tipo == "Pessoa Jurídica":
                     st.warning("Por favor, digite um CEP para buscar.")
 
         with col2:
-            conjuge_nacionalidade_pj = st.text_input("Nacionalidade Cônjuge/Sócio(a) PJ", key="conjuge_nacionalidade_pj")
-            conjuge_email_pj = st.text_input("E-mail Cônjuge/Sócio(a) PJ", key="conjuge_email_pj")
-            conjuge_fone_comercial_pj = st.text_input("Fone Comercial Cônjuge/Sócio(a) PJ", key="conjuge_fone_comercial_pj")
-            conjuge_data_nascimento_pj = st.date_input("Data de Nascimento Cônjuge/Sócio(a) PJ", key="conjuge_data_nascimento_pj")
+            [cite_start]conjuge_nacionalidade_pj = st.text_input("Nacionalidade Cônjuge/Sócio(a) PJ", key="conjuge_nacionalidade_pj", value=st.session_state.get("conjuge_nacionalidade_pj", "")) [cite: 8]
+            [cite_start]conjuge_email_pj = st.text_input("E-mail Cônjuge/Sócio(a) PJ", key="conjuge_email_pj", value=st.session_state.get("conjuge_email_pj", "")) [cite: 8]
+            [cite_start]conjuge_fone_comercial_pj = st.text_input("Fone Comercial Cônjuge/Sócio(a) PJ", key="conjuge_fone_comercial_pj", value=st.session_state.get("conjuge_fone_comercial_pj", "")) [cite: 8]
+            conjuge_data_nascimento_pj = st.date_input("Data de Nascimento Cônjuge/Sócio(a) PJ", key="conjuge_data_nascimento_pj", value=st.session_state.get("conjuge_data_nascimento_pj", None))
 
         # Campos preenchidos automaticamente após a busca do CEP
-        conjuge_end_residencial_pj = st.text_input("Endereço Residencial Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_end_residencial_pj", ""), key="conjuge_end_residencial_pj")
-        conjuge_bairro_pj = st.text_input("Bairro Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_bairro_pj", ""), key="conjuge_bairro_pj")
-        conjuge_cidade_pj = st.text_input("Cidade Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_cidade_pj", ""), key="conjuge_cidade_pj")
-        conjuge_estado_pj = st.text_input("Estado Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_estado_pj", ""), key="conjuge_estado_pj")
+        [cite_start]conjuge_end_residencial_pj = st.text_input("Endereço Residencial Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_end_residencial_pj", ""), key="conjuge_end_residencial_pj") [cite: 8]
+        [cite_start]conjuge_bairro_pj = st.text_input("Bairro Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_bairro_pj", ""), key="conjuge_bairro_pj") [cite: 8]
+        [cite_start]conjuge_cidade_pj = st.text_input("Cidade Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_cidade_pj", ""), key="conjuge_cidade_pj") [cite: 8]
+        [cite_start]conjuge_estado_pj = st.text_input("Estado Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_estado_pj", ""), key="conjuge_estado_pj") [cite: 8]
 
         st.markdown("---")
-        st.write("No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a):")
-        condomino_indicado_pj = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pj")
+        [cite_start]st.markdown("**DOCUMENTOS NECESSÁRIOS:** [cite: 8]")
+        [cite_start]st.markdown("- **DA EMPRESA:** CONTRATO SOCIAL E ALTERAÇÕES, COMPROVANTE DE ENDEREÇO, DECLARAÇÃO DE FATURAMENTO; [cite: 8]")
+        [cite_start]st.markdown("- **DOS SÓCIOS E SEUS CÔNJUGES:** CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação. [cite: 8]")
+        st.markdown("---")
+
+        [cite_start]st.write("📌 No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a): 📌 [cite: 8, 19]")
+        [cite_start]condomino_indicado_pj = st.text_input("➡️ Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pj", value=st.session_state.get("condomino_indicado_pj", "")) [cite: 8, 19]
 
         submitted_pj = st.form_submit_button("Gerar Ficha de Pessoa Jurídica")
         if submitted_pj:
@@ -453,7 +490,7 @@ elif ficha_tipo == "Pessoa Jurídica":
                 "conjuge_cep_pj": conjuge_cep_pj,
                 "conjuge_cpf_pj": conjuge_cpf_pj,
                 "conjuge_rg_pj": conjuge_rg_pj,
-                "conjuge_data_nascimento_pj": conjuge_data_nascimento_pj.strftime("%d/%m/%Y") if isinstance(conjuge_data_nascimento_pj, (pd.Timestamp, pd.Timedelta)) else conjuge_data_nascimento_pj,
+                "conjuge_data_nascimento_pj": conjuge_data_nascimento_pj.strftime("%d/%m/%Y") if conjuge_data_nascimento_pj else "",
                 "condomino_indicado_pj": condomino_indicado_pj,
             }
             pdf_b64_pj = gerar_pdf_pj(dados_pj)
