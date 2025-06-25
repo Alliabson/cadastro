@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 from fpdf import FPDF
 import base64
-import pandas as pd # Importar pandas para uso futuro, se necessário
+import pandas as pd
 
 # Função para buscar endereço por CEP usando a API ViaCEP
 def buscar_cep(cep):
@@ -62,6 +62,7 @@ def gerar_pdf_pf(dados):
     pdf.set_font("Arial", "B", 10)
     pdf.cell(0, 7, "Condição de Convivência:", 0, 1)
     pdf.set_font("Arial", "", 9)
+    # Linha corrigida, removendo as tags de citação
     pdf.multi_cell(0, 5, "Declara conviver em união estável – Apresentar comprovante de estado civil de cada um e a declaração de convivência em união estável com as assinaturas reconhecidas em Cartório.", 0, "L")
     pdf.ln(5)
 
@@ -141,7 +142,7 @@ def gerar_pdf_pj(dados):
     return b64_pdf
 
 
-st.set_page_config(layout="wide", page_title="Ficha Cadastral") # Alterado para layout="wide"
+st.set_page_config(layout="wide", page_title="Ficha Cadastral")
 
 st.title("Ficha Cadastral - Imobiliária Celeste")
 st.markdown("Selecione o tipo de cadastro e preencha as informações.")
@@ -162,7 +163,7 @@ if ficha_tipo == "Pessoa Física":
         with col2:
             imobiliaria_pf = st.text_input("Imobiliária", key="imobiliaria_pf", value=st.session_state.get("imobiliaria_pf", ""))
             lt_pf = st.text_input("LT", key="lt_pf", value=st.session_state.get("lt_pf", ""))
-            st.markdown("<br>", unsafe_allow_html=True) # Espaçamento para alinhar
+            st.markdown("<br>", unsafe_allow_html=True)
             ativo_pf = st.checkbox("Ativo", key="ativo_pf", value=st.session_state.get("ativo_pf", False))
             quitado_pf = st.checkbox("Quitado", key="quitado_pf", value=st.session_state.get("quitado_pf", False))
 
