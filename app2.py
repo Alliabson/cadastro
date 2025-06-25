@@ -30,8 +30,8 @@ def criar_tabelas():
         empreendimento TEXT,
         qd TEXT,
         lt TEXT,
-        ativo BOOLEAN,
-        quitado BOOLEAN,
+        ativo INTEGER, -- Alterado de BOOLEAN para INTEGER
+        quitado INTEGER, -- Alterado de BOOLEAN para INTEGER
         corretor TEXT,
         imobiliaria TEXT,
         # COMPRADOR(A)
@@ -50,7 +50,7 @@ def criar_tabelas():
         estado_civil_comprador TEXT,
         data_casamento_comprador TEXT,
         regime_casamento_comprador TEXT,
-        condicao_convivencia_comprador BOOLEAN,
+        condicao_convivencia_comprador INTEGER, -- Alterado de BOOLEAN para INTEGER
         # CÔNJUGE/SÓCIO(A)
         nome_conjuge TEXT,
         profissao_conjuge TEXT,
@@ -82,8 +82,8 @@ def criar_tabelas():
         empreendimento TEXT,
         qd TEXT,
         lt TEXT,
-        ativo BOOLEAN,
-        quitado BOOLEAN,
+        ativo INTEGER, -- Alterado de BOOLEAN para INTEGER
+        quitado INTEGER, -- Alterado de BOOLEAN para INTEGER
         corretor TEXT,
         imobiliaria TEXT,
         # COMPRADOR(A) (neste caso, a empresa que está cedendo/transferindo)
@@ -701,9 +701,11 @@ with tab1: # Cadastro de Compradores (Pessoa Física)
             with col3:
                 lt = st.text_input("LT", value=registro_comprador.get('lt', ''))
             with col4:
-                ativo = st.checkbox("Ativo", value=registro_comprador.get('ativo', False))
+                # O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
+                ativo = st.checkbox("Ativo", value=bool(registro_comprador.get('ativo', False)))
             with col5:
-                quitado = st.checkbox("Quitado", value=registro_comprador.get('quitado', False))
+                # O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
+                quitado = st.checkbox("Quitado", value=bool(registro_comprador.get('quitado', False)))
 
             col1, col2 = st.columns(2)
             with col1:
@@ -732,7 +734,8 @@ with tab1: # Cadastro de Compradores (Pessoa Física)
             estado_civil_comprador = st.selectbox("Estado Civil", ["", "Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"], index=["", "Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"].index(registro_comprador.get('estado_civil_comprador', '')))
             data_casamento_comprador = st.text_input("Data do Casamento (dd/mm/aaaa)", value=formatar_data_ptbr(registro_comprador.get('data_casamento_comprador', '')))
             regime_casamento_comprador = st.text_input("Regime de Casamento", value=registro_comprador.get('regime_casamento_comprador', ''))
-            condicao_convivencia_comprador = st.checkbox("Declara conviver em união estável – Apresentar comprovante de estado civil de cada um e a declaração de convivência em união estável com as assinaturas reconhecidas em Cartório.", value=registro_comprador.get('condicao_convivencia_comprador', False))
+            # O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
+            condicao_convivencia_comprador = st.checkbox("Declara conviver em união estável – Apresentar comprovante de estado civil de cada um e a declaração de convivência em união estável com as assinaturas reconhecidas em Cartório.", value=bool(registro_comprador.get('condicao_convivencia_comprador', False)))
 
             st.markdown("---")
             st.subheader("Dados do Cônjuge/Sócio(a)")
@@ -818,9 +821,10 @@ with tab1: # Cadastro de Compradores (Pessoa Física)
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 if st.form_submit_button("Salvar Alterações"):
+                    # Converter valores booleanos para INTEGER (0 ou 1) antes de salvar no DB
                     dados_atualizados = {
-                        'empreendimento': empreendimento, 'qd': qd, 'lt': lt, 'ativo': ativo,
-                        'quitado': quitado, 'corretor': corretor, 'imobiliaria': imobiliaria,
+                        'empreendimento': empreendimento, 'qd': qd, 'lt': lt, 'ativo': int(ativo),
+                        'quitado': int(quitado), 'corretor': corretor, 'imobiliaria': imobiliaria,
                         'nome_comprador': nome_comprador, 'profissao_comprador': profissao_comprador,
                         'nacionalidade_comprador': nacionalidade_comprador,
                         'fone_resid_comprador': fone_resid_comprador,
@@ -832,7 +836,7 @@ with tab1: # Cadastro de Compradores (Pessoa Física)
                         'estado_civil_comprador': estado_civil_comprador,
                         'data_casamento_comprador': data_casamento_comprador,
                         'regime_casamento_comprador': regime_casamento_comprador,
-                        'condicao_convivencia_comprador': condicao_convivencia_comprador,
+                        'condicao_convivencia_comprador': int(condicao_convivencia_comprador),
                         'nome_conjuge': nome_conjuge, 'profissao_conjuge': profissao_conjuge,
                         'nacionalidade_conjuge': nacionalidade_conjuge,
                         'fone_resid_conjuge': fone_resid_conjuge,
@@ -956,8 +960,9 @@ with tab1: # Cadastro de Compradores (Pessoa Física)
                     st.error("Por favor, preencha os campos obrigatórios (Nome Completo e E-mail do Comprador).")
                 else:
                     novo_comprador = {
-                        'empreendimento': empreendimento, 'qd': qd, 'lt': lt, 'ativo': ativo,
-                        'quitado': quitado, 'corretor': corretor, 'imobiliaria': imobiliaria,
+                        'empreendimento': empreendimento, 'qd': qd, 'lt': lt, 'ativo': int(ativo), # Converter para INTEGER
+                        'quitado': int(quitado), # Converter para INTEGER
+                        'corretor': corretor, 'imobiliaria': imobiliaria,
                         'nome_comprador': nome_comprador, 'profissao_comprador': profissao_comprador,
                         'nacionalidade_comprador': nacionalidade_comprador,
                         'fone_resid_comprador': fone_resid_comprador,
@@ -969,7 +974,7 @@ with tab1: # Cadastro de Compradores (Pessoa Física)
                         'estado_civil_comprador': estado_civil_comprador,
                         'data_casamento_comprador': data_casamento_comprador,
                         'regime_casamento_comprador': regime_casamento_comprador,
-                        'condicao_convivencia_comprador': condicao_convivencia_comprador,
+                        'condicao_convivencia_comprador': int(condicao_convivencia_comprador), # Converter para INTEGER
                         'nome_conjuge': nome_conjuge, 'profissao_conjuge': profissao_conjuge,
                         'nacionalidade_conjuge': nacionalidade_conjuge,
                         'fone_resid_conjuge': fone_resid_conjuge,
@@ -1008,9 +1013,11 @@ with tab2: # Cadastro de Vendedores (Pessoa Jurídica)
             with col3:
                 lt_v = st.text_input("LT", value=registro_vendedor.get('lt', ''), key="v_lt")
             with col4:
-                ativo_v = st.checkbox("Ativo", value=registro_vendedor.get('ativo', False), key="v_ativo")
+                # O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
+                ativo_v = st.checkbox("Ativo", value=bool(registro_vendedor.get('ativo', False)), key="v_ativo")
             with col5:
-                quitado_v = st.checkbox("Quitado", value=registro_vendedor.get('quitado', False), key="v_quitado")
+                # O valor do checkbox deve ser booleano, converter o valor do banco de dados (INTEGER)
+                quitado_v = st.checkbox("Quitado", value=bool(registro_vendedor.get('quitado', False)), key="v_quitado")
 
             col1, col2 = st.columns(2)
             with col1:
@@ -1140,9 +1147,10 @@ with tab2: # Cadastro de Vendedores (Pessoa Jurídica)
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 if st.form_submit_button("Salvar Alterações"):
+                    # Converter valores booleanos para INTEGER (0 ou 1) antes de salvar no DB
                     dados_atualizados = {
-                        'empreendimento': empreendimento_v, 'qd': qd_v, 'lt': lt_v, 'ativo': ativo_v,
-                        'quitado': quitado_v, 'corretor': corretor_v, 'imobiliaria': imobiliaria_v,
+                        'empreendimento': empreendimento_v, 'qd': qd_v, 'lt': lt_v, 'ativo': int(ativo_v),
+                        'quitado': int(quitado_v), 'corretor': corretor_v, 'imobiliaria': imobiliaria_v,
                         'nome_comprador_pj': nome_comprador_pj,
                         'fone_resid_comprador_pj': fone_resid_comprador_pj,
                         'fone_com_comprador_pj': fone_com_comprador_pj,
@@ -1307,8 +1315,9 @@ with tab2: # Cadastro de Vendedores (Pessoa Jurídica)
                     st.error("Por favor, preencha os campos obrigatórios (Nome da Empresa e E-mail da Empresa).")
                 else:
                     novo_vendedor = {
-                        'empreendimento': empreendimento_v, 'qd': qd_v, 'lt': lt_v, 'ativo': ativo_v,
-                        'quitado': quitado_v, 'corretor': corretor_v, 'imobiliaria': imobiliaria_v,
+                        'empreendimento': empreendimento_v, 'qd': qd_v, 'lt': lt_v, 'ativo': int(ativo_v), # Converter para INTEGER
+                        'quitado': int(quitado_v), # Converter para INTEGER
+                        'corretor': corretor_v, 'imobiliaria': imobiliaria_v,
                         'nome_comprador_pj': nome_comprador_pj,
                         'fone_resid_comprador_pj': fone_resid_comprador_pj,
                         'fone_com_comprador_pj': fone_com_comprador_pj,
