@@ -10,10 +10,8 @@ REGIMES_DE_BENS = [
     "Comunhão Universal de Bens",
     "Comunhão Parcial de Bens",
     "Separação Total de Bens",
-    "Separação Obrigatória de Bens", # Adicionado
+    "Separação Obrigatória de Bens",
     "Participação Final nos Aquestos",
-    # "Regime de Bens Misto", # Removido
-    # "Outro" # Removido
 ]
 
 # Função para buscar endereço por CEP usando a API ViaCEP
@@ -111,8 +109,6 @@ def gerar_pdf_pf(dados):
     pdf.cell(0, 7, f"Bairro: {dados.get('conjuge_bairro_pf', '')}", 0, 1)
     pdf.cell(0, 7, f"Cidade/Estado: {dados.get('conjuge_cidade_pf', '')}/{dados.get('conjuge_estado_pf', '')}", 0, 1)
     pdf.cell(0, 7, f"CEP: {dados.get('conjuge_cep_pf', '')}", 0, 1)
-    # Data de Nascimento do Cônjuge removida do PDF
-    # pdf.cell(0, 7, f"Data de Nascimento: {dados.get('conjuge_data_nascimento_pf', '')}", 0, 1)
     pdf.ln(5)
 
 
@@ -123,8 +119,9 @@ def gerar_pdf_pf(dados):
     pdf.multi_cell(0, 5, "CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.", 0, "L")
     pdf.ln(5)
 
-    pdf_output = pdf.output(dest='S').encode('latin-1') # Saída como string de bytes
-    b64_pdf = base64.b64encode(pdf_output).decode('latin-1')
+    # Altera a codificação de saída para 'cp1252'
+    pdf_output = pdf.output(dest='S').encode('cp1252') # Saída como string de bytes
+    b64_pdf = base64.b64encode(pdf_output).decode('latin-1') # Decodifica para latin-1 para o base64 (compatibilidade com browsers)
     return b64_pdf
 
 # Função para gerar o PDF da Ficha Cadastral de Pessoa Jurídica
@@ -203,8 +200,6 @@ def gerar_pdf_pj(dados):
     pdf.cell(0, 7, f"Bairro: {dados.get('conjuge_bairro_pj', '')}", 0, 1)
     pdf.cell(0, 7, f"Cidade/Estado: {dados.get('conjuge_cidade_pj', '')}/{dados.get('conjuge_estado_pj', '')}", 0, 1)
     pdf.cell(0, 7, f"CEP: {dados.get('conjuge_cep_pj', '')}", 0, 1)
-    # Data de Nascimento do Cônjuge PJ removida do PDF
-    # pdf.cell(0, 7, f"Data de Nascimento: {dados.get('conjuge_data_nascimento_pj', '')}", 0, 1)
     pdf.ln(5)
     
     # Adicionando Documentos Necessários no PDF de PJ
@@ -215,8 +210,9 @@ def gerar_pdf_pj(dados):
     pdf.multi_cell(0, 5, "DOS SÓCIOS E SEUS CÔNJUGES: CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.", 0, "L")
     pdf.ln(5)
 
-    pdf_output = pdf.output(dest='S').encode('latin-1')
-    b64_pdf = base64.b64encode(pdf_output).decode('latin-1')
+    # Altera a codificação de saída para 'cp1252'
+    pdf_output = pdf.output(dest='S').encode('cp1252')
+    b64_pdf = base64.b64encode(pdf_output).decode('latin-1') # Decodifica para latin-1 para o base64 (compatibilidade com browsers)
     return b64_pdf
 
 
@@ -252,15 +248,24 @@ if ficha_tipo == "Pessoa Física":
             comprador_profissao_pf = st.text_input("Profissão", key="comprador_profissao_pf", value=st.session_state.get("comprador_profissao_pf", ""))
             comprador_fone_residencial_pf = st.text_input("Fone Residencial", key="comprador_fone_residencial_pf", value=st.session_state.get("comprador_fone_residencial_pf", ""))
             comprador_celular_pf = st.text_input("Celular", key="comprador_celular_pf", value=st.session_state.get("comprador_celular_pf", ""))
-            comprador_estado_civil_pf = st.selectbox("Estado Civil", ["", "Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)"], key="comprador_estado_civil_pf", index=["", "Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)"].index(st.session_state.get("comprador_estado_civil_pf", "")))
             
+            # Ajuste para alinhamento: Estado Civil e Regime de Bens na mesma linha
+            col_ec, col_rb = st.columns(2)
+            with col_ec:
+                comprador_estado_civil_pf = st.selectbox("Estado Civil", ["", "Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)"], key="comprador_estado_civil_pf", index=["", "Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)"].index(st.session_state.get("comprador_estado_civil_pf", "")))
+            
+            comprador_data_casamento_pf = None
+            comprador_regime_casamento_pf = ""
+
             if comprador_estado_civil_pf == "Casado(a)":
+                with col_rb: # Coloca o Regime de Casamento ao lado
+                    comprador_regime_casamento_pf = st.selectbox("Regime de Casamento", REGIMES_DE_BENS, key="comprador_regime_casamento_pf", index=REGIMES_DE_BENS.index(st.session_state.get("comprador_regime_casamento_pf", "")))
                 comprador_data_casamento_pf = st.date_input("Data do Casamento", key="comprador_data_casamento_pf", value=st.session_state.get("comprador_data_casamento_pf", None))
-                # Usando selectbox para Regime de Casamento
-                comprador_regime_casamento_pf = st.selectbox("Regime de Casamento", REGIMES_DE_BENS, key="comprador_regime_casamento_pf", index=REGIMES_DE_BENS.index(st.session_state.get("comprador_regime_casamento_pf", "")))
             else:
+                with col_rb: # Adiciona um placeholder para manter o alinhamento
+                    st.empty() # Garante que a coluna continue existindo para layout
                 comprador_data_casamento_pf = None
-                comprador_regime_casamento_pf = ""
+                comprador_regime_casamento_pf = "" # Garante que o valor seja resetado se mudar para não casado
             
             # Condição de Convivência no formulário
             st.markdown("**Condição de Convivência:**")
@@ -286,9 +291,6 @@ if ficha_tipo == "Pessoa Física":
             comprador_nacionalidade_pf = st.text_input("Nacionalidade", key="comprador_nacionalidade_pf", value=st.session_state.get("comprador_nacionalidade_pf", ""))
             comprador_email_pf = st.text_input("E-mail", key="comprador_email_pf", value=st.session_state.get("comprador_email_pf", ""))
             comprador_fone_comercial_pf = st.text_input("Fone Comercial", key="comprador_fone_comercial_pf", value=st.session_state.get("comprador_fone_comercial_pf", ""))
-            # CPF e RG removidos
-            # comprador_cpf_pf = st.text_input("CPF", key="comprador_cpf_pf", value=st.session_state.get("comprador_cpf_pf", ""))
-            # comprador_rg_pf = st.text_input("RG", key="comprador_rg_pf", value=st.session_state.get("comprador_rg_pf", ""))
 
         # Campos preenchidos automaticamente após a busca do CEP
         comprador_end_residencial_pf = st.text_input("Endereço Residencial", value=st.session_state.get("comprador_end_residencial_pf", ""), key="comprador_end_residencial_pf")
@@ -304,9 +306,6 @@ if ficha_tipo == "Pessoa Física":
             conjuge_profissao_pf = st.text_input("Profissão Cônjuge/Sócio(a)", key="conjuge_profissao_pf", value=st.session_state.get("conjuge_profissao_pf", ""))
             conjuge_fone_residencial_pf = st.text_input("Fone Residencial Cônjuge/Sócio(a)", key="conjuge_fone_residencial_pf", value=st.session_state.get("conjuge_fone_residencial_pf", ""))
             conjuge_celular_pf = st.text_input("Celular Cônjuge/Sócio(a)", key="conjuge_celular_pf", value=st.session_state.get("conjuge_celular_pf", ""))
-            # CPF e RG removidos
-            # conjuge_cpf_pf = st.text_input("CPF Cônjuge/Sócio(a)", key="conjuge_cpf_pf", value=st.session_state.get("conjuge_cpf_pf", ""))
-            # conjuge_rg_pf = st.text_input("RG Cônjuge/Sócio(a)", key="conjuge_rg_pf", value=st.session_state.get("conjuge_rg_pf", ""))
             conjuge_cep_pf = st.text_input("CEP Cônjuge/Sócio(a)", help="Digite o CEP e pressione Enter para buscar o endereço.", key="conjuge_cep_pf", value=st.session_state.get("conjuge_cep_pf", ""))
 
             # Botão para buscar CEP do cônjuge
@@ -326,8 +325,6 @@ if ficha_tipo == "Pessoa Física":
             conjuge_nacionalidade_pf = st.text_input("Nacionalidade Cônjuge/Sócio(a)", key="conjuge_nacionalidade_pf", value=st.session_state.get("conjuge_nacionalidade_pf", ""))
             conjuge_email_pf = st.text_input("E-mail Cônjuge/Sócio(a)", key="conjuge_email_pf", value=st.session_state.get("conjuge_email_pf", ""))
             conjuge_fone_comercial_pf = st.text_input("Fone Comercial Cônjuge/Sócio(a)", key="conjuge_fone_comercial_pf", value=st.session_state.get("conjuge_fone_comercial_pf", ""))
-            # Data de Nascimento do Cônjuge removida
-            # conjuge_data_nascimento_pf = st.date_input("Data de Nascimento Cônjuge/Sócio(a)", key="conjuge_data_nascimento_pf", value=st.session_state.get("conjuge_data_nascimento_pf", None))
 
         # Campos preenchidos automaticamente após a busca do CEP
         conjuge_end_residencial_pf = st.text_input("Endereço Residencial Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_end_residencial_pf", ""), key="conjuge_end_residencial_pf")
@@ -341,7 +338,7 @@ if ficha_tipo == "Pessoa Física":
         st.markdown("- CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.")
         st.markdown("---")
 
-        st.write("📌 No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a): �")
+        st.write("📌 No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a): 📌")
         condomino_indicado_pf = st.text_input("➡️ Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pf", value=st.session_state.get("condomino_indicado_pf", ""))
 
         submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
@@ -384,7 +381,7 @@ if ficha_tipo == "Pessoa Física":
                 "conjuge_cidade_pf": conjuge_cidade_pf,
                 "conjuge_estado_pf": conjuge_estado_pf,
                 "conjuge_cep_pf": conjuge_cep_pf,
-                "conjuge_data_nascimento_pf": "", # Removido o valor da data de nascimento
+                "conjuge_data_nascimento_pf": "",
                 "condomino_indicado_pf": condomino_indicado_pf,
             }
             pdf_b64_pf = gerar_pdf_pf(dados_pf)
@@ -412,7 +409,6 @@ elif ficha_tipo == "Pessoa Jurídica":
         col1, col2 = st.columns(2)
         with col1:
             comprador_razao_social_pj = st.text_input("Razão Social", key="comprador_razao_social_pj", value=st.session_state.get("comprador_razao_social_pj", ""))
-            # CNPJ removido
             comprador_fone_residencial_pj = st.text_input("Fone Residencial", key="comprador_fone_residencial_pj", value=st.session_state.get("comprador_fone_residencial_pj", ""))
             comprador_celular_pj = st.text_input("Celular", key="comprador_celular_pj", value=st.session_state.get("comprador_celular_pj", ""))
             comprador_cep_pj = st.text_input("CEP", help="Digite o CEP e pressione Enter para buscar o endereço.", key="comprador_cep_pj", value=st.session_state.get("comprador_cep_pj", ""))
@@ -450,7 +446,6 @@ elif ficha_tipo == "Pessoa Jurídica":
             representante_profissao_pj = st.text_input("Profissão Representante", key="representante_profissao_pj", value=st.session_state.get("representante_profissao_pj", ""))
             representante_fone_residencial_pj = st.text_input("Fone Residencial Representante", key="representante_fone_residencial_pj", value=st.session_state.get("representante_fone_residencial_pj", ""))
             representante_celular_pj = st.text_input("Celular Representante", key="representante_celular_pj", value=st.session_state.get("representante_celular_pj", ""))
-            # CPF e RG removidos
             representante_cep_pj = st.text_input("CEP Representante", help="Digite o CEP e pressione Enter para buscar o endereço.", key="representante_cep_pj", value=st.session_state.get("representante_cep_pj", ""))
             
             # Botão para buscar CEP do representante
@@ -485,7 +480,6 @@ elif ficha_tipo == "Pessoa Jurídica":
             conjuge_profissao_pj = st.text_input("Profissão Cônjuge/Sócio(a) PJ", key="conjuge_profissao_pj", value=st.session_state.get("conjuge_profissao_pj", ""))
             conjuge_fone_residencial_pj = st.text_input("Fone Residencial Cônjuge/Sócio(a) PJ", key="conjuge_fone_residencial_pj", value=st.session_state.get("conjuge_fone_residencial_pj", ""))
             conjuge_celular_pj = st.text_input("Celular Cônjuge/Sócio(a) PJ", key="conjuge_celular_pj", value=st.session_state.get("conjuge_celular_pj", ""))
-            # CPF e RG removidos
             conjuge_cep_pj = st.text_input("CEP Cônjuge/Sócio(a) PJ", help="Digite o CEP e pressione Enter para buscar o endereço.", key="conjuge_cep_pj", value=st.session_state.get("conjuge_cep_pj", ""))
             
             # Botão para buscar CEP do cônjuge/sócio PJ
@@ -505,8 +499,6 @@ elif ficha_tipo == "Pessoa Jurídica":
             conjuge_nacionalidade_pj = st.text_input("Nacionalidade Cônjuge/Sócio(a) PJ", key="conjuge_nacionalidade_pj", value=st.session_state.get("conjuge_nacionalidade_pj", ""))
             conjuge_email_pj = st.text_input("E-mail Cônjuge/Sócio(a) PJ", key="conjuge_email_pj", value=st.session_state.get("conjuge_email_pj", ""))
             conjuge_fone_comercial_pj = st.text_input("Fone Comercial Cônjuge/Sócio(a) PJ", key="conjuge_fone_comercial_pj", value=st.session_state.get("conjuge_fone_comercial_pj", ""))
-            # Data de Nascimento do Cônjuge PJ removida
-            # conjuge_data_nascimento_pj = st.date_input("Data de Nascimento Cônjuge/Sócio(a) PJ", key="conjuge_data_nascimento_pj", value=st.session_state.get("conjuge_data_nascimento_pj", None))
 
         # Campos preenchidos automaticamente após a busca do CEP
         conjuge_end_residencial_pj = st.text_input("Endereço Residencial Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_end_residencial_pj", ""), key="conjuge_end_residencial_pj")
@@ -573,7 +565,7 @@ elif ficha_tipo == "Pessoa Jurídica":
                 "conjuge_cidade_pj": conjuge_cidade_pj,
                 "conjuge_estado_pj": conjuge_estado_pj,
                 "conjuge_cep_pj": conjuge_cep_pj,
-                "conjuge_data_nascimento_pj": "", # Removido o valor da data de nascimento
+                "conjuge_data_nascimento_pj": "",
                 "condomino_indicado_pj": condomino_indicado_pj,
             }
             pdf_b64_pj = gerar_pdf_pj(dados_pj)
