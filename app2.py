@@ -50,7 +50,7 @@ def criar_tabelas():
         estado_civil_comprador TEXT,
         data_casamento_comprador TEXT,
         regime_casamento_comprador TEXT,
-        condicao_convivencia_comprador TEXT,
+        condicao_convivencia_comprador BOOLEAN,
         # CÔNJUGE/SÓCIO(A)
         nome_conjuge TEXT,
         profissao_conjuge TEXT,
@@ -462,7 +462,8 @@ def gerar_pdf_comprador(data):
     estado_civil_text = data.get('estado_civil_comprador', '')
     data_casamento_text = formatar_data_ptbr(data.get('data_casamento_comprador', ''))
     regime_casamento_text = data.get('regime_casamento_comprador', '')
-    condicao_convivencia_text = data.get('condicao_convivencia_comprador', '')
+    condicao_convivencia_val = data.get('condicao_convivencia_comprador')
+    condicao_convivencia_text = "(X) Declara conviver em união estável" if condicao_convivencia_val else "( ) Declara conviver em união estável"
 
     story.append(Paragraph(f"<b>Estado Civil:</b> {estado_civil_text} <b>Data do Casamento:</b> {data_casamento_text} <b>Regime de Casamento:</b> {regime_casamento_text}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>Condição de Convivência:</b> {condicao_convivencia_text}", styles['NormalStyle']))
@@ -491,12 +492,13 @@ def gerar_pdf_comprador(data):
     story.append(Spacer(1, 0.4 * inch))
 
     # Assinaturas
+    today = datetime.now().strftime('%d/%m/%Y')
     story.append(Paragraph(f"Cidade/Estado, ____ de ___________________ de ________.", styles['NormalStyle']))
     story.append(Spacer(1, 0.5 * inch))
     story.append(Paragraph("_____________________________________", styles['CenteredSmallText']))
     story.append(Paragraph("Assinatura do(a) Comprador(a)", styles['CenteredSmallText']))
     story.append(Spacer(1, 0.2 * inch))
-    story.append(Paragraph(f"Autorizado em _______/_______/______________", styles['NormalStyle']))
+    story.append(Paragraph(f"Autorizado em {today}", styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
     story.append(Paragraph("_____________________________________", styles['CenteredSmallText']))
     story.append(Paragraph("Imobiliária Celeste", styles['CenteredSmallText']))
@@ -613,12 +615,13 @@ def gerar_pdf_vendedor(data):
     story.append(Spacer(1, 0.4 * inch))
 
     # Assinaturas
+    today = datetime.now().strftime('%d/%m/%Y')
     story.append(Paragraph(f"Cidade/Estado, ____ de ___________________ de ________.", styles['NormalStyle']))
     story.append(Spacer(1, 0.5 * inch))
     story.append(Paragraph("_____________________________________", styles['CenteredSmallText']))
     story.append(Paragraph("Assinatura do(a) Comprador(a)", styles['CenteredSmallText']))
     story.append(Spacer(1, 0.2 * inch))
-    story.append(Paragraph(f"Autorizado em _______/_______/______________", styles['NormalStyle']))
+    story.append(Paragraph(f"Autorizado em {today}", styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
     story.append(Paragraph("_____________________________________", styles['CenteredSmallText']))
     story.append(Paragraph("Imobiliária Celeste", styles['CenteredSmallText']))
@@ -1293,7 +1296,7 @@ with tab2: # Cadastro de Vendedores (Pessoa Jurídica)
 
             st.markdown("---")
             st.subheader("Informações de Condomínio/Loteamento Fechado")
-            st.markdown("📌 No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a) �")
+            st.markdown("📌 No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a) 📌")
             condomino_indicado_pj = st.text_input("Indique aqui quem será o(a) condômino(a) para Pessoa Jurídica", key="condomino_indicado_vendedor_pj")
 
             # Botão de cadastro
@@ -1457,4 +1460,3 @@ with tab3: # Consulta de Registros
             file_name=f"{tipo_consulta.lower().replace(' ', '_').replace('(pessoa_física)', '').replace('(pessoa_jurídica)', '')}_completo_{datetime.now().strftime('%d%m%Y')}.csv",
             mime='text/csv'
         )
-�
