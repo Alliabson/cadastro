@@ -80,7 +80,7 @@ def gerar_pdf_pf(dados):
     pdf.cell(0, 7, f"Estado Civil: {dados.get('comprador_estado_civil_pf', '')}", 0, 1)
     if dados.get('comprador_data_casamento_pf'):
         pdf.cell(0, 7, f"Data do Casamento: {dados.get('comprador_data_casamento_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Regime de Casamento: {dados.get('comprador_regime_casamento_pf', '')}", 0, 1)
+    pdf.cell(0, 7, f"Regime de Bens: {dados.get('comprador_regime_bens_pf', '')}", 0, 1)
     pdf.cell(0, 7, f"União Estável: {dados.get('comprador_uniao_estavel_pf', '')}", 0, 1)
     pdf.ln(5)
     
@@ -119,9 +119,9 @@ def gerar_pdf_pf(dados):
     pdf.multi_cell(0, 5, "CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.", 0, "L")
     pdf.ln(5)
 
-    # Altera a codificação de saída para 'cp1252'
-    pdf_output = pdf.output(dest='S').encode('cp1252') # Saída como string de bytes
-    b64_pdf = base64.b64encode(pdf_output).decode('latin-1') # Decodifica para latin-1 para o base64 (compatibilidade com browsers)
+    # Corrigindo a geração do PDF
+    pdf_output = pdf.output(dest='S').encode('latin1', 'replace')
+    b64_pdf = base64.b64encode(pdf_output).decode('latin1')
     return b64_pdf
 
 # Função para gerar o PDF da Ficha Cadastral de Pessoa Jurídica
@@ -210,9 +210,9 @@ def gerar_pdf_pj(dados):
     pdf.multi_cell(0, 5, "DOS SÓCIOS E SEUS CÔNJUGES: CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.", 0, "L")
     pdf.ln(5)
 
-    # Altera a codificação de saída para 'cp1252'
-    pdf_output = pdf.output(dest='S').encode('cp1252')
-    b64_pdf = base64.b64encode(pdf_output).decode('latin-1') # Decodifica para latin-1 para o base64 (compatibilidade com browsers)
+    # Corrigindo a geração do PDF
+    pdf_output = pdf.output(dest='S').encode('latin1', 'replace')
+    b64_pdf = base64.b64encode(pdf_output).decode('latin1')
     return b64_pdf
 
 
@@ -254,18 +254,14 @@ if ficha_tipo == "Pessoa Física":
             with col_ec:
                 comprador_estado_civil_pf = st.selectbox("Estado Civil", ["", "Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)"], key="comprador_estado_civil_pf", index=["", "Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)"].index(st.session_state.get("comprador_estado_civil_pf", "")))
             
+            with col_rb:
+                comprador_regime_bens_pf = st.selectbox("Regime de Bens", REGIMES_DE_BENS, key="comprador_regime_bens_pf", index=REGIMES_DE_BENS.index(st.session_state.get("comprador_regime_bens_pf", "")))
+
             # Inicializa a variável antes do if
             comprador_data_casamento_pf = None
-            comprador_regime_casamento_pf = ""
 
             if comprador_estado_civil_pf == "Casado(a)":
-                with col_rb: # Coloca o Regime de Casamento ao lado
-                    comprador_regime_casamento_pf = st.selectbox("Regime de Casamento", REGIMES_DE_BENS, key="comprador_regime_casamento_pf", index=REGIMES_DE_BENS.index(st.session_state.get("comprador_regime_casamento_pf", "")))
                 comprador_data_casamento_pf = st.date_input("Data do Casamento", key="comprador_data_casamento_pf", value=st.session_state.get("comprador_data_casamento_pf", None))
-            else:
-                with col_rb: # Adiciona um placeholder para manter o alinhamento
-                    st.empty() # Garante que a coluna continue existindo para layout
-                # As variáveis já estão None e "" se não for casado, então não precisa de reatribuição aqui
             
             # Condição de Convivência no formulário
             st.markdown("**Condição de Convivência:**")
@@ -366,7 +362,7 @@ if ficha_tipo == "Pessoa Física":
                 "comprador_cep_pf": comprador_cep_pf,
                 "comprador_estado_civil_pf": comprador_estado_civil_pf,
                 "comprador_data_casamento_pf": comprador_data_casamento_pf.strftime("%d/%m/%Y") if comprador_data_casamento_pf else "",
-                "comprador_regime_casamento_pf": comprador_regime_casamento_pf,
+                "comprador_regime_bens_pf": comprador_regime_bens_pf,
                 "comprador_uniao_estavel_pf": "Sim" if comprador_uniao_estavel_pf else "Não",
                 "conjuge_nome_pf": conjuge_nome_pf,
                 "conjuge_profissao_pf": conjuge_profissao_pf,
