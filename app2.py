@@ -7,12 +7,13 @@ import pandas as pd
 # Lista de regimes de bens do casamento
 REGIMES_DE_BENS = [
     "", # Opção vazia inicial
-    "Comunhão Parcial de Bens",
     "Comunhão Universal de Bens",
+    "Comunhão Parcial de Bens",
     "Separação Total de Bens",
+    "Separação Obrigatória de Bens", # Adicionado
     "Participação Final nos Aquestos",
-    "Regime de Bens Misto",
-    "Outro"
+    # "Regime de Bens Misto", # Removido
+    # "Outro" # Removido
 ]
 
 # Função para buscar endereço por CEP usando a API ViaCEP
@@ -340,7 +341,7 @@ if ficha_tipo == "Pessoa Física":
         st.markdown("- CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.")
         st.markdown("---")
 
-        st.write("📌 No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a): 📌")
+        st.write("📌 No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a): �")
         condomino_indicado_pf = st.text_input("➡️ Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pf", value=st.session_state.get("condomino_indicado_pf", ""))
 
         submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
@@ -578,3 +579,4 @@ elif ficha_tipo == "Pessoa Jurídica":
             pdf_b64_pj = gerar_pdf_pj(dados_pj)
             href = f'<a href="data:application/pdf;base64,{pdf_b64_pj}" download="Ficha_Cadastral_Pessoa_Juridica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Jurídica</a>'
             st.markdown(href, unsafe_allow_html=True)
+�
