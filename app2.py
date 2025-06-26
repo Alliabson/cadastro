@@ -780,20 +780,18 @@ if ficha_tipo == "Pessoa Física":
         st.write("No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a):")
         condomino_indicado_pf = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pf")
 
-        # Seção para Dependentes
-        st.subheader("Dependentes")
-        incluir_dependentes_pf = st.checkbox("Incluir Dependentes", key="incluir_dependentes_pf")
-    
-        # O formulário para adicionar dependentes deve estar FORA do st.form principal
-        # para que seus botões não causem submissão do formulário pai.
-        # Os dados do dependente são armazenados em session_state.dependentes_pf_temp
-        # e serão passados para o PDF ao submeter o formulário principal.
-        # Para que o st.button "Adicionar Dependente" não esteja dentro de um st.form,
-        # o bloco de adicionar dependente PRECISA ser isolado.
-        
-        # Cria um container auxiliar para o formulário de dependentes
-        # Isso garante que a UI para adicionar dependentes pode ser renderizada fora do formulário principal
-        # permitindo o uso de st.button normalmente.
+        # Botões de ação do formulário principal (permanecem dentro do st.form)
+        col1, col2 = st.columns(2)
+        with col1:
+            submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
+        with col2:
+            imprimir_pf = st.form_submit_button("Imprimir Formulário")
+
+    # Seção para Dependentes (FORA DO st.form para Pessoa Física)
+    st.subheader("Dependentes")
+    incluir_dependentes_pf = st.checkbox("Incluir Dependentes", key="incluir_dependentes_pf_checkbox") # Renomeado key para evitar conflito
+
+    if incluir_dependentes_pf:
         with st.container(border=True): # Use um container para agrupar visualmente
             st.markdown("**Adicionar Novo Dependente:**")
             dep_nome_pf = st.text_input("Nome Completo do Dependente", value=st.session_state.get("dep_nome_pf", ""), key="dep_nome_pf")
@@ -804,7 +802,7 @@ if ficha_tipo == "Pessoa Física":
             dep_grau_parentesco_pf = st.text_input("Grau de Parentesco", value=st.session_state.get("dep_grau_parentesco_pf", ""), key="dep_grau_parentesco_pf")
 
             # Botões para adicionar/limpar dependentes FORA do st.form
-            add_dep_pf_button = st.button("Adicionar Dependente", key="add_dep_pf")
+            add_dep_pf_button = st.button("Adicionar Dependente", key="add_dep_pf_button_out_form") # Nova key
             if add_dep_pf_button:
                 if dep_nome_pf and dep_cpf_pf:
                     st.session_state.dependentes_pf_temp.append({
@@ -834,21 +832,15 @@ if ficha_tipo == "Pessoa Física":
             df_dependentes_pf = pd.DataFrame(st.session_state.dependentes_pf_temp)
             st.dataframe(df_dependentes_pf)
 
-            clear_dep_pf_button = st.button("Limpar Dependentes", key="clear_dep_pf")
+            clear_dep_pf_button = st.button("Limpar Dependentes", key="clear_dep_pf_button_out_form") # Nova key
             if clear_dep_pf_button:
                 st.session_state.dependentes_pf_temp = []
                 st.success("Dependentes limpos.")
                 st.rerun()
 
-        # Botões de ação do formulário principal
-        col1, col2 = st.columns(2)
-        with col1:
-            submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
-        with col2:
-            imprimir_pf = st.form_submit_button("Imprimir Formulário") # Este ainda deve ser um submit_button
-
-        # Lógica de processamento após a submissão do formulário
-        if submitted_pf:
+        # Lógica de processamento após a submissão do formulário PF
+        # Esta lógica agora é chamada APÓS o `with st.form("form_pf"):`
+        if submitted_pf: 
             dados_pf = {
                 "empreendimento_pf": empreendimento_pf.strip(),
                 "corretor_pf": corretor_pf.strip(),
@@ -893,6 +885,7 @@ if ficha_tipo == "Pessoa Física":
             if pdf_b64_pf:
                 href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
                 st.markdown(href, unsafe_allow_html=True)
+
 
 elif ficha_tipo == "Pessoa Jurídica":
     st.header("Ficha Cadastral Pessoa Jurídica")
@@ -1013,44 +1006,46 @@ elif ficha_tipo == "Pessoa Jurídica":
         st.write("No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a):")
         condomino_indicado_pj = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pj")
 
-        # Seção para Dependentes PJ
-        st.subheader("Dependentes (Pessoa Jurídica)")
-        incluir_dependentes_pj = st.checkbox("Incluir Dependentes para PJ", key="incluir_dependentes_pj")
+        # Botões de ação do formulário principal
+        submitted_pj = st.form_submit_button("Gerar Ficha de Pessoa Jurídica")
+        imprimir_pj = st.form_submit_button("Imprimir Formulário")
 
-        # O formulário para adicionar dependentes deve estar FORA do st.form principal
-        # para que seus botões não causem submissão do formulário pai.
-        if incluir_dependentes_pj:
-            with st.container(border=True): # Use um container para agrupar visualmente
-                st.markdown("**Adicionar Novo Dependente para PJ:**")
-                dep_nome_pj = st.text_input("Nome Completo do Dependente (PJ)", value=st.session_state.get("dep_nome_pj", ""), key="dep_nome_pj")
-                dep_cpf_pj = st.text_input("CPF do Dependente (PJ)", value=st.session_state.get("dep_cpf_pj", ""), key="dep_cpf_pj")
-                dep_tel_comercial_pj = st.text_input("Telefone Comercial do Dependente (PJ)", value=st.session_state.get("dep_tel_comercial_pj", ""), key="dep_tel_comercial_pj")
-                dep_celular_pj = st.text_input("Celular do Dependente (PJ)", value=st.session_state.get("dep_celular_pj", ""), key="dep_celular_pj")
-                dep_email_pj = st.text_input("E-mail do Dependente (PJ)", value=st.session_state.get("dep_email_pj", ""), key="dep_email_pj")
-                dep_grau_parentesco_pj = st.text_input("Grau de Parentesco (PJ)", value=st.session_state.get("dep_grau_parentesco_pj", ""), key="dep_grau_parentesco_pj")
+    # Seção para Dependentes PJ (FORA DO st.form)
+    st.subheader("Dependentes (Pessoa Jurídica)")
+    incluir_dependentes_pj = st.checkbox("Incluir Dependentes para PJ", key="incluir_dependentes_pj_checkbox") # Renomeado key
 
-                add_dep_pj_button = st.button("Adicionar Dependente (PJ)", key="add_dep_pj")
-                if add_dep_pj_button:
-                    if dep_nome_pj and dep_cpf_pj:
-                        st.session_state.dependentes_pj_temp.append({
-                            "nome": dep_nome_pj,
-                            "cpf": dep_cpf_pj,
-                            "telefone_comercial": dep_tel_comercial_pj,
-                            "celular": dep_celular_pj,
-                            "email": dep_email_pj,
-                            "grau_parentesco": dep_grau_parentesco_pj,
-                        })
-                        st.success("Dependente adicionado para PJ! Submeta o formulário principal para salvá-lo no PDF.")
-                        # Limpa os campos de entrada do dependente
-                        st.session_state.dep_nome_pj = ""
-                        st.session_state.dep_cpf_pj = ""
-                        st.session_state.dep_tel_comercial_pj = ""
-                        st.session_state.dep_celular_pj = ""
-                        st.session_state.dep_email_pj = ""
-                        st.session_state.dep_grau_parentesco_pj = ""
-                        st.rerun() # Re-renderiza para limpar os campos
-                    else:
-                        st.warning("Nome e CPF do dependente são obrigatórios.")
+    if incluir_dependentes_pj:
+        with st.container(border=True): # Use um container para agrupar visualmente
+            st.markdown("**Adicionar Novo Dependente para PJ:**")
+            dep_nome_pj = st.text_input("Nome Completo do Dependente (PJ)", value=st.session_state.get("dep_nome_pj", ""), key="dep_nome_pj")
+            dep_cpf_pj = st.text_input("CPF do Dependente (PJ)", value=st.session_state.get("dep_cpf_pj", ""), key="dep_cpf_pj")
+            dep_tel_comercial_pj = st.text_input("Telefone Comercial do Dependente (PJ)", value=st.session_state.get("dep_tel_comercial_pj", ""), key="dep_tel_comercial_pj")
+            dep_celular_pj = st.text_input("Celular do Dependente (PJ)", value=st.session_state.get("dep_celular_pj", ""), key="dep_celular_pj")
+            dep_email_pj = st.text_input("E-mail do Dependente (PJ)", value=st.session_state.get("dep_email_pj", ""), key="dep_email_pj")
+            dep_grau_parentesco_pj = st.text_input("Grau de Parentesco (PJ)", value=st.session_state.get("dep_grau_parentesco_pj", ""), key="dep_grau_parentesco_pj")
+
+            add_dep_pj_button = st.button("Adicionar Dependente (PJ)", key="add_dep_pj_button_out_form") # Nova key
+            if add_dep_pj_button:
+                if dep_nome_pj and dep_cpf_pj:
+                    st.session_state.dependentes_pj_temp.append({
+                        "nome": dep_nome_pj,
+                        "cpf": dep_cpf_pj,
+                        "telefone_comercial": dep_tel_comercial_pj,
+                        "celular": dep_celular_pj,
+                        "email": dep_email_pj,
+                        "grau_parentesco": dep_grau_parentesco_pj,
+                    })
+                    st.success("Dependente adicionado para PJ! Submeta o formulário principal para salvá-lo no PDF.")
+                    # Limpa os campos de entrada do dependente
+                    st.session_state.dep_nome_pj = ""
+                    st.session_state.dep_cpf_pj = ""
+                    st.session_state.dep_tel_comercial_pj = ""
+                    st.session_state.dep_celular_pj = ""
+                    st.session_state.dep_email_pj = ""
+                    st.session_state.dep_grau_parentesco_pj = ""
+                    st.rerun() # Re-renderiza para limpar os campos
+                else:
+                    st.warning("Nome e CPF do dependente são obrigatórios.")
             
             if st.session_state.dependentes_pj_temp:
                 st.markdown("---")
@@ -1058,66 +1053,114 @@ elif ficha_tipo == "Pessoa Jurídica":
                 df_dependentes_pj = pd.DataFrame(st.session_state.dependentes_pj_temp)
                 st.dataframe(df_dependentes_pj)
 
-                clear_dep_pj_button = st.button("Limpar Dependentes (PJ)", key="clear_dep_pj")
+                clear_dep_pj_button = st.button("Limpar Dependentes (PJ)", key="clear_dep_pj_button_out_form") # Nova key
                 if clear_dep_pj_button:
                     st.session_state.dependentes_pj_temp = []
                     st.success("Dependentes limpos para PJ.")
                     st.rerun()
 
+    # Lógica de processamento após a submissão do formulário (agora fora do st.form)
+    # submitted_pf e submitted_pj são as variáveis do st.form_submit_button dos forms principais.
+    # Esta lógica precisa estar no nível superior ou ser chamada após o formulário.
+    if submitted_pf: # submitted_pf é a variável do st.form_submit_button do form principal
+        dados_pf = {
+            "empreendimento_pf": empreendimento_pf.strip(),
+            "corretor_pf": corretor_pf.strip(),
+            "imobiliaria_pf": imobiliaria_pf.strip(),
+            "qd_pf": qd_pf.strip(),
+            "lt_pf": lt_pf.strip(),
+            "ativo_pf": "Sim" if ativo_pf else "Não",
+            "quitado_pf": "Sim" if quitado_pf else "Não",
+            "comprador_nome_pf": comprador_nome_pf.strip(),
+            "comprador_profissao_pf": comprador_profissao_pf.strip(),
+            "comprador_nacionalidade_pf": comprador_nacionalidade_pf.strip(),
+            "comprador_fone_residencial_pf": comprador_fone_residencial_pf.strip(),
+            "comprador_fone_comercial_pf": comprador_fone_comercial_pf.strip(),
+            "comprador_celular_pf": comprador_celular_pf.strip(),
+            "comprador_email_pf": comprador_email_pf.strip(),
+            "comprador_end_residencial_pf": comprador_end_residencial_pf.strip(),
+            "comprador_numero_pf": comprador_numero_pf.strip(),
+            "comprador_bairro_pf": comprador_bairro_pf.strip(),
+            "comprador_cidade_pf": comprador_cidade_pf.strip(),
+            "comprador_estado_pf": comprador_estado_pf.strip(),
+            "comprador_cep_pf": comprador_cep_pf.strip(),
+            "comprador_estado_civil_pf": comprador_estado_civil_pf.strip(),
+            "comprador_regime_bens_pf": comprador_regime_bens_pf.strip(),
+            "comprador_uniao_estavel_pf": "Sim" if comprador_uniao_estavel_pf else "Não",
+            "conjuge_nome_pf": conjuge_nome_pf.strip(),
+            "conjuge_profissao_pf": conjuge_profissao_pf.strip(),
+            "conjuge_nacionalidade_pf": conjuge_nacionalidade_pf.strip(),
+            "conjuge_fone_residencial_pf": conjuge_fone_residencial_pf.strip(),
+            "conjuge_fone_comercial_pf": conjuge_fone_comercial_pf.strip(),
+            "conjuge_celular_pf": conjuge_celular_pf.strip(),
+            "conjuge_email_pf": conjuge_email_pf.strip(),
+            "conjuge_end_residencial_pf": conjuge_end_residencial_pf.strip(),
+            "conjuge_numero_pf": conjuge_numero_pf.strip(),
+            "conjuge_bairro_pf": conjuge_bairro_pf.strip(),
+            "conjuge_cidade_pf": conjuge_cidade_pf.strip(),
+            "conjuge_estado_pf": conjuge_estado_pf.strip(),
+            "conjuge_cep_pf": conjuge_cep_pf.strip(),
+            "condomino_indicado_pf": condomino_indicado_pf.strip(),
+        }
+        
+        pdf_b64_pf = gerar_pdf_pf(dados_pf, st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None)
+        if pdf_b64_pf:
+            href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
+            st.markdown(href, unsafe_allow_html=True)
 
-        submitted_pj = st.form_submit_button("Gerar Ficha de Pessoa Jurídica")
-        if submitted_pj:
-            dados_pj = {
-                "empreendimento_pj": empreendimento_pj.strip(),
-                "corretor_pj": corretor_pj.strip(),
-                "imobiliaria_pj": imobiliaria_pj.strip(),
-                "qd_pj": qd_pj.strip(),
-                "lt_pj": lt_pj.strip(),
-                "ativo_pj": "Sim" if ativo_pj else "Não",
-                "quitado_pj": "Sim" if quitado_pj else "Não",
-                "comprador_razao_social_pj": comprador_razao_social_pj.strip(),
-                "comprador_nome_fantasia_pj": comprador_nome_fantasia_pj.strip(),
-                "comprador_inscricao_estadual_pj": comprador_inscricao_estadual_pj.strip(),
-                "comprador_fone_residencial_pj": comprador_fone_residencial_pj.strip(),
-                "comprador_fone_comercial_pj": comprador_fone_comercial_pj.strip(),
-                "comprador_celular_pj": comprador_celular_pj.strip(),
-                "comprador_email_pj": comprador_email_pj.strip(),
-                "comprador_end_residencial_comercial_pj": comprador_end_residencial_comercial_pj.strip(),
-                "comprador_numero_pj": comprador_numero_pj.strip(),
-                "comprador_bairro_pj": comprador_bairro_pj.strip(),
-                "comprador_cidade_pj": comprador_cidade_pj.strip(),
-                "comprador_estado_pj": comprador_estado_pj.strip(),
-                "comprador_cep_pj": comprador_cep_pj.strip(),
-                "representante_nome_pj": representante_nome_pj.strip(),
-                "representante_profissao_pj": representante_profissao_pj.strip(),
-                "representante_nacionalidade_pj": representante_nacionalidade_pj.strip(),
-                "representante_fone_residencial_pj": representante_fone_residencial_pj.strip(),
-                "representante_fone_comercial_pj": representante_fone_comercial_pj.strip(),
-                "representante_celular_pj": representante_celular_pj.strip(),
-                "representante_email_pj": representante_email_pj.strip(),
-                "representante_end_residencial_pj": representante_end_residencial_pj.strip(),
-                "representante_numero_pj": representante_numero_pj.strip(),
-                "representante_bairro_pj": representante_bairro_pj.strip(),
-                "representante_cidade_pj": representante_cidade_pj.strip(),
-                "representante_estado_pj": representante_estado_pj.strip(),
-                "representante_cep_pj": representante_cep_pj.strip(),
-                "conjuge_nome_pj": conjuge_nome_pj.strip(),
-                "conjuge_profissao_pj": conjuge_profissao_pj.strip(),
-                "conjuge_nacionalidade_pj": conjuge_nacionalidade_pj.strip(),
-                "conjuge_fone_residencial_pj": conjuge_fone_residencial_pj.strip(),
-                "conjuge_fone_comercial_pj": conjuge_fone_comercial_pj.strip(),
-                "conjuge_celular_pj": conjuge_celular_pj.strip(),
-                "conjuge_email_pj": conjuge_email_pj.strip(),
-                "conjuge_end_residencial_pj": conjuge_end_residencial_pj.strip(),
-                "conjuge_numero_pj": conjuge_numero_pj.strip(),
-                "conjuge_bairro_pj": conjuge_bairro_pj.strip(),
-                "conjuge_cidade_pj": conjuge_cidade_pj.strip(),
-                "conjuge_estado_pj": conjuge_estado_pj.strip(),
-                "conjuge_cep_pj": conjuge_cep_pj.strip(),
-                "condomino_indicado_pj": condomino_indicado_pj.strip(),
-            }
-            
-            pdf_b64_pj = gerar_pdf_pj(dados_pj, st.session_state.dependentes_pj_temp if incluir_dependentes_pj else None)
-            if pdf_b64_pj:
-                href = f'<a href="data:application/pdf;base64,{pdf_b64_pj}" download="Ficha_Cadastral_Pessoa_Juridica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Jurídica</a>'
-                st.markdown(href, unsafe_allow_html=True)
+
+    if submitted_pj: # submitted_pj é a variável do st.form_submit_button do form principal
+        dados_pj = {
+            "empreendimento_pj": empreendimento_pj.strip(),
+            "corretor_pj": corretor_pj.strip(),
+            "imobiliaria_pj": imobiliaria_pj.strip(),
+            "qd_pj": qd_pj.strip(),
+            "lt_pj": lt_pj.strip(),
+            "ativo_pj": "Sim" if ativo_pj else "Não",
+            "quitado_pj": "Sim" if quitado_pj else "Não",
+            "comprador_razao_social_pj": comprador_razao_social_pj.strip(),
+            "comprador_nome_fantasia_pj": comprador_nome_fantasia_pj.strip(),
+            "comprador_inscricao_estadual_pj": comprador_inscricao_estadual_pj.strip(),
+            "comprador_fone_residencial_pj": comprador_fone_residencial_pj.strip(),
+            "comprador_fone_comercial_pj": comprador_fone_comercial_pj.strip(),
+            "comprador_celular_pj": comprador_celular_pj.strip(),
+            "comprador_email_pj": comprador_email_pj.strip(),
+            "comprador_end_residencial_comercial_pj": comprador_end_residencial_comercial_pj.strip(),
+            "comprador_numero_pj": comprador_numero_pj.strip(),
+            "comprador_bairro_pj": comprador_bairro_pj.strip(),
+            "comprador_cidade_pj": comprador_cidade_pj.strip(),
+            "comprador_estado_pj": comprador_estado_pj.strip(),
+            "comprador_cep_pj": comprador_cep_pj.strip(),
+            "representante_nome_pj": representante_nome_pj.strip(),
+            "representante_profissao_pj": representante_profissao_pj.strip(),
+            "representante_nacionalidade_pj": representante_nacionalidade_pj.strip(),
+            "representante_fone_residencial_pj": representante_fone_residencial_pj.strip(),
+            "representante_fone_comercial_pj": representante_fone_comercial_pj.strip(),
+            "representante_celular_pj": representante_celular_pj.strip(),
+            "representante_email_pj": representante_email_pj.strip(),
+            "representante_end_residencial_pj": representante_end_residencial_pj.strip(),
+            "representante_numero_pj": representante_numero_pj.strip(),
+            "representante_bairro_pj": representante_bairro_pj.strip(),
+            "representante_cidade_pj": representante_cidade_pj.strip(),
+            "representante_estado_pj": representante_estado_pj.strip(),
+            "representante_cep_pj": representante_cep_pj.strip(),
+            "conjuge_nome_pj": conjuge_nome_pj.strip(),
+            "conjuge_profissao_pj": conjuge_profissao_pj.strip(),
+            "conjuge_nacionalidade_pj": conjuge_nacionalidade_pj.strip(),
+            "conjuge_fone_residencial_pj": conjuge_fone_residencial_pj.strip(),
+            "conjuge_fone_comercial_pj": conjuge_fone_comercial_pj.strip(),
+            "conjuge_celular_pj": conjuge_celular_pj.strip(),
+            "conjuge_email_pj": conjuge_email_pj.strip(),
+            "conjuge_end_residencial_pj": conjuge_end_residencial_pj.strip(),
+            "conjuge_numero_pj": conjuge_numero_pj.strip(),
+            "conjuge_bairro_pj": conjuge_bairro_pj.strip(),
+            "conjuge_cidade_pj": conjuge_cidade_pj.strip(),
+            "conjuge_estado_pj": conjuge_estado_pj.strip(),
+            "conjuge_cep_pj": conjuge_cep_pj.strip(),
+            "condomino_indicado_pj": condomino_indicado_pj.strip(),
+        }
+        
+        pdf_b64_pj = gerar_pdf_pj(dados_pj, st.session_state.dependentes_pj_temp if incluir_dependentes_pj else None)
+        if pdf_b64_pj:
+            href = f'<a href="data:application/pdf;base64,{pdf_b64_pj}" download="Ficha_Cadastral_Pessoa_Juridica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Jurídica</a>'
+            st.markdown(href, unsafe_allow_html=True)
