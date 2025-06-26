@@ -57,6 +57,16 @@ if "conjuge_cidade_pj" not in st.session_state:
 if "conjuge_estado_pj" not in st.session_state:
     st.session_state.conjuge_estado_pj = ""
 
+# Adicionado para pessoas vinculadas
+if "endereco_pessoa_pj" not in st.session_state:
+    st.session_state.endereco_pessoa_pj = ""
+if "bairro_pessoa_pj" not in st.session_state:
+    st.session_state.bairro_pessoa_pj = ""
+if "cidade_pessoa_pj" not in st.session_state:
+    st.session_state.cidade_pessoa_pj = ""
+if "estado_pessoa_pj" not in st.session_state:
+    st.session_state.estado_pessoa_pj = ""
+
 
 # Configuração de sessão com retry para requisições HTTP
 session = requests.Session()
@@ -79,16 +89,6 @@ REGIMES_DE_BENS = [
     "Participação Final nos Aquestos",
 ]
 
-# Removida a função verificar_conexao_internet pois a lógica de retry do requests é mais robusta.
-# def verificar_conexao_internet(host="8.8.8.8", port=53, timeout=3):
-#     """Verifica se há conexão com a internet"""
-#     try:
-#         socket.setdefaulttimeout(timeout)
-#         socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
-#         return True
-#     except socket.error:
-#         return False
-
 def buscar_cep(cep):
     """
     Busca informações de endereço a partir de um CEP usando a API ViaCEP.
@@ -100,10 +100,6 @@ def buscar_cep(cep):
     cep = cep.replace("-", "").replace(".", "").strip()  # Limpa o CEP
     if len(cep) != 8 or not cep.isdigit():
         return None, "CEP inválido. Por favor, insira 8 dígitos numéricos."
-
-    # A verificação de conexão com a internet agora é gerenciada pela lógica de retry do requests
-    # if not verificar_conexao_internet():
-    #     return None, "Sem conexão com a internet. Verifique sua rede."
 
     url = f"https://viacep.com.br/ws/{cep}/json/"
     
@@ -146,6 +142,64 @@ def sanitize_text(text):
         text = text.encode('latin-1', 'ignore').decode('latin-1')
         text = text.strip() # Remove espaços em branco do início e fim
     return text
+
+def preencher_endereco(tipo_campo: str, cep_value: str) -> str:
+    """
+    Busca informações de endereço a partir de um CEP e preenche o st.session_state.
+    Retorna uma mensagem de erro se houver, ou None se bem-sucedido.
+    """
+    endereco_info, error_msg = buscar_cep(cep_value)
+
+    if endereco_info:
+        # Mapeamento de 'tipo_campo' para as chaves corretas no session_state
+        mapping = {
+            'pf': {
+                'logradouro': 'comprador_end_residencial_pf',
+                'bairro': 'comprador_bairro_pf',
+                'cidade': 'comprador_cidade_pf',
+                'estado': 'comprador_estado_pf'
+            },
+            'conjuge_pf': {
+                'logradouro': 'conjuge_end_residencial_pf',
+                'bairro': 'conjuge_bairro_pf',
+                'cidade': 'conjuge_cidade_pf',
+                'estado': 'conjuge_estado_pf'
+            },
+            'empresa_pj': {
+                'logradouro': 'comprador_end_residencial_comercial_pj',
+                'bairro': 'comprador_bairro_pj',
+                'cidade': 'comprador_cidade_pj',
+                'estado': 'comprador_estado_pj'
+            },
+            'administrador_pj': {
+                'logradouro': 'representante_end_residencial_pj',
+                'bairro': 'representante_bairro_pj',
+                'cidade': 'representante_cidade_pj',
+                'estado': 'representante_estado_pj'
+            },
+            'conjuge_pj': {
+                'logradouro': 'conjuge_end_residencial_pj',
+                'bairro': 'conjuge_bairro_pj',
+                'cidade': 'conjuge_cidade_pj',
+                'estado': 'conjuge_estado_pj'
+            },
+            'pessoa_pj': { # Para pessoas vinculadas
+                'logradouro': 'endereco_pessoa_pj',
+                'bairro': 'bairro_pessoa_pj',
+                'cidade': 'cidade_pessoa_pj',
+                'estado': 'estado_pessoa_pj'
+            }
+        }
+
+        target_keys = mapping.get(tipo_campo)
+        if target_keys:
+            for campo_origem, session_key in target_keys.items():
+                st.session_state[session_key] = endereco_info.get(campo_origem, '')
+            return None # Sem erro
+        else:
+            return "Tipo de campo de endereço desconhecido."
+    else:
+        return error_msg # Retorna a mensagem de erro da função buscar_cep
 
 def gerar_pdf_pf(dados):
     """
@@ -547,15 +601,12 @@ if ficha_tipo == "Pessoa Física":
             
             if st.form_submit_button("Buscar Endereço Comprador"):
                 if comprador_cep_pf:
-                    endereco_comprador, error_msg = buscar_cep(comprador_cep_pf)
-                    if endereco_comprador:
-                        st.session_state.comprador_end_residencial_pf = endereco_comprador.get("logradouro", "")
-                        st.session_state.comprador_bairro_pf = endereco_comprador.get("bairro", "")
-                        st.session_state.comprador_cidade_pf = endereco_comprador.get("localidade", "")
-                        st.session_state.comprador_estado_pf = endereco_comprador.get("uf", "")
+                    error_msg = preencher_endereco('pf', comprador_cep_pf)
+                    if error_msg:
+                        st.error(error_msg)
+                    else:
                         st.success("Endereço do comprador preenchido!")
-                    elif error_msg:
-                        st.error(error_msg) # Exibe a mensagem de erro específica
+                        st.rerun() # Força a atualização dos campos na UI
                 else:
                     st.warning("Por favor, digite um CEP para buscar.")
 
@@ -564,12 +615,13 @@ if ficha_tipo == "Pessoa Física":
             comprador_email_pf = st.text_input("E-mail", key="comprador_email_pf")
             comprador_fone_comercial_pf = st.text_input("Fone Comercial", key="comprador_fone_comercial_pf")
 
-        # Campos preenchidos automaticamente após a busca do CEP (chaves atualizadas para evitar conflitos)
-        comprador_end_residencial_pf_val = st.text_input("Endereço Residencial", value=st.session_state.get("comprador_end_residencial_pf", ""), key="comprador_end_residencial_pf_display")
+        # Campos preenchidos automaticamente após a busca do CEP
+        # Usando 'value' para refletir o session_state e 'key' para o controle do widget
+        comprador_end_residencial_pf = st.text_input("Endereço Residencial", value=st.session_state.get("comprador_end_residencial_pf", ""), key="comprador_end_residencial_pf")
         comprador_numero_pf = st.text_input("Número", key="comprador_numero_pf")
-        comprador_bairro_pf_val = st.text_input("Bairro", value=st.session_state.get("comprador_bairro_pf", ""), key="comprador_bairro_pf_display")
-        comprador_cidade_pf_val = st.text_input("Cidade", value=st.session_state.get("comprador_cidade_pf", ""), key="comprador_cidade_pf_display")
-        comprador_estado_pf_val = st.text_input("Estado", value=st.session_state.get("comprador_estado_pf", ""), key="comprador_estado_pf_display")
+        comprador_bairro_pf = st.text_input("Bairro", value=st.session_state.get("comprador_bairro_pf", ""), key="comprador_bairro_pf")
+        comprador_cidade_pf = st.text_input("Cidade", value=st.session_state.get("comprador_cidade_pf", ""), key="comprador_cidade_pf")
+        comprador_estado_pf = st.text_input("Estado", value=st.session_state.get("comprador_estado_pf", ""), key="comprador_estado_pf")
 
         st.subheader("Dados do CÔNJUGE/SÓCIO(A)")
         col1, col2 = st.columns(2)
@@ -599,12 +651,12 @@ if ficha_tipo == "Pessoa Física":
             conjuge_email_pf = st.text_input("E-mail Cônjuge/Sócio(a)", key="conjuge_email_pf")
             conjuge_fone_comercial_pf = st.text_input("Fone Comercial Cônjuge/Sócio(a)", key="conjuge_fone_comercial_pf")
 
-        # Campos preenchidos automaticamente após a busca do CEP (chaves atualizadas para evitar conflitos)
-        conjuge_end_residencial_pf_val = st.text_input("Endereço Residencial Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_end_residencial_pf", ""), key="conjuge_end_residencial_pf_display")
+        # Campos preenchidos automaticamente após a busca do CEP
+        conjuge_end_residencial_pf = st.text_input("Endereço Residencial Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_end_residencial_pf", ""), key="conjuge_end_residencial_pf")
         conjuge_numero_pf = st.text_input("Número Cônjuge/Sócio(a)", key="conjuge_numero_pf")
-        conjuge_bairro_pf_val = st.text_input("Bairro Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_bairro_pf", ""), key="conjuge_bairro_pf_display")
-        conjuge_cidade_pf_val = st.text_input("Cidade Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_cidade_pf", ""), key="conjuge_cidade_pf_display")
-        conjuge_estado_pf_val = st.text_input("Estado Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_estado_pf", ""), key="conjuge_estado_pf_display")
+        conjuge_bairro_pf = st.text_input("Bairro Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_bairro_pf", ""), key="conjuge_bairro_pf")
+        conjuge_cidade_pf = st.text_input("Cidade Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_cidade_pf", ""), key="conjuge_cidade_pf")
+        conjuge_estado_pf = st.text_input("Estado Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_estado_pf", ""), key="conjuge_estado_pf")
 
         st.markdown("---")
         st.markdown("**DOCUMENTOS NECESSÁRIOS:**")
@@ -631,11 +683,11 @@ if ficha_tipo == "Pessoa Física":
                 "comprador_fone_comercial_pf": comprador_fone_comercial_pf.strip(),
                 "comprador_celular_pf": comprador_celular_pf.strip(),
                 "comprador_email_pf": comprador_email_pf.strip(),
-                "comprador_end_residencial_pf": comprador_end_residencial_pf_val.strip(),
+                "comprador_end_residencial_pf": comprador_end_residencial_pf.strip(),
                 "comprador_numero_pf": comprador_numero_pf.strip(),
-                "comprador_bairro_pf": comprador_bairro_pf_val.strip(),
-                "comprador_cidade_pf": comprador_cidade_pf_val.strip(),
-                "comprador_estado_pf": comprador_estado_pf_val.strip(),
+                "comprador_bairro_pf": comprador_bairro_pf.strip(),
+                "comprador_cidade_pf": comprador_cidade_pf.strip(),
+                "comprador_estado_pf": comprador_estado_pf.strip(),
                 "comprador_cep_pf": comprador_cep_pf.strip(),
                 "comprador_estado_civil_pf": comprador_estado_civil_pf.strip(),
                 "comprador_regime_bens_pf": comprador_regime_bens_pf.strip(),
@@ -647,11 +699,11 @@ if ficha_tipo == "Pessoa Física":
                 "conjuge_fone_comercial_pf": conjuge_fone_comercial_pf.strip(),
                 "conjuge_celular_pf": conjuge_celular_pf.strip(),
                 "conjuge_email_pf": conjuge_email_pf.strip(),
-                "conjuge_end_residencial_pf": conjuge_end_residencial_pf_val.strip(),
+                "conjuge_end_residencial_pf": conjuge_end_residencial_pf.strip(),
                 "conjuge_numero_pf": conjuge_numero_pf.strip(),
-                "conjuge_bairro_pf": conjuge_bairro_pf_val.strip(),
-                "conjuge_cidade_pf": conjuge_cidade_pf_val.strip(),
-                "conjuge_estado_pf": conjuge_estado_pf_val.strip(),
+                "conjuge_bairro_pf": conjuge_bairro_pf.strip(),
+                "conjuge_cidade_pf": conjuge_cidade_pf.strip(),
+                "conjuge_estado_pf": conjuge_estado_pf.strip(),
                 "conjuge_cep_pf": conjuge_cep_pf.strip(),
                 "condomino_indicado_pf": condomino_indicado_pf.strip(),
             }
@@ -706,11 +758,11 @@ elif ficha_tipo == "Pessoa Jurídica":
             comprador_fone_comercial_pj = st.text_input("Fone Comercial", key="comprador_fone_comercial_pj")
             comprador_email_pj = st.text_input("E-mail", key="comprador_email_pj")
 
-        comprador_end_residencial_comercial_pj_val = st.text_input("Endereço Residencial/Comercial", value=st.session_state.get("comprador_end_residencial_comercial_pj", ""), key="comprador_end_residencial_comercial_pj_display")
+        comprador_end_residencial_comercial_pj = st.text_input("Endereço Residencial/Comercial", value=st.session_state.get("comprador_end_residencial_comercial_pj", ""), key="comprador_end_residencial_comercial_pj")
         comprador_numero_pj = st.text_input("Número", key="comprador_numero_pj")
-        comprador_bairro_pj_val = st.text_input("Bairro", value=st.session_state.get("comprador_bairro_pj", ""), key="comprador_bairro_pj_display")
-        comprador_cidade_pj_val = st.text_input("Cidade", value=st.session_state.get("comprador_cidade_pj", ""), key="comprador_cidade_pj_display")
-        comprador_estado_pj_val = st.text_input("Estado", value=st.session_state.get("comprador_estado_pj", ""), key="comprador_estado_pj_display")
+        comprador_bairro_pj = st.text_input("Bairro", value=st.session_state.get("comprador_bairro_pj", ""), key="comprador_bairro_pj")
+        comprador_cidade_pj = st.text_input("Cidade", value=st.session_state.get("comprador_cidade_pj", ""), key="comprador_cidade_pj")
+        comprador_estado_pj = st.text_input("Estado", value=st.session_state.get("comprador_estado_pj", ""), key="comprador_estado_pj")
 
         st.subheader("Dados do REPRESENTANTE")
         col1, col2 = st.columns(2)
@@ -740,11 +792,11 @@ elif ficha_tipo == "Pessoa Jurídica":
             representante_email_pj = st.text_input("E-mail Representante", key="representante_email_pj")
             representante_fone_comercial_pj = st.text_input("Fone Comercial Representante", key="representante_fone_comercial_pj")
         
-        representante_end_residencial_pj_val = st.text_input("Endereço Residencial Representante", value=st.session_state.get("representante_end_residencial_pj", ""), key="representante_end_residencial_pj_display")
+        representante_end_residencial_pj = st.text_input("Endereço Residencial Representante", value=st.session_state.get("representante_end_residencial_pj", ""), key="representante_end_residencial_pj")
         representante_numero_pj = st.text_input("Número Representante", key="representante_numero_pj")
-        representante_bairro_pj_val = st.text_input("Bairro Representante", value=st.session_state.get("representante_bairro_pj", ""), key="representante_bairro_pj_display")
-        representante_cidade_pj_val = st.text_input("Cidade Representante", value=st.session_state.get("representante_cidade_pj", ""), key="representante_cidade_pj_display")
-        representante_estado_pj_val = st.text_input("Estado Representante", value=st.session_state.get("representante_estado_pj", ""), key="representante_estado_pj_display")
+        representante_bairro_pj = st.text_input("Bairro Representante", value=st.session_state.get("representante_bairro_pj", ""), key="representante_bairro_pj")
+        representante_cidade_pj = st.text_input("Cidade Representante", value=st.session_state.get("representante_cidade_pj", ""), key="representante_cidade_pj")
+        representante_estado_pj = st.text_input("Estado Representante", value=st.session_state.get("representante_estado_pj", ""), key="representante_estado_pj")
 
         st.subheader("Dados do CÔNJUGE/SÓCIO(A)")
         col1, col2 = st.columns(2)
@@ -774,11 +826,11 @@ elif ficha_tipo == "Pessoa Jurídica":
             conjuge_email_pj = st.text_input("E-mail Cônjuge/Sócio(a) PJ", key="conjuge_email_pj")
             conjuge_fone_comercial_pj = st.text_input("Fone Comercial Cônjuge/Sócio(a) PJ", key="conjuge_fone_comercial_pj")
 
-        conjuge_end_residencial_pj_val = st.text_input("Endereço Residencial Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_end_residencial_pj", ""), key="conjuge_end_residencial_pj_display")
+        conjuge_end_residencial_pj = st.text_input("Endereço Residencial Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_end_residencial_pj", ""), key="conjuge_end_residencial_pj")
         conjuge_numero_pj = st.text_input("Número Cônjuge/Sócio(a) PJ", key="conjuge_numero_pj")
-        conjuge_bairro_pj_val = st.text_input("Bairro Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_bairro_pj", ""), key="conjuge_bairro_pj_display")
-        conjuge_cidade_pj_val = st.text_input("Cidade Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_cidade_pj", ""), key="conjuge_cidade_pj_display")
-        conjuge_estado_pj_val = st.text_input("Estado Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_estado_pj", ""), key="conjuge_estado_pj_display")
+        conjuge_bairro_pj = st.text_input("Bairro Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_bairro_pj", ""), key="conjuge_bairro_pj")
+        conjuge_cidade_pj = st.text_input("Cidade Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_cidade_pj", ""), key="conjuge_cidade_pj")
+        conjuge_estado_pj = st.text_input("Estado Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_estado_pj", ""), key="conjuge_estado_pj")
 
         st.markdown("---")
         st.markdown("**DOCUMENTOS NECESSÁRIOS:**")
@@ -806,11 +858,11 @@ elif ficha_tipo == "Pessoa Jurídica":
                 "comprador_fone_comercial_pj": comprador_fone_comercial_pj.strip(),
                 "comprador_celular_pj": comprador_celular_pj.strip(),
                 "comprador_email_pj": comprador_email_pj.strip(),
-                "comprador_end_residencial_comercial_pj": comprador_end_residencial_comercial_pj_val.strip(),
+                "comprador_end_residencial_comercial_pj": comprador_end_residencial_comercial_pj.strip(),
                 "comprador_numero_pj": comprador_numero_pj.strip(),
-                "comprador_bairro_pj": comprador_bairro_pj_val.strip(),
-                "comprador_cidade_pj": comprador_cidade_pj_val.strip(),
-                "comprador_estado_pj": comprador_estado_pj_val.strip(),
+                "comprador_bairro_pj": comprador_bairro_pj.strip(),
+                "comprador_cidade_pj": comprador_cidade_pj.strip(),
+                "comprador_estado_pj": comprador_estado_pj.strip(),
                 "comprador_cep_pj": comprador_cep_pj.strip(),
                 "representante_nome_pj": representante_nome_pj.strip(),
                 "representante_profissao_pj": representante_profissao_pj.strip(),
@@ -819,11 +871,11 @@ elif ficha_tipo == "Pessoa Jurídica":
                 "representante_fone_comercial_pj": representante_fone_comercial_pj.strip(),
                 "representante_celular_pj": representante_celular_pj.strip(),
                 "representante_email_pj": representante_email_pj.strip(),
-                "representante_end_residencial_pj": representante_end_residencial_pj_val.strip(),
+                "representante_end_residencial_pj": representante_end_residencial_pj.strip(),
                 "representante_numero_pj": representante_numero_pj.strip(),
-                "representante_bairro_pj": representante_bairro_pj_val.strip(),
-                "representante_cidade_pj": representante_cidade_pj_val.strip(),
-                "representante_estado_pj": representante_estado_pj_val.strip(),
+                "representante_bairro_pj": representante_bairro_pj.strip(),
+                "representante_cidade_pj": representante_cidade_pj.strip(),
+                "representante_estado_pj": representante_estado_pj.strip(),
                 "representante_cep_pj": representante_cep_pj.strip(),
                 "conjuge_nome_pj": conjuge_nome_pj.strip(),
                 "conjuge_profissao_pj": conjuge_profissao_pj.strip(),
@@ -832,11 +884,11 @@ elif ficha_tipo == "Pessoa Jurídica":
                 "conjuge_fone_comercial_pj": conjuge_fone_comercial_pj.strip(),
                 "conjuge_celular_pj": conjuge_celular_pj.strip(),
                 "conjuge_email_pj": conjuge_email_pj.strip(),
-                "conjuge_end_residencial_pj": conjuge_end_residencial_pj_val.strip(),
+                "conjuge_end_residencial_pj": conjuge_end_residencial_pj.strip(),
                 "conjuge_numero_pj": conjuge_numero_pj.strip(),
-                "conjuge_bairro_pj": conjuge_bairro_pj_val.strip(),
-                "conjuge_cidade_pj": conjuge_cidade_pj_val.strip(),
-                "conjuge_estado_pj": conjuge_estado_pj_val.strip(),
+                "conjuge_bairro_pj": conjuge_bairro_pj.strip(),
+                "conjuge_cidade_pj": conjuge_cidade_pj.strip(),
+                "conjuge_estado_pj": conjuge_estado_pj.strip(),
                 "conjuge_cep_pj": conjuge_cep_pj.strip(),
                 "condomino_indicado_pj": condomino_indicado_pj.strip(),
             }
