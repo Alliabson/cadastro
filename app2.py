@@ -79,14 +79,15 @@ REGIMES_DE_BENS = [
     "Participação Final nos Aquestos",
 ]
 
-def verificar_conexao_internet(host="8.8.8.8", port=53, timeout=3):
-    """Verifica se há conexão com a internet"""
-    try:
-        socket.setdefaulttimeout(timeout)
-        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
-        return True
-    except socket.error:
-        return False
+# Removida a função verificar_conexao_internet pois a lógica de retry do requests é mais robusta.
+# def verificar_conexao_internet(host="8.8.8.8", port=53, timeout=3):
+#     """Verifica se há conexão com a internet"""
+#     try:
+#         socket.setdefaulttimeout(timeout)
+#         socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+#         return True
+#     except socket.error:
+#         return False
 
 def buscar_cep(cep):
     """
@@ -100,14 +101,14 @@ def buscar_cep(cep):
     if len(cep) != 8 or not cep.isdigit():
         return None, "CEP inválido. Por favor, insira 8 dígitos numéricos."
 
-    # Verifica conexão com a internet antes de tentar
-    if not verificar_conexao_internet():
-        return None, "Sem conexão com a internet. Verifique sua rede."
+    # A verificação de conexão com a internet agora é gerenciada pela lógica de retry do requests
+    # if not verificar_conexao_internet():
+    #     return None, "Sem conexão com a internet. Verifique sua rede."
 
     url = f"https://viacep.com.br/ws/{cep}/json/"
     
     try:
-        response = session.get(url, timeout=5)
+        response = session.get(url, timeout=5) # Usa a 'session' global com retry
         response.raise_for_status()  # Levanta erro para códigos 4xx/5xx
         
         data = response.json()
@@ -120,7 +121,7 @@ def buscar_cep(cep):
     except requests.exceptions.Timeout:
         return None, "Tempo de conexão esgotado. Servidor pode estar indisponível."
     except requests.exceptions.ConnectionError:
-        return None, "Não foi possível conectar ao servidor. Verifique sua conexão com a internet."
+        return None, "Não foi possível conectar ao servidor ViaCEP. Verifique sua conexão com a internet."
     except requests.exceptions.RequestException as e:
         return None, f"Erro ao buscar CEP: {str(e)}"
 
