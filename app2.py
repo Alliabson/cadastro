@@ -431,7 +431,7 @@ def gerar_pdf_pf(dados, dependentes=None):
         # Campo adicional para condômino indicado
         condomino_indicado = dados.get('condomino_indicado_pf', '')
         if condomino_indicado and sanitize_text(condomino_indicado):
-            pdf.ln(5)
+            pdf.ln(3)
             pdf.set_font("Helvetica", "B", 10)
             pdf.multi_cell(0, 6, sanitize_text("No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a):"), 0, 'L')
             pdf.set_font("Helvetica", "", 10)
@@ -654,7 +654,7 @@ def gerar_pdf_pj(dados, dependentes=None):
         # Campo adicional para condômino indicado
         condomino_indicado = dados.get('condomino_indicado_pj', '')
         if condomino_indicado and sanitize_text(condomino_indicado):
-            pdf.ln(5)
+            pdf.ln(3)
             pdf.set_font("Helvetica", "B", 10)
             pdf.multi_cell(0, 6, sanitize_text("No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a):"), 0, 'L')
             pdf.set_font("Helvetica", "", 10)
