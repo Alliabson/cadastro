@@ -128,6 +128,7 @@ def sanitize_text(text):
     """
     Substitui caracteres Unicode problemáticos (como o en dash '\u2013')
     por equivalentes ASCII para evitar erros de codificação no FPDF.
+    Também remove caracteres que não são compatíveis com latin-1 (como emojis).
     """
     if isinstance(text, str):
         # Substitui o "en dash" pelo hífen
@@ -140,7 +141,8 @@ def sanitize_text(text):
         text = text.replace('\u201C', '"')
         # Substitui aspas duplas direitas
         text = text.replace('\u201D', '"')
-        # Adicione mais substituições se outros caracteres causarem problemas
+        # Remove caracteres que não podem ser codificados em latin-1 (incluindo a maioria dos emojis)
+        text = text.encode('latin-1', 'ignore').decode('latin-1')
         text = text.strip() # Remove espaços em branco do início e fim
     return text
 
@@ -226,8 +228,8 @@ def gerar_pdf_pf(dados):
             ("Nacionalidade Cônjuge/Sócio(a)", "conjuge_nacionalidade_pf"),
             ("Fone Residencial Cônjuge/Sócio(a)", "conjuge_fone_residencial_pf"),
             ("Fone Comercial Cônjuge/Sócio(a)", "conjuge_fone_comercial_pf"),
-            ("Celular Cônjuge/Sócio(a)", "conjuge_celular_pf"),
-            ("E-mail Cônjuge/Sócio(a)", "conjuge_email_pf"),
+            ("Celular", "conjuge_celular_pf"),
+            ("E-mail", "conjuge_email_pf"),
             ("Endereço Residencial", "conjuge_end_residencial_pf", "conjuge_numero_pf"),
             ("Bairro", "conjuge_bairro_pf"),
             ("Cidade/Estado", "conjuge_cidade_pf", "conjuge_estado_pf"),
@@ -263,9 +265,9 @@ def gerar_pdf_pf(dados):
         if condomino_indicado and sanitize_text(condomino_indicado):
             pdf.ln(5)
             pdf.set_font("Helvetica", "B", 10)
-            pdf.cell(0, 6, sanitize_text("📌 No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a): 📌"), 0, 1, 'L')
+            pdf.cell(0, 6, sanitize_text("No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a):"), 0, 1, 'L')
             pdf.set_font("Helvetica", "", 10)
-            pdf.cell(0, 6, f"➡️ Indique aqui quem será o(a) condômino(a): {sanitize_text(condomino_indicado)}", 0, 1)
+            pdf.cell(0, 6, f"Indique aqui quem será o(a) condômino(a): {sanitize_text(condomino_indicado)}", 0, 1)
             pdf.ln(3)
 
 
@@ -377,8 +379,8 @@ def gerar_pdf_pj(dados):
             ("Nacionalidade Representante", "representante_nacionalidade_pj"),
             ("Fone Residencial Representante", "representante_fone_residencial_pj"),
             ("Fone Comercial Representante", "representante_fone_comercial_pj"),
-            ("Celular Representante", "representante_celular_pj"),
-            ("E-mail Representante", "representante_email_pj"),
+            ("Celular", "representante_celular_pj"),
+            ("E-mail", "representante_email_pj"),
             ("Endereço Residencial", "representante_end_residencial_pj", "representante_numero_pj"),
             ("Bairro", "representante_bairro_pj"),
             ("Cidade/Estado", "representante_cidade_pj", "representante_estado_pj"),
@@ -413,8 +415,8 @@ def gerar_pdf_pj(dados):
             ("Nacionalidade Cônjuge/Sócio(a) PJ", "conjuge_nacionalidade_pj"),
             ("Fone Residencial Cônjuge/Sócio(a) PJ", "conjuge_fone_residencial_pj"),
             ("Fone Comercial Cônjuge/Sócio(a) PJ", "conjuge_fone_comercial_pj"),
-            ("Celular Cônjuge/Sócio(a) PJ", "conjuge_celular_pj"),
-            ("E-mail Cônjuge/Sócio(a) PJ", "conjuge_email_pj"),
+            ("Celular", "conjuge_celular_pj"),
+            ("E-mail", "conjuge_email_pj"),
             ("Endereço Residencial", "conjuge_end_residencial_pj", "conjuge_numero_pj"),
             ("Bairro", "conjuge_bairro_pj"),
             ("Cidade/Estado", "conjuge_cidade_pj", "conjuge_estado_pj"),
@@ -451,9 +453,9 @@ def gerar_pdf_pj(dados):
         if condomino_indicado and sanitize_text(condomino_indicado):
             pdf.ln(5)
             pdf.set_font("Helvetica", "B", 10)
-            pdf.multi_cell(0, 6, sanitize_text("📌 No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a): 📌"), 0, 'L')
+            pdf.multi_cell(0, 6, sanitize_text("No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a):"), 0, 'L')
             pdf.set_font("Helvetica", "", 10)
-            pdf.cell(0, 6, f"➡️ Indique aqui quem será o(a) condômino(a): {sanitize_text(condomino_indicado)}", 0, 1)
+            pdf.cell(0, 6, f"Indique aqui quem será o(a) condômino(a): {sanitize_text(condomino_indicado)}", 0, 1)
             pdf.ln(3)
 
         # Adiciona a seção de data e assinaturas
@@ -608,8 +610,8 @@ if ficha_tipo == "Pessoa Física":
         st.markdown("- CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.")
         st.markdown("---")
 
-        st.write("📌 No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a): 📌")
-        condomino_indicado_pf = st.text_input("➡️ Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pf")
+        st.write("No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a):")
+        condomino_indicado_pf = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pf")
 
         submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
         if submitted_pf:
@@ -783,8 +785,8 @@ elif ficha_tipo == "Pessoa Jurídica":
         st.markdown("- **DOS SÓCIOS E SEUS CÔNJUGES:** CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.")
         st.markdown("---")
 
-        st.write("📌 No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a): 📌")
-        condomino_indicado_pj = st.text_input("➡️ Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pj")
+        st.write("No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a):")
+        condomino_indicado_pj = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pj")
 
         submitted_pj = st.form_submit_button("Gerar Ficha de Pessoa Jurídica")
         if submitted_pj:
