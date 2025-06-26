@@ -67,6 +67,13 @@ if "cidade_pessoa_pj" not in st.session_state:
 if "estado_pessoa_pj" not in st.session_state:
     st.session_state.estado_pessoa_pj = ""
 
+# Adicionado para dependentes PF
+if "dependentes_pf_temp" not in st.session_state:
+    st.session_state.dependentes_pf_temp = []
+
+# Adicionado para dependentes PJ
+if "dependentes_pj_temp" not in st.session_state:
+    st.session_state.dependentes_pj_temp = []
 
 # Configuração de sessão com retry para requisições HTTP
 session = requests.Session()
@@ -270,7 +277,7 @@ def preencher_endereco(tipo_campo: str, cep_value: str) -> str:
     else:
         return error_msg # Retorna a mensagem de erro da função buscar_cep
 
-def gerar_pdf_pf(dados):
+def gerar_pdf_pf(dados, dependentes=None):
     """
     Gera um arquivo PDF com os dados da Ficha Cadastral de Pessoa Física.
     """
@@ -423,6 +430,26 @@ def gerar_pdf_pf(dados):
         pdf.ln(3) # Reduzido de 5 para 3
         pdf.cell(0, 4, sanitize_text("Imobiliária Celeste"), 0, 1, 'C') # Reduzido de 5 para 4
         
+        # Inserir dependentes em uma nova página, se houver
+        if dependentes:
+            pdf.add_page()
+            pdf.set_font("Helvetica", "B", 16)
+            pdf.cell(0, 10, sanitize_text("LISTAGEM DE DEPENDENTES"), 0, 1, "C")
+            pdf.ln(5)
+
+            pdf.set_font("Helvetica", "", 10)
+            for i, dep in enumerate(dependentes):
+                pdf.set_font("Helvetica", "B", 10)
+                pdf.cell(0, 6, f"DEPENDENTE {i+1}:", 0, 1, "L")
+                pdf.set_font("Helvetica", "", 9)
+                pdf.cell(0, 5, f"Nome: {sanitize_text(dep.get('nome', ''))}", 0, 1)
+                pdf.cell(0, 5, f"CPF: {sanitize_text(dep.get('cpf', ''))}", 0, 1)
+                pdf.cell(0, 5, f"Telefone Comercial: {sanitize_text(dep.get('telefone_comercial', ''))}", 0, 1)
+                pdf.cell(0, 5, f"Celular: {sanitize_text(dep.get('celular', ''))}", 0, 1)
+                pdf.cell(0, 5, f"E-mail: {sanitize_text(dep.get('email', ''))}", 0, 1)
+                pdf.cell(0, 5, f"Grau de Parentesco: {sanitize_text(dep.get('grau_parentesco', ''))}", 0, 1)
+                pdf.ln(3) # Espaço entre dependentes
+        
         # Adicionada codificação para 'latin-1'
         pdf_output = pdf.output(dest='S').encode('latin-1')
         b64_pdf = base64.b64encode(pdf_output).decode('utf-8')
@@ -431,7 +458,7 @@ def gerar_pdf_pf(dados):
         st.error(f"Erro ao gerar PDF: {str(e)}")
         return None
 
-def gerar_pdf_pj(dados):
+def gerar_pdf_pj(dados, dependentes=None):
     """
     Gera um arquivo PDF com os dados da Ficha Cadastral de Pessoa Jurídica.
     """
@@ -612,6 +639,26 @@ def gerar_pdf_pj(dados):
         pdf.ln(3) # Reduzido de 5 para 3
         pdf.cell(0, 4, sanitize_text("Imobiliária Celeste"), 0, 1, 'C') # Reduzido de 5 para 4
 
+        # Inserir dependentes em uma nova página, se houver
+        if dependentes:
+            pdf.add_page()
+            pdf.set_font("Helvetica", "B", 16)
+            pdf.cell(0, 10, sanitize_text("LISTAGEM DE DEPENDENTES"), 0, 1, "C")
+            pdf.ln(5)
+
+            pdf.set_font("Helvetica", "", 10)
+            for i, dep in enumerate(dependentes):
+                pdf.set_font("Helvetica", "B", 10)
+                pdf.cell(0, 6, f"DEPENDENTE {i+1}:", 0, 1, "L")
+                pdf.set_font("Helvetica", "", 9)
+                pdf.cell(0, 5, f"Nome: {sanitize_text(dep.get('nome', ''))}", 0, 1)
+                pdf.cell(0, 5, f"CPF: {sanitize_text(dep.get('cpf', ''))}", 0, 1)
+                pdf.cell(0, 5, f"Telefone Comercial: {sanitize_text(dep.get('telefone_comercial', ''))}", 0, 1)
+                pdf.cell(0, 5, f"Celular: {sanitize_text(dep.get('celular', ''))}", 0, 1)
+                pdf.cell(0, 5, f"E-mail: {sanitize_text(dep.get('email', ''))}", 0, 1)
+                pdf.cell(0, 5, f"Grau de Parentesco: {sanitize_text(dep.get('grau_parentesco', ''))}", 0, 1)
+                pdf.ln(3) # Espaço entre dependentes
+        
         # Adicionada codificação para 'latin-1'
         pdf_output = pdf.output(dest='S').encode('latin-1')
         b64_pdf = base64.b64encode(pdf_output).decode('utf-8')
@@ -732,6 +779,54 @@ if ficha_tipo == "Pessoa Física":
         st.write("No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a):")
         condomino_indicado_pf = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pf")
 
+        # Seção para Dependentes
+        st.subheader("Dependentes")
+        incluir_dependentes_pf = st.checkbox("Incluir Dependentes", key="incluir_dependentes_pf")
+
+        if incluir_dependentes_pf:
+            with st.container(border=True):
+                st.markdown("**Adicionar Novo Dependente:**")
+                dep_nome_pf = st.text_input("Nome Completo do Dependente", key="dep_nome_pf")
+                dep_cpf_pf = st.text_input("CPF do Dependente", key="dep_cpf_pf")
+                dep_tel_comercial_pf = st.text_input("Telefone Comercial do Dependente", key="dep_tel_comercial_pf")
+                dep_celular_pf = st.text_input("Celular do Dependente", key="dep_celular_pf")
+                dep_email_pf = st.text_input("E-mail do Dependente", key="dep_email_pf")
+                dep_grau_parentesco_pf = st.text_input("Grau de Parentesco", key="dep_grau_parentesco_pf")
+
+                if st.button("Adicionar Dependente", key="add_dep_pf"):
+                    if dep_nome_pf and dep_cpf_pf:
+                        st.session_state.dependentes_pf_temp.append({
+                            "nome": dep_nome_pf,
+                            "cpf": dep_cpf_pf,
+                            "telefone_comercial": dep_tel_comercial_pf,
+                            "celular": dep_celular_pf,
+                            "email": dep_email_pf,
+                            "grau_parentesco": dep_grau_parentesco_pf,
+                        })
+                        st.success("Dependente adicionado!")
+                        # Limpa os campos de entrada do dependente
+                        st.session_state.dep_nome_pf = ""
+                        st.session_state.dep_cpf_pf = ""
+                        st.session_state.dep_tel_comercial_pf = ""
+                        st.session_state.dep_celular_pf = ""
+                        st.session_state.dep_email_pf = ""
+                        st.session_state.dep_grau_parentesco_pf = ""
+                        st.rerun()
+                    else:
+                        st.warning("Nome e CPF do dependente são obrigatórios.")
+            
+            if st.session_state.dependentes_pf_temp:
+                st.markdown("---")
+                st.markdown("**Dependentes Adicionados:**")
+                df_dependentes_pf = pd.DataFrame(st.session_state.dependentes_pf_temp)
+                st.dataframe(df_dependentes_pf)
+
+                if st.button("Limpar Dependentes", key="clear_dep_pf"):
+                    st.session_state.dependentes_pf_temp = []
+                    st.success("Dependentes limpos.")
+                    st.rerun()
+
+
         submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
         if submitted_pf:
             dados_pf = {
@@ -774,7 +869,7 @@ if ficha_tipo == "Pessoa Física":
                 "condomino_indicado_pf": condomino_indicado_pf.strip(),
             }
             
-            pdf_b64_pf = gerar_pdf_pf(dados_pf)
+            pdf_b64_pf = gerar_pdf_pf(dados_pf, st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None)
             if pdf_b64_pf:
                 href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
                 st.markdown(href, unsafe_allow_html=True)
@@ -898,6 +993,54 @@ elif ficha_tipo == "Pessoa Jurídica":
         st.write("No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a):")
         condomino_indicado_pj = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pj")
 
+        # Seção para Dependentes PJ
+        st.subheader("Dependentes (Pessoa Jurídica)")
+        incluir_dependentes_pj = st.checkbox("Incluir Dependentes para PJ", key="incluir_dependentes_pj")
+
+        if incluir_dependentes_pj:
+            with st.container(border=True):
+                st.markdown("**Adicionar Novo Dependente para PJ:**")
+                dep_nome_pj = st.text_input("Nome Completo do Dependente (PJ)", key="dep_nome_pj")
+                dep_cpf_pj = st.text_input("CPF do Dependente (PJ)", key="dep_cpf_pj")
+                dep_tel_comercial_pj = st.text_input("Telefone Comercial do Dependente (PJ)", key="dep_tel_comercial_pj")
+                dep_celular_pj = st.text_input("Celular do Dependente (PJ)", key="dep_celular_pj")
+                dep_email_pj = st.text_input("E-mail do Dependente (PJ)", key="dep_email_pj")
+                dep_grau_parentesco_pj = st.text_input("Grau de Parentesco (PJ)", key="dep_grau_parentesco_pj")
+
+                if st.button("Adicionar Dependente (PJ)", key="add_dep_pj"):
+                    if dep_nome_pj and dep_cpf_pj:
+                        st.session_state.dependentes_pj_temp.append({
+                            "nome": dep_nome_pj,
+                            "cpf": dep_cpf_pj,
+                            "telefone_comercial": dep_tel_comercial_pj,
+                            "celular": dep_celular_pj,
+                            "email": dep_email_pj,
+                            "grau_parentesco": dep_grau_parentesco_pj,
+                        })
+                        st.success("Dependente adicionado para PJ!")
+                        # Limpa os campos de entrada do dependente
+                        st.session_state.dep_nome_pj = ""
+                        st.session_state.dep_cpf_pj = ""
+                        st.session_state.dep_tel_comercial_pj = ""
+                        st.session_state.dep_celular_pj = ""
+                        st.session_state.dep_email_pj = ""
+                        st.session_state.dep_grau_parentesco_pj = ""
+                        st.rerun()
+                    else:
+                        st.warning("Nome e CPF do dependente são obrigatórios.")
+            
+            if st.session_state.dependentes_pj_temp:
+                st.markdown("---")
+                st.markdown("**Dependentes Adicionados (PJ):**")
+                df_dependentes_pj = pd.DataFrame(st.session_state.dependentes_pj_temp)
+                st.dataframe(df_dependentes_pj)
+
+                if st.button("Limpar Dependentes (PJ)", key="clear_dep_pj"):
+                    st.session_state.dependentes_pj_temp = []
+                    st.success("Dependentes limpos para PJ.")
+                    st.rerun()
+
+
         submitted_pj = st.form_submit_button("Gerar Ficha de Pessoa Jurídica")
         if submitted_pj:
             dados_pj = {
@@ -950,7 +1093,7 @@ elif ficha_tipo == "Pessoa Jurídica":
                 "condomino_indicado_pj": condomino_indicado_pj.strip(),
             }
             
-            pdf_b64_pj = gerar_pdf_pj(dados_pj)
+            pdf_b64_pj = gerar_pdf_pj(dados_pj, st.session_state.dependentes_pj_temp if incluir_dependentes_pj else None)
             if pdf_b64_pj:
                 href = f'<a href="data:application/pdf;base64,{pdf_b64_pj}" download="Ficha_Cadastral_Pessoa_Juridica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Jurídica</a>'
                 st.markdown(href, unsafe_allow_html=True)
