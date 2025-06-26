@@ -277,6 +277,32 @@ def preencher_endereco(tipo_campo: str, cep_value: str) -> str:
     else:
         return error_msg # Retorna a mensagem de erro da função buscar_cep
 
+def formatar_cpf(cpf: str) -> str:
+    """Formata o CPF como 000.000.000-00."""
+    cpf = re.sub(r'[^0-9]', '', cpf)
+    if len(cpf) == 11:
+        return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
+    return cpf
+
+def formatar_cnpj(cnpj: str) -> str:
+    """Formata o CNPJ como 00.000.000/0000-00."""
+    cnpj = re.sub(r'[^0-9]', '', cnpj)
+    if len(cnpj) == 14:
+        return f"{cnpj[:2]}.{cnpj[2:5]}.{cnpj[5:8]}/{cnpj[8:12]}-{cnpj[12:]}"
+    return cnpj
+
+def formatar_telefone(telefone: str) -> str:
+    """
+    Formata o telefone celular como 00-99999-0000 e telefone fixo como 00 0000-0000.
+    """
+    telefone = re.sub(r'[^0-9]', '', telefone)
+    if len(telefone) == 11 and telefone[2] == '9': # Celular com 9º dígito
+        return f"{telefone[:2]}-{telefone[2:7]}-{telefone[7:]}"
+    elif len(telefone) == 10: # Telefone fixo ou celular sem 9º dígito
+        return f"{telefone[:2]} {telefone[2:6]}-{telefone[6:]}"
+    return telefone # Retorna sem formatação se não corresponder aos padrões
+
+
 def gerar_pdf_pf(dados, dependentes=None):
     """
     Gera um arquivo PDF com os dados da Ficha Cadastral de Pessoa Física.
@@ -328,6 +354,11 @@ def gerar_pdf_pf(dados, dependentes=None):
             if len(field_info) == 2:
                 value = dados.get(field_info[1], '')
                 if value and sanitize_text(value):
+                    # Aplica formatação de telefone se o campo for de telefone
+                    if "fone" in field_info[1] or "celular" in field_info[1]:
+                        value = formatar_telefone(value)
+                    elif "cpf" in field_info[1]:
+                        value = formatar_cpf(value)
                     pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
             elif len(field_info) == 3: # Special case for address and city/state
                 if label == "Endereço Residencial":
@@ -371,6 +402,11 @@ def gerar_pdf_pf(dados, dependentes=None):
             if len(field_info) == 2:
                 value = dados.get(field_info[1], '')
                 if value and sanitize_text(value):
+                    # Aplica formatação de telefone se o campo for de telefone
+                    if "fone" in field_info[1] or "celular" in field_info[1]:
+                        value = formatar_telefone(value)
+                    elif "cpf" in field_info[1]:
+                        value = formatar_cpf(value)
                     pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
             elif len(field_info) == 3: # Special case for address and city/state
                 if label == "Endereço Residencial":
@@ -443,9 +479,9 @@ def gerar_pdf_pf(dados, dependentes=None):
                 pdf.cell(0, 6, f"DEPENDENTE {i+1}:", 0, 1, "L")
                 pdf.set_font("Helvetica", "", 9)
                 pdf.cell(0, 5, f"Nome: {sanitize_text(dep.get('nome', ''))}", 0, 1)
-                pdf.cell(0, 5, f"CPF: {sanitize_text(dep.get('cpf', ''))}", 0, 1)
-                pdf.cell(0, 5, f"Telefone Comercial: {sanitize_text(dep.get('telefone_comercial', ''))}", 0, 1)
-                pdf.cell(0, 5, f"Celular: {sanitize_text(dep.get('celular', ''))}", 0, 1)
+                pdf.cell(0, 5, f"CPF: {sanitize_text(formatar_cpf(dep.get('cpf', '')))}", 0, 1)
+                pdf.cell(0, 5, f"Telefone Comercial: {sanitize_text(formatar_telefone(dep.get('telefone_comercial', '')))}", 0, 1)
+                pdf.cell(0, 5, f"Celular: {sanitize_text(formatar_telefone(dep.get('celular', '')))}", 0, 1)
                 pdf.cell(0, 5, f"E-mail: {sanitize_text(dep.get('email', ''))}", 0, 1)
                 pdf.cell(0, 5, f"Grau de Parentesco: {sanitize_text(dep.get('grau_parentesco', ''))}", 0, 1)
                 pdf.ln(3) # Espaço entre dependentes
@@ -506,6 +542,11 @@ def gerar_pdf_pj(dados, dependentes=None):
             if len(field_info) == 2:
                 value = dados.get(field_info[1], '')
                 if value and sanitize_text(value):
+                    # Aplica formatação de telefone se o campo for de telefone
+                    if "fone" in field_info[1] or "celular" in field_info[1]:
+                        value = formatar_telefone(value)
+                    elif "cnpj" in field_info[1]:
+                        value = formatar_cnpj(value)
                     pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
             elif len(field_info) == 3: # Special case for address and city/state
                 if label == "Endereço Residencial/Comercial":
@@ -542,6 +583,11 @@ def gerar_pdf_pj(dados, dependentes=None):
             if len(field_info) == 2:
                 value = dados.get(field_info[1], '')
                 if value and sanitize_text(value):
+                    # Aplica formatação de telefone se o campo for de telefone
+                    if "fone" in field_info[1] or "celular" in field_info[1]:
+                        value = formatar_telefone(value)
+                    elif "cpf" in field_info[1]:
+                        value = formatar_cpf(value)
                     pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
             elif len(field_info) == 3: # Special case for address and city/state
                 if label == "Endereço Residencial":
@@ -578,6 +624,11 @@ def gerar_pdf_pj(dados, dependentes=None):
             if len(field_info) == 2:
                 value = dados.get(field_info[1], '')
                 if value and sanitize_text(value):
+                    # Aplica formatação de telefone se o campo for de telefone
+                    if "fone" in field_info[1] or "celular" in field_info[1]:
+                        value = formatar_telefone(value)
+                    elif "cpf" in field_info[1]:
+                        value = formatar_cpf(value)
                     pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
             elif len(field_info) == 3: # Special case for address and city/state
                 if label == "Endereço Residencial":
@@ -652,9 +703,9 @@ def gerar_pdf_pj(dados, dependentes=None):
                 pdf.cell(0, 6, f"DEPENDENTE {i+1}:", 0, 1, "L")
                 pdf.set_font("Helvetica", "", 9)
                 pdf.cell(0, 5, f"Nome: {sanitize_text(dep.get('nome', ''))}", 0, 1)
-                pdf.cell(0, 5, f"CPF: {sanitize_text(dep.get('cpf', ''))}", 0, 1)
-                pdf.cell(0, 5, f"Telefone Comercial: {sanitize_text(dep.get('telefone_comercial', ''))}", 0, 1)
-                pdf.cell(0, 5, f"Celular: {sanitize_text(dep.get('celular', ''))}", 0, 1)
+                pdf.cell(0, 5, f"CPF: {sanitize_text(formatar_cpf(dep.get('cpf', '')))}", 0, 1)
+                pdf.cell(0, 5, f"Telefone Comercial: {sanitize_text(formatar_telefone(dep.get('telefone_comercial', '')))}", 0, 1)
+                pdf.cell(0, 5, f"Celular: {sanitize_text(formatar_telefone(dep.get('celular', '')))}", 0, 1)
                 pdf.cell(0, 5, f"E-mail: {sanitize_text(dep.get('email', ''))}", 0, 1)
                 pdf.cell(0, 5, f"Grau de Parentesco: {sanitize_text(dep.get('grau_parentesco', ''))}", 0, 1)
                 pdf.ln(3) # Espaço entre dependentes
