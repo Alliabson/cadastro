@@ -676,6 +676,47 @@ st.markdown("Selecione o tipo de cadastro e preencha as informações.")
 # Seleção do tipo de ficha
 ficha_tipo = st.radio("Selecione o tipo de ficha:", ("Pessoa Física", "Pessoa Jurídica"))
 
+# --- Callback functions for adding dependents ---
+def add_dependent_pf_callback():
+    if st.session_state.get("dep_nome_pf") and st.session_state.get("dep_cpf_pf"):
+        st.session_state.dependentes_pf_temp.append({
+            "nome": st.session_state.dep_nome_pf,
+            "cpf": st.session_state.dep_cpf_pf,
+            "telefone_comercial": st.session_state.dep_tel_comercial_pf,
+            "celular": st.session_state.dep_celular_pf,
+            "email": st.session_state.dep_email_pf,
+            "grau_parentesco": st.session_state.dep_grau_parentesco_pf,
+        })
+        st.session_state.dep_nome_pf = ""
+        st.session_state.dep_cpf_pf = ""
+        st.session_state.dep_tel_comercial_pf = ""
+        st.session_state.dep_celular_pf = ""
+        st.session_state.dep_email_pf = ""
+        st.session_state.dep_grau_parentesco_pf = ""
+        st.success("Dependente adicionado! Submeta o formulário principal para salvá-lo no PDF.")
+    else:
+        st.warning("Nome e CPF do dependente são obrigatórios.")
+
+def add_dependent_pj_callback():
+    if st.session_state.get("dep_nome_pj") and st.session_state.get("dep_cpf_pj"):
+        st.session_state.dependentes_pj_temp.append({
+            "nome": st.session_state.dep_nome_pj,
+            "cpf": st.session_state.dep_cpf_pj,
+            "telefone_comercial": st.session_state.dep_tel_comercial_pj,
+            "celular": st.session_state.dep_celular_pj,
+            "email": st.session_state.dep_email_pj,
+            "grau_parentesco": st.session_state.dep_grau_parentesco_pj,
+        })
+        st.session_state.dep_nome_pj = ""
+        st.session_state.dep_cpf_pj = ""
+        st.session_state.dep_tel_comercial_pj = ""
+        st.session_state.dep_celular_pj = ""
+        st.session_state.dep_email_pj = ""
+        st.session_state.dep_grau_parentesco_pj = ""
+        st.success("Dependente adicionado para PJ! Submeta o formulário principal para salvá-lo no PDF.")
+    else:
+        st.warning("Nome e CPF do dependente são obrigatórios.")
+
 if ficha_tipo == "Pessoa Física":
     st.header("Ficha Cadastral Pessoa Física")
 
@@ -801,29 +842,8 @@ if ficha_tipo == "Pessoa Física":
             dep_email_pf = st.text_input("E-mail do Dependente", value=st.session_state.get("dep_email_pf", ""), key="dep_email_pf")
             dep_grau_parentesco_pf = st.text_input("Grau de Parentesco", value=st.session_state.get("dep_grau_parentesco_pf", ""), key="dep_grau_parentesco_pf")
 
-            # Botões para adicionar/limpar dependentes FORA do st.form
-            add_dep_pf_button = st.button("Adicionar Dependente", key="add_dep_pf_button_out_form") # Nova key
-            if add_dep_pf_button:
-                if dep_nome_pf and dep_cpf_pf:
-                    st.session_state.dependentes_pf_temp.append({
-                        "nome": dep_nome_pf,
-                        "cpf": dep_cpf_pf,
-                        "telefone_comercial": dep_tel_comercial_pf,
-                        "celular": dep_celular_pf,
-                        "email": dep_email_pf,
-                        "grau_parentesco": dep_grau_parentesco_pf,
-                    })
-                    st.success("Dependente adicionado! Submeta o formulário principal para salvá-lo no PDF.")
-                    # Limpa os campos de entrada do dependente
-                    st.session_state.dep_nome_pf = ""
-                    st.session_state.dep_cpf_pf = ""
-                    st.session_state.dep_tel_comercial_pf = ""
-                    st.session_state.dep_celular_pf = ""
-                    st.session_state.dep_email_pf = ""
-                    st.session_state.dep_grau_parentesco_pf = ""
-                    st.rerun() # Re-renderiza para limpar os campos
-                else:
-                    st.warning("Nome e CPF do dependente são obrigatórios.")
+            # Botão de adicionar dependente com callback
+            st.button("Adicionar Dependente", key="add_dep_pf_button_out_form", on_click=add_dependent_pf_callback)
         
         # Exibe dependentes adicionados (se houver)
         if st.session_state.dependentes_pf_temp:
@@ -1024,28 +1044,7 @@ elif ficha_tipo == "Pessoa Jurídica":
             dep_email_pj = st.text_input("E-mail do Dependente (PJ)", value=st.session_state.get("dep_email_pj", ""), key="dep_email_pj")
             dep_grau_parentesco_pj = st.text_input("Grau de Parentesco (PJ)", value=st.session_state.get("dep_grau_parentesco_pj", ""), key="dep_grau_parentesco_pj")
 
-            add_dep_pj_button = st.button("Adicionar Dependente (PJ)", key="add_dep_pj_button_out_form") # Nova key
-            if add_dep_pj_button:
-                if dep_nome_pj and dep_cpf_pj:
-                    st.session_state.dependentes_pj_temp.append({
-                        "nome": dep_nome_pj,
-                        "cpf": dep_cpf_pj,
-                        "telefone_comercial": dep_tel_comercial_pj,
-                        "celular": dep_celular_pj,
-                        "email": dep_email_pj,
-                        "grau_parentesco": dep_grau_parentesco_pj,
-                    })
-                    st.success("Dependente adicionado para PJ! Submeta o formulário principal para salvá-lo no PDF.")
-                    # Limpa os campos de entrada do dependente
-                    st.session_state.dep_nome_pj = ""
-                    st.session_state.dep_cpf_pj = ""
-                    st.session_state.dep_tel_comercial_pj = ""
-                    st.session_state.dep_celular_pj = ""
-                    st.session_state.dep_email_pj = ""
-                    st.session_state.dep_grau_parentesco_pj = ""
-                    st.rerun() # Re-renderiza para limpar os campos
-                else:
-                    st.warning("Nome e CPF do dependente são obrigatórios.")
+            st.button("Adicionar Dependente (PJ)", key="add_dep_pj_button_out_form", on_click=add_dependent_pj_callback) # Nova key
             
             if st.session_state.dependentes_pj_temp:
                 st.markdown("---")
