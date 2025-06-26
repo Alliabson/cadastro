@@ -222,7 +222,8 @@ def gerar_pdf_pf(dados):
         pdf.multi_cell(0, 5, sanitize_text("CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L")
         pdf.ln(5)
 
-        pdf_output = pdf.output(dest='S')
+        # Adicionada codificação para 'latin-1'
+        pdf_output = pdf.output(dest='S').encode('latin-1')
         b64_pdf = base64.b64encode(pdf_output).decode('utf-8')
         return b64_pdf
     except Exception as e:
@@ -310,7 +311,8 @@ def gerar_pdf_pj(dados):
         pdf.multi_cell(0, 5, sanitize_text("DOS SÓCIOS E SEUS CÔNJUGES: CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L")
         pdf.ln(5)
 
-        pdf_output = pdf.output(dest='S')
+        # Adicionada codificação para 'latin-1'
+        pdf_output = pdf.output(dest='S').encode('latin-1')
         b64_pdf = base64.b64encode(pdf_output).decode('utf-8')
         return b64_pdf
     except Exception as e:
