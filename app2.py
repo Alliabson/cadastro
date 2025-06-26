@@ -84,77 +84,76 @@ def gerar_pdf_pf(dados):
     """
     Gera um arquivo PDF com os dados da Ficha Cadastral de Pessoa Física.
     """
-    pdf = FPDF()
-    pdf.add_page()
-    
-    # Configuração de fonte que suporta caracteres acentuados
-    pdf.add_font('Arial', '', 'arial.ttf', uni=True)
-    pdf.set_font('Arial', '', 10)
-    
-    pdf.set_font("Arial", "B", 16)
-    pdf.cell(0, 10, "Ficha Cadastral Pessoa Física - Cessão e Transferência de Direitos", 0, 1, "C")
-    pdf.ln(10)
-
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "Dados do Empreendimento e Imobiliária", 0, 1, "L")
-    pdf.set_font("Arial", "", 10)
-    for key, value in dados.items():
-        if key in ["empreendimento_pf", "corretor_pf", "imobiliaria_pf", "qd_pf", "lt_pf", "ativo_pf", "quitado_pf"]:
-            pdf.cell(0, 7, f"{key.replace('_pf', '').replace('_', ' ').title()}: {value}", 0, 1)
-    pdf.ln(5)
-
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "Dados do COMPRADOR(A)", 0, 1, "L")
-    pdf.set_font("Arial", "", 10)
-    pdf.cell(0, 7, f"Nome Completo: {dados.get('comprador_nome_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Profissão: {dados.get('comprador_profissao_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Nacionalidade: {dados.get('comprador_nacionalidade_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Fone Residencial: {dados.get('comprador_fone_residencial_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Fone Comercial: {dados.get('comprador_fone_comercial_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Celular: {dados.get('comprador_celular_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"E-mail: {dados.get('comprador_email_pf', '')}", 0, 1)
-    
-    pdf.cell(0, 7, f"Endereço Residencial: {dados.get('comprador_end_residencial_pf', '')}, Nº {dados.get('comprador_numero_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Bairro: {dados.get('comprador_bairro_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Cidade/Estado: {dados.get('comprador_cidade_pf', '')}/{dados.get('comprador_estado_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"CEP: {dados.get('comprador_cep_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Estado Civil: {dados.get('comprador_estado_civil_pf', '')}", 0, 1)
-    if dados.get('comprador_data_casamento_pf'):
-        pdf.cell(0, 7, f"Data do Casamento: {dados.get('comprador_data_casamento_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Regime de Bens: {dados.get('comprador_regime_bens_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"União Estável: {dados.get('comprador_uniao_estavel_pf', '')}", 0, 1)
-    pdf.ln(5)
-    
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(0, 7, "Condição de Convivência:", 0, 1)
-    pdf.set_font("Arial", "", 9)
-    pdf.multi_cell(0, 5, "Declara conviver em união estável – Apresentar comprovante de estado civil de cada um e a declaração de convivência em união estável com as assinaturas reconhecidas em Cartório.", 0, "L")
-    pdf.ln(5)
-
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "Dados do CÔNJUGE/SÓCIO(A)", 0, 1, "L")
-    pdf.set_font("Arial", "", 10)
-    pdf.cell(0, 7, f"Nome Completo Cônjuge/Sócio(a): {dados.get('conjuge_nome_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Profissão Cônjuge/Sócio(a): {dados.get('conjuge_profissao_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Nacionalidade Cônjuge/Sócio(a): {dados.get('conjuge_nacionalidade_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Fone Residencial Cônjuge/Sócio(a): {dados.get('conjuge_fone_residencial_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Fone Comercial Cônjuge/Sócio(a): {dados.get('conjuge_fone_comercial_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Celular Cônjuge/Sócio(a): {dados.get('conjuge_celular_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"E-mail Cônjuge/Sócio(a): {dados.get('conjuge_email_pf', '')}", 0, 1)
-
-    pdf.cell(0, 7, f"Endereço Residencial: {dados.get('conjuge_end_residencial_pf', '')}, Nº {dados.get('conjuge_numero_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Bairro: {dados.get('conjuge_bairro_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"Cidade/Estado: {dados.get('conjuge_cidade_pf', '')}/{dados.get('conjuge_estado_pf', '')}", 0, 1)
-    pdf.cell(0, 7, f"CEP: {dados.get('conjuge_cep_pf', '')}", 0, 1)
-    pdf.ln(5)
-
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(0, 7, "DOCUMENTOS NECESSÁRIOS:", 0, 1)
-    pdf.set_font("Arial", "", 9)
-    pdf.multi_cell(0, 5, "CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.", 0, "L")
-    pdf.ln(5)
-
     try:
+        pdf = FPDF()
+        pdf.add_page()
+        
+        # Usando fontes padrão do FPDF que suportam caracteres acentuados
+        pdf.set_font('Helvetica', '', 10)
+        
+        pdf.set_font("Helvetica", "B", 16)
+        pdf.cell(0, 10, "Ficha Cadastral Pessoa Física - Cessão e Transferência de Direitos", 0, 1, "C")
+        pdf.ln(10)
+
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 10, "Dados do Empreendimento e Imobiliária", 0, 1, "L")
+        pdf.set_font("Helvetica", "", 10)
+        for key, value in dados.items():
+            if key in ["empreendimento_pf", "corretor_pf", "imobiliaria_pf", "qd_pf", "lt_pf", "ativo_pf", "quitado_pf"]:
+                pdf.cell(0, 7, f"{key.replace('_pf', '').replace('_', ' ').title()}: {value}", 0, 1)
+        pdf.ln(5)
+
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 10, "Dados do COMPRADOR(A)", 0, 1, "L")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.cell(0, 7, f"Nome Completo: {dados.get('comprador_nome_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Profissão: {dados.get('comprador_profissao_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Nacionalidade: {dados.get('comprador_nacionalidade_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Fone Residencial: {dados.get('comprador_fone_residencial_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Fone Comercial: {dados.get('comprador_fone_comercial_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Celular: {dados.get('comprador_celular_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"E-mail: {dados.get('comprador_email_pf', '')}", 0, 1)
+        
+        pdf.cell(0, 7, f"Endereço Residencial: {dados.get('comprador_end_residencial_pf', '')}, Nº {dados.get('comprador_numero_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Bairro: {dados.get('comprador_bairro_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Cidade/Estado: {dados.get('comprador_cidade_pf', '')}/{dados.get('comprador_estado_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"CEP: {dados.get('comprador_cep_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Estado Civil: {dados.get('comprador_estado_civil_pf', '')}", 0, 1)
+        if dados.get('comprador_data_casamento_pf'):
+            pdf.cell(0, 7, f"Data do Casamento: {dados.get('comprador_data_casamento_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Regime de Bens: {dados.get('comprador_regime_bens_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"União Estável: {dados.get('comprador_uniao_estavel_pf', '')}", 0, 1)
+        pdf.ln(5)
+        
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(0, 7, "Condição de Convivência:", 0, 1)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.multi_cell(0, 5, "Declara conviver em união estável – Apresentar comprovante de estado civil de cada um e a declaração de convivência em união estável com as assinaturas reconhecidas em Cartório.", 0, "L")
+        pdf.ln(5)
+
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 10, "Dados do CÔNJUGE/SÓCIO(A)", 0, 1, "L")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.cell(0, 7, f"Nome Completo Cônjuge/Sócio(a): {dados.get('conjuge_nome_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Profissão Cônjuge/Sócio(a): {dados.get('conjuge_profissao_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Nacionalidade Cônjuge/Sócio(a): {dados.get('conjuge_nacionalidade_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Fone Residencial Cônjuge/Sócio(a): {dados.get('conjuge_fone_residencial_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Fone Comercial Cônjuge/Sócio(a): {dados.get('conjuge_fone_comercial_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Celular Cônjuge/Sócio(a): {dados.get('conjuge_celular_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"E-mail Cônjuge/Sócio(a): {dados.get('conjuge_email_pf', '')}", 0, 1)
+
+        pdf.cell(0, 7, f"Endereço Residencial: {dados.get('conjuge_end_residencial_pf', '')}, Nº {dados.get('conjuge_numero_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Bairro: {dados.get('conjuge_bairro_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"Cidade/Estado: {dados.get('conjuge_cidade_pf', '')}/{dados.get('conjuge_estado_pf', '')}", 0, 1)
+        pdf.cell(0, 7, f"CEP: {dados.get('conjuge_cep_pf', '')}", 0, 1)
+        pdf.ln(5)
+
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(0, 7, "DOCUMENTOS NECESSÁRIOS:", 0, 1)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.multi_cell(0, 5, "CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.", 0, "L")
+        pdf.ln(5)
+
         pdf_output = pdf.output(dest='S')
         b64_pdf = base64.b64encode(pdf_output).decode('utf-8')
         return b64_pdf
@@ -166,84 +165,83 @@ def gerar_pdf_pj(dados):
     """
     Gera um arquivo PDF com os dados da Ficha Cadastral de Pessoa Jurídica.
     """
-    pdf = FPDF()
-    pdf.add_page()
-    
-    # Configuração de fonte que suporta caracteres acentuados
-    pdf.add_font('Arial', '', 'arial.ttf', uni=True)
-    pdf.set_font('Arial', '', 10)
-    
-    pdf.set_font("Arial", "B", 16)
-    pdf.cell(0, 10, "Ficha Cadastral Pessoa Jurídica - Cessão e Transferência de Direitos", 0, 1, "C")
-    pdf.ln(10)
-
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "Dados do Empreendimento e Imobiliária", 0, 1, "L")
-    pdf.set_font("Arial", "", 10)
-    for key, value in dados.items():
-        if key in ["empreendimento_pj", "corretor_pj", "imobiliaria_pj", "qd_pj", "lt_pj", "ativo_pj", "quitado_pj"]:
-            pdf.cell(0, 7, f"{key.replace('_pj', '').replace('_', ' ').title()}: {value}", 0, 1)
-    pdf.ln(5)
-
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "Dados do COMPRADOR(A)", 0, 1, "L")
-    pdf.set_font("Arial", "", 10)
-    pdf.cell(0, 7, f"Razão Social: {dados.get('comprador_razao_social_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Nome Fantasia: {dados.get('comprador_nome_fantasia_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Inscrição Estadual: {dados.get('comprador_inscricao_estadual_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Fone Residencial: {dados.get('comprador_fone_residencial_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Fone Comercial: {dados.get('comprador_fone_comercial_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Celular: {dados.get('comprador_celular_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"E-mail: {dados.get('comprador_email_pj', '')}", 0, 1)
-
-    pdf.cell(0, 7, f"Endereço Residencial/Comercial: {dados.get('comprador_end_residencial_comercial_pj', '')}, Nº {dados.get('comprador_numero_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Bairro: {dados.get('comprador_bairro_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Cidade/Estado: {dados.get('comprador_cidade_pj', '')}/{dados.get('comprador_estado_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"CEP: {dados.get('comprador_cep_pj', '')}", 0, 1)
-    pdf.ln(5)
-
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "Dados do REPRESENTANTE", 0, 1, "L")
-    pdf.set_font("Arial", "", 10)
-    pdf.cell(0, 7, f"Nome Completo Representante: {dados.get('representante_nome_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Profissão Representante: {dados.get('representante_profissao_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Nacionalidade Representante: {dados.get('representante_nacionalidade_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Fone Residencial Representante: {dados.get('representante_fone_residencial_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Fone Comercial Representante: {dados.get('representante_fone_comercial_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Celular Representante: {dados.get('representante_celular_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"E-mail Representante: {dados.get('representante_email_pj', '')}", 0, 1)
-    
-    pdf.cell(0, 7, f"Endereço Residencial: {dados.get('representante_end_residencial_pj', '')}, Nº {dados.get('representante_numero_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Bairro: {dados.get('representante_bairro_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Cidade/Estado: {dados.get('representante_cidade_pj', '')}/{dados.get('representante_estado_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"CEP: {dados.get('representante_cep_pj', '')}", 0, 1)
-    pdf.ln(5)
-
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "Dados do CÔNJUGE/SÓCIO(A)", 0, 1, "L")
-    pdf.set_font("Arial", "", 10)
-    pdf.cell(0, 7, f"Nome Completo Cônjuge/Sócio(a) PJ: {dados.get('conjuge_nome_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Profissão Cônjuge/Sócio(a) PJ: {dados.get('conjuge_profissao_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Nacionalidade Cônjuge/Sócio(a) PJ: {dados.get('conjuge_nacionalidade_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Fone Residencial Cônjuge/Sócio(a) PJ: {dados.get('conjuge_fone_residencial_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Fone Comercial Cônjuge/Sócio(a) PJ: {dados.get('conjuge_fone_comercial_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Celular Cônjuge/Sócio(a) PJ: {dados.get('conjuge_celular_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"E-mail Cônjuge/Sócio(a) PJ: {dados.get('conjuge_email_pj', '')}", 0, 1)
-    
-    pdf.cell(0, 7, f"Endereço Residencial: {dados.get('conjuge_end_residencial_pj', '')}, Nº {dados.get('conjuge_numero_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Bairro: {dados.get('conjuge_bairro_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"Cidade/Estado: {dados.get('conjuge_cidade_pj', '')}/{dados.get('conjuge_estado_pj', '')}", 0, 1)
-    pdf.cell(0, 7, f"CEP: {dados.get('conjuge_cep_pj', '')}", 0, 1)
-    pdf.ln(5)
-    
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(0, 7, "DOCUMENTOS NECESSÁRIOS:", 0, 1)
-    pdf.set_font("Arial", "", 9)
-    pdf.multi_cell(0, 5, "DA EMPRESA: CONTRATO SOCIAL E ALTERAÇÕES, COMPROVANTE DE ENDEREÇO, DECLARAÇÃO DE FATURAMENTO;", 0, "L")
-    pdf.multi_cell(0, 5, "DOS SÓCIOS E SEUS CÔNJUGES: CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.", 0, "L")
-    pdf.ln(5)
-
     try:
+        pdf = FPDF()
+        pdf.add_page()
+        
+        # Usando fontes padrão do FPDF que suportam caracteres acentuados
+        pdf.set_font('Helvetica', '', 10)
+        
+        pdf.set_font("Helvetica", "B", 16)
+        pdf.cell(0, 10, "Ficha Cadastral Pessoa Jurídica - Cessão e Transferência de Direitos", 0, 1, "C")
+        pdf.ln(10)
+
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 10, "Dados do Empreendimento e Imobiliária", 0, 1, "L")
+        pdf.set_font("Helvetica", "", 10)
+        for key, value in dados.items():
+            if key in ["empreendimento_pj", "corretor_pj", "imobiliaria_pj", "qd_pj", "lt_pj", "ativo_pj", "quitado_pj"]:
+                pdf.cell(0, 7, f"{key.replace('_pj', '').replace('_', ' ').title()}: {value}", 0, 1)
+        pdf.ln(5)
+
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 10, "Dados do COMPRADOR(A)", 0, 1, "L")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.cell(0, 7, f"Razão Social: {dados.get('comprador_razao_social_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Nome Fantasia: {dados.get('comprador_nome_fantasia_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Inscrição Estadual: {dados.get('comprador_inscricao_estadual_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Fone Residencial: {dados.get('comprador_fone_residencial_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Fone Comercial: {dados.get('comprador_fone_comercial_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Celular: {dados.get('comprador_celular_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"E-mail: {dados.get('comprador_email_pj', '')}", 0, 1)
+
+        pdf.cell(0, 7, f"Endereço Residencial/Comercial: {dados.get('comprador_end_residencial_comercial_pj', '')}, Nº {dados.get('comprador_numero_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Bairro: {dados.get('comprador_bairro_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Cidade/Estado: {dados.get('comprador_cidade_pj', '')}/{dados.get('comprador_estado_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"CEP: {dados.get('comprador_cep_pj', '')}", 0, 1)
+        pdf.ln(5)
+
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 10, "Dados do REPRESENTANTE", 0, 1, "L")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.cell(0, 7, f"Nome Completo Representante: {dados.get('representante_nome_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Profissão Representante: {dados.get('representante_profissao_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Nacionalidade Representante: {dados.get('representante_nacionalidade_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Fone Residencial Representante: {dados.get('representante_fone_residencial_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Fone Comercial Representante: {dados.get('representante_fone_comercial_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Celular Representante: {dados.get('representante_celular_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"E-mail Representante: {dados.get('representante_email_pj', '')}", 0, 1)
+        
+        pdf.cell(0, 7, f"Endereço Residencial: {dados.get('representante_end_residencial_pj', '')}, Nº {dados.get('representante_numero_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Bairro: {dados.get('representante_bairro_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Cidade/Estado: {dados.get('representante_cidade_pj', '')}/{dados.get('representante_estado_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"CEP: {dados.get('representante_cep_pj', '')}", 0, 1)
+        pdf.ln(5)
+
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 10, "Dados do CÔNJUGE/SÓCIO(A)", 0, 1, "L")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.cell(0, 7, f"Nome Completo Cônjuge/Sócio(a) PJ: {dados.get('conjuge_nome_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Profissão Cônjuge/Sócio(a) PJ: {dados.get('conjuge_profissao_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Nacionalidade Cônjuge/Sócio(a) PJ: {dados.get('conjuge_nacionalidade_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Fone Residencial Cônjuge/Sócio(a) PJ: {dados.get('conjuge_fone_residencial_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Fone Comercial Cônjuge/Sócio(a) PJ: {dados.get('conjuge_fone_comercial_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Celular Cônjuge/Sócio(a) PJ: {dados.get('conjuge_celular_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"E-mail Cônjuge/Sócio(a) PJ: {dados.get('conjuge_email_pj', '')}", 0, 1)
+        
+        pdf.cell(0, 7, f"Endereço Residencial: {dados.get('conjuge_end_residencial_pj', '')}, Nº {dados.get('conjuge_numero_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Bairro: {dados.get('conjuge_bairro_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"Cidade/Estado: {dados.get('conjuge_cidade_pj', '')}/{dados.get('conjuge_estado_pj', '')}", 0, 1)
+        pdf.cell(0, 7, f"CEP: {dados.get('conjuge_cep_pj', '')}", 0, 1)
+        pdf.ln(5)
+        
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(0, 7, "DOCUMENTOS NECESSÁRIOS:", 0, 1)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.multi_cell(0, 5, "DA EMPRESA: CONTRATO SOCIAL E ALTERAÇÕES, COMPROVANTE DE ENDEREÇO, DECLARAÇÃO DE FATURAMENTO;", 0, "L")
+        pdf.multi_cell(0, 5, "DOS SÓCIOS E SEUS CÔNJUGES: CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.", 0, "L")
+        pdf.ln(5)
+
         pdf_output = pdf.output(dest='S')
         b64_pdf = base64.b64encode(pdf_output).decode('utf-8')
         return b64_pdf
