@@ -427,7 +427,6 @@ def gerar_pdf_pf(dados, dependentes=None):
         pdf.set_font("Helvetica", "", 9)
         pdf.multi_cell(0, 4.5, sanitize_text("CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L") # Reduzido de 5 para 4.5
         pdf.ln(3) # Reduzido de 5 para 3
-
         # Campo adicional para condômino indicado
         condomino_indicado = dados.get('condomino_indicado_pf', '')
         if condomino_indicado and sanitize_text(condomino_indicado):
@@ -650,7 +649,6 @@ def gerar_pdf_pj(dados, dependentes=None):
         pdf.multi_cell(0, 4.5, sanitize_text("DA EMPRESA: CONTRATO SOCIAL E ALTERAÇÕES, COMPROVANTE DE ENDEREÇO, DECLARAÇÃO DE FATURAMENTO;"), 0, "L") # Reduzido de 5 para 4.5
         pdf.multi_cell(0, 4.5, sanitize_text("DOS SÓCIOS E SEUS CÔNJUGES: CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L") # Reduzido de 5 para 4.5
         pdf.ln(3) # Reduzido de 5 para 3
-
         # Campo adicional para condômino indicado
         condomino_indicado = dados.get('condomino_indicado_pj', '')
         if condomino_indicado and sanitize_text(condomino_indicado):
