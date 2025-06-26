@@ -679,7 +679,8 @@ ficha_tipo = st.radio("Selecione o tipo de ficha:", ("Pessoa Física", "Pessoa J
 if ficha_tipo == "Pessoa Física":
     st.header("Ficha Cadastral Pessoa Física")
 
-    with st.form("form_pf"):
+    # Início do formulário principal
+    with st.form("form_pf"): 
         st.subheader("Dados do Empreendimento e Imobiliária")
         col1, col2 = st.columns(2)
         with col1:
@@ -782,52 +783,71 @@ if ficha_tipo == "Pessoa Física":
         # Seção para Dependentes
         st.subheader("Dependentes")
         incluir_dependentes_pf = st.checkbox("Incluir Dependentes", key="incluir_dependentes_pf")
+    
+        # O formulário para adicionar dependentes deve estar FORA do st.form principal
+        # para que seus botões não causem submissão do formulário pai.
+        # Os dados do dependente são armazenados em session_state.dependentes_pf_temp
+        # e serão passados para o PDF ao submeter o formulário principal.
+        # Para que o st.button "Adicionar Dependente" não esteja dentro de um st.form,
+        # o bloco de adicionar dependente PRECISA ser isolado.
+        
+        # Cria um container auxiliar para o formulário de dependentes
+        # Isso garante que a UI para adicionar dependentes pode ser renderizada fora do formulário principal
+        # permitindo o uso de st.button normalmente.
+        with st.container(border=True): # Use um container para agrupar visualmente
+            st.markdown("**Adicionar Novo Dependente:**")
+            dep_nome_pf = st.text_input("Nome Completo do Dependente", value=st.session_state.get("dep_nome_pf", ""), key="dep_nome_pf")
+            dep_cpf_pf = st.text_input("CPF do Dependente", value=st.session_state.get("dep_cpf_pf", ""), key="dep_cpf_pf")
+            dep_tel_comercial_pf = st.text_input("Telefone Comercial do Dependente", value=st.session_state.get("dep_tel_comercial_pf", ""), key="dep_tel_comercial_pf")
+            dep_celular_pf = st.text_input("Celular do Dependente", value=st.session_state.get("dep_celular_pf", ""), key="dep_celular_pf")
+            dep_email_pf = st.text_input("E-mail do Dependente", value=st.session_state.get("dep_email_pf", ""), key="dep_email_pf")
+            dep_grau_parentesco_pf = st.text_input("Grau de Parentesco", value=st.session_state.get("dep_grau_parentesco_pf", ""), key="dep_grau_parentesco_pf")
 
-        if incluir_dependentes_pf:
-            with st.container(border=True):
-                st.markdown("**Adicionar Novo Dependente:**")
-                dep_nome_pf = st.text_input("Nome Completo do Dependente", key="dep_nome_pf")
-                dep_cpf_pf = st.text_input("CPF do Dependente", key="dep_cpf_pf")
-                dep_tel_comercial_pf = st.text_input("Telefone Comercial do Dependente", key="dep_tel_comercial_pf")
-                dep_celular_pf = st.text_input("Celular do Dependente", key="dep_celular_pf")
-                dep_email_pf = st.text_input("E-mail do Dependente", key="dep_email_pf")
-                dep_grau_parentesco_pf = st.text_input("Grau de Parentesco", key="dep_grau_parentesco_pf")
+            # Botões para adicionar/limpar dependentes FORA do st.form
+            add_dep_pf_button = st.button("Adicionar Dependente", key="add_dep_pf")
+            if add_dep_pf_button:
+                if dep_nome_pf and dep_cpf_pf:
+                    st.session_state.dependentes_pf_temp.append({
+                        "nome": dep_nome_pf,
+                        "cpf": dep_cpf_pf,
+                        "telefone_comercial": dep_tel_comercial_pf,
+                        "celular": dep_celular_pf,
+                        "email": dep_email_pf,
+                        "grau_parentesco": dep_grau_parentesco_pf,
+                    })
+                    st.success("Dependente adicionado! Submeta o formulário principal para salvá-lo no PDF.")
+                    # Limpa os campos de entrada do dependente
+                    st.session_state.dep_nome_pf = ""
+                    st.session_state.dep_cpf_pf = ""
+                    st.session_state.dep_tel_comercial_pf = ""
+                    st.session_state.dep_celular_pf = ""
+                    st.session_state.dep_email_pf = ""
+                    st.session_state.dep_grau_parentesco_pf = ""
+                    st.rerun() # Re-renderiza para limpar os campos
+                else:
+                    st.warning("Nome e CPF do dependente são obrigatórios.")
+        
+        # Exibe dependentes adicionados (se houver)
+        if st.session_state.dependentes_pf_temp:
+            st.markdown("---")
+            st.markdown("**Dependentes Adicionados:**")
+            df_dependentes_pf = pd.DataFrame(st.session_state.dependentes_pf_temp)
+            st.dataframe(df_dependentes_pf)
 
-                if st.button("Adicionar Dependente", key="add_dep_pf"):
-                    if dep_nome_pf and dep_cpf_pf:
-                        st.session_state.dependentes_pf_temp.append({
-                            "nome": dep_nome_pf,
-                            "cpf": dep_cpf_pf,
-                            "telefone_comercial": dep_tel_comercial_pf,
-                            "celular": dep_celular_pf,
-                            "email": dep_email_pf,
-                            "grau_parentesco": dep_grau_parentesco_pf,
-                        })
-                        st.success("Dependente adicionado!")
-                        # Limpa os campos de entrada do dependente
-                        st.session_state.dep_nome_pf = ""
-                        st.session_state.dep_cpf_pf = ""
-                        st.session_state.dep_tel_comercial_pf = ""
-                        st.session_state.dep_celular_pf = ""
-                        st.session_state.dep_email_pf = ""
-                        st.session_state.dep_grau_parentesco_pf = ""
-                        st.rerun()
-                    else:
-                        st.warning("Nome e CPF do dependente são obrigatórios.")
-            
-            if st.session_state.dependentes_pf_temp:
-                st.markdown("---")
-                st.markdown("**Dependentes Adicionados:**")
-                df_dependentes_pf = pd.DataFrame(st.session_state.dependentes_pf_temp)
-                st.dataframe(df_dependentes_pf)
+            clear_dep_pf_button = st.button("Limpar Dependentes", key="clear_dep_pf")
+            if clear_dep_pf_button:
+                st.session_state.dependentes_pf_temp = []
+                st.success("Dependentes limpos.")
+                st.rerun()
 
-                if st.button("Limpar Dependentes", key="clear_dep_pf"):
-                    st.session_state.dependentes_pf_temp = []
-                    st.success("Dependentes limpos.")
-                    st.rerun()
+        # Botões de ação do formulário principal
+        col1, col2 = st.columns(2)
+        with col1:
+            submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
+        with col2:
+            imprimir_pf = st.form_submit_button("Imprimir Formulário") # Este ainda deve ser um submit_button
 
-
-        submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
+        # Lógica de processamento após a submissão do formulário
         if submitted_pf:
             dados_pf = {
                 "empreendimento_pf": empreendimento_pf.strip(),
@@ -997,17 +1017,20 @@ elif ficha_tipo == "Pessoa Jurídica":
         st.subheader("Dependentes (Pessoa Jurídica)")
         incluir_dependentes_pj = st.checkbox("Incluir Dependentes para PJ", key="incluir_dependentes_pj")
 
+        # O formulário para adicionar dependentes deve estar FORA do st.form principal
+        # para que seus botões não causem submissão do formulário pai.
         if incluir_dependentes_pj:
-            with st.container(border=True):
+            with st.container(border=True): # Use um container para agrupar visualmente
                 st.markdown("**Adicionar Novo Dependente para PJ:**")
-                dep_nome_pj = st.text_input("Nome Completo do Dependente (PJ)", key="dep_nome_pj")
-                dep_cpf_pj = st.text_input("CPF do Dependente (PJ)", key="dep_cpf_pj")
-                dep_tel_comercial_pj = st.text_input("Telefone Comercial do Dependente (PJ)", key="dep_tel_comercial_pj")
-                dep_celular_pj = st.text_input("Celular do Dependente (PJ)", key="dep_celular_pj")
-                dep_email_pj = st.text_input("E-mail do Dependente (PJ)", key="dep_email_pj")
-                dep_grau_parentesco_pj = st.text_input("Grau de Parentesco (PJ)", key="dep_grau_parentesco_pj")
+                dep_nome_pj = st.text_input("Nome Completo do Dependente (PJ)", value=st.session_state.get("dep_nome_pj", ""), key="dep_nome_pj")
+                dep_cpf_pj = st.text_input("CPF do Dependente (PJ)", value=st.session_state.get("dep_cpf_pj", ""), key="dep_cpf_pj")
+                dep_tel_comercial_pj = st.text_input("Telefone Comercial do Dependente (PJ)", value=st.session_state.get("dep_tel_comercial_pj", ""), key="dep_tel_comercial_pj")
+                dep_celular_pj = st.text_input("Celular do Dependente (PJ)", value=st.session_state.get("dep_celular_pj", ""), key="dep_celular_pj")
+                dep_email_pj = st.text_input("E-mail do Dependente (PJ)", value=st.session_state.get("dep_email_pj", ""), key="dep_email_pj")
+                dep_grau_parentesco_pj = st.text_input("Grau de Parentesco (PJ)", value=st.session_state.get("dep_grau_parentesco_pj", ""), key="dep_grau_parentesco_pj")
 
-                if st.button("Adicionar Dependente (PJ)", key="add_dep_pj"):
+                add_dep_pj_button = st.button("Adicionar Dependente (PJ)", key="add_dep_pj")
+                if add_dep_pj_button:
                     if dep_nome_pj and dep_cpf_pj:
                         st.session_state.dependentes_pj_temp.append({
                             "nome": dep_nome_pj,
@@ -1017,7 +1040,7 @@ elif ficha_tipo == "Pessoa Jurídica":
                             "email": dep_email_pj,
                             "grau_parentesco": dep_grau_parentesco_pj,
                         })
-                        st.success("Dependente adicionado para PJ!")
+                        st.success("Dependente adicionado para PJ! Submeta o formulário principal para salvá-lo no PDF.")
                         # Limpa os campos de entrada do dependente
                         st.session_state.dep_nome_pj = ""
                         st.session_state.dep_cpf_pj = ""
@@ -1025,7 +1048,7 @@ elif ficha_tipo == "Pessoa Jurídica":
                         st.session_state.dep_celular_pj = ""
                         st.session_state.dep_email_pj = ""
                         st.session_state.dep_grau_parentesco_pj = ""
-                        st.rerun()
+                        st.rerun() # Re-renderiza para limpar os campos
                     else:
                         st.warning("Nome e CPF do dependente são obrigatórios.")
             
@@ -1035,7 +1058,8 @@ elif ficha_tipo == "Pessoa Jurídica":
                 df_dependentes_pj = pd.DataFrame(st.session_state.dependentes_pj_temp)
                 st.dataframe(df_dependentes_pj)
 
-                if st.button("Limpar Dependentes (PJ)", key="clear_dep_pj"):
+                clear_dep_pj_button = st.button("Limpar Dependentes (PJ)", key="clear_dep_pj")
+                if clear_dep_pj_button:
                     st.session_state.dependentes_pj_temp = []
                     st.success("Dependentes limpos para PJ.")
                     st.rerun()
