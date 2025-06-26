@@ -8,6 +8,7 @@ import time
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import datetime # Importado para tratamento de datas
+import re # Importado para tratamento de strings e validações
 
 # Inicializa as variáveis de estado da sessão do Streamlit,
 # garantindo que elas existam antes de serem acessadas para evitar KeyError.
@@ -299,7 +300,7 @@ def formatar_telefone(telefone: str) -> str:
     if len(telefone) == 11 and telefone[2] == '9': # Celular com 9º dígito
         return f"{telefone[:2]}-{telefone[2:7]}-{telefone[7:]}"
     elif len(telefone) == 10: # Telefone fixo ou celular sem 9º dígito
-        return f"{telefone[:2]} {telefone[2:6]}-{telefone[6:]}"
+        return f"({telefone[:2]}) {telefone[2:6]}-{telefone[6:]}"
     return telefone # Retorna sem formatação se não corresponder aos padrões
 
 
@@ -729,6 +730,7 @@ ficha_tipo = st.radio("Selecione o tipo de ficha:", ("Pessoa Física", "Pessoa J
 
 # --- Callback functions for adding dependents ---
 def add_dependent_pf_callback():
+    # Verifica se os campos obrigatórios estão preenchidos antes de adicionar
     if st.session_state.get("dep_nome_pf") and st.session_state.get("dep_cpf_pf"):
         st.session_state.dependentes_pf_temp.append({
             "nome": st.session_state.dep_nome_pf,
@@ -738,6 +740,7 @@ def add_dependent_pf_callback():
             "email": st.session_state.dep_email_pf,
             "grau_parentesco": st.session_state.dep_grau_parentesco_pf,
         })
+        # Limpa os campos de entrada do dependente no session_state para que a UI seja atualizada
         st.session_state.dep_nome_pf = ""
         st.session_state.dep_cpf_pf = ""
         st.session_state.dep_tel_comercial_pf = ""
@@ -746,9 +749,10 @@ def add_dependent_pf_callback():
         st.session_state.dep_grau_parentesco_pf = ""
         st.success("Dependente adicionado! Submeta o formulário principal para salvá-lo no PDF.")
     else:
-        st.warning("Nome e CPF do dependente são obrigatórios.")
+        st.warning("Nome e CPF do dependente são obrigatórios para adicionar.")
 
 def add_dependent_pj_callback():
+    # Verifica se os campos obrigatórios estão preenchidos antes de adicionar
     if st.session_state.get("dep_nome_pj") and st.session_state.get("dep_cpf_pj"):
         st.session_state.dependentes_pj_temp.append({
             "nome": st.session_state.dep_nome_pj,
@@ -758,6 +762,7 @@ def add_dependent_pj_callback():
             "email": st.session_state.dep_email_pj,
             "grau_parentesco": st.session_state.dep_grau_parentesco_pj,
         })
+        # Limpa os campos de entrada do dependente no session_state para que a UI seja atualizada
         st.session_state.dep_nome_pj = ""
         st.session_state.dep_cpf_pj = ""
         st.session_state.dep_tel_comercial_pj = ""
@@ -766,7 +771,7 @@ def add_dependent_pj_callback():
         st.session_state.dep_grau_parentesco_pj = ""
         st.success("Dependente adicionado para PJ! Submeta o formulário principal para salvá-lo no PDF.")
     else:
-        st.warning("Nome e CPF do dependente são obrigatórios.")
+        st.warning("Nome e CPF do dependente são obrigatórios para adicionar.")
 
 if ficha_tipo == "Pessoa Física":
     st.header("Ficha Cadastral Pessoa Física")
