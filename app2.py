@@ -34,11 +34,11 @@ if "conjuge_estado_pf" not in st.session_state:
 if "comprador_end_residencial_comercial_pj" not in st.session_state:
     st.session_state.comprador_end_residencial_comercial_pj = ""
 if "comprador_bairro_pj" not in st.session_state:
-    st.session_state.comprador_bairro_pj = ""
+    st.session_state.bairro_pj = ""
 if "comprador_cidade_pj" not in st.session_state:
-    st.session_state.comprador_cidade_pj = ""
+    st.session_state.cidade_pj = ""
 if "comprador_estado_pj" not in st.session_state:
-    st.session_state.comprador_estado_pj = ""
+    st.session_state.estado_pj = ""
 
 if "representante_end_residencial_pj" not in st.session_state:
     st.session_state.representante_end_residencial_pj = ""
@@ -730,8 +730,8 @@ ficha_tipo = st.radio("Selecione o tipo de ficha:", ("Pessoa Física", "Pessoa J
 
 # --- Callback functions for adding dependents ---
 def add_dependent_pf_callback():
-    # Verifica se os campos obrigatórios estão preenchidos antes de adicionar
-    if st.session_state.get("dep_nome_pf") and st.session_state.get("dep_cpf_pf"):
+    # Verifica se o nome do dependente está preenchido (CPF não é mais obrigatório)
+    if st.session_state.get("dep_nome_pf"):
         st.session_state.dependentes_pf_temp.append({
             "nome": st.session_state.dep_nome_pf,
             "cpf": st.session_state.dep_cpf_pf,
@@ -749,11 +749,11 @@ def add_dependent_pf_callback():
         st.session_state.dep_grau_parentesco_pf = ""
         st.success("Dependente adicionado! Submeta o formulário principal para salvá-lo no PDF.")
     else:
-        st.warning("Nome e CPF do dependente são obrigatórios para adicionar.")
+        st.warning("O nome do dependente é obrigatório para adicionar.")
 
 def add_dependent_pj_callback():
-    # Verifica se os campos obrigatórios estão preenchidos antes de adicionar
-    if st.session_state.get("dep_nome_pj") and st.session_state.get("dep_cpf_pj"):
+    # Verifica se o nome do dependente está preenchido (CPF não é mais obrigatório)
+    if st.session_state.get("dep_nome_pj"):
         st.session_state.dependentes_pj_temp.append({
             "nome": st.session_state.dep_nome_pj,
             "cpf": st.session_state.dep_cpf_pj,
@@ -771,7 +771,7 @@ def add_dependent_pj_callback():
         st.session_state.dep_grau_parentesco_pj = ""
         st.success("Dependente adicionado para PJ! Submeta o formulário principal para salvá-lo no PDF.")
     else:
-        st.warning("Nome e CPF do dependente são obrigatórios para adicionar.")
+        st.warning("O nome do dependente é obrigatório para adicionar.")
 
 # Inicializa submitted_pf e submitted_pj fora dos formulários
 submitted_pf = False
