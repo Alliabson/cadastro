@@ -89,37 +89,106 @@ REGIMES_DE_BENS = [
     "Participação Final nos Aquestos",
 ]
 
-def buscar_cep(cep):
+def _buscar_cep_viacep(cep):
     """
     Busca informações de endereço a partir de um CEP usando a API ViaCEP.
+    Retorna um dicionário com os dados do endereço e uma mensagem de erro (ou None).
+    """
+    url = f"https://viacep.com.br/ws/{cep}/json/"
+    try:
+        response = session.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        if "erro" not in data:
+            return data, None
+        else:
+            return None, f"CEP não encontrado na ViaCEP: {cep}"
+    except requests.exceptions.Timeout:
+        return None, "Tempo de conexão esgotado com ViaCEP."
+    except requests.exceptions.ConnectionError:
+        return None, "Não foi possível conectar ao servidor ViaCEP."
+    except requests.exceptions.RequestException as e:
+        return None, f"Erro na ViaCEP: {str(e)}"
+
+def _buscar_cep_brasilapi(cep):
+    """
+    Busca informações de endereço a partir de um CEP usando a API Brasil API.
+    Retorna um dicionário com os dados do endereço e uma mensagem de erro (ou None).
+    """
+    url = f"https://brasilapi.com.br/api/cep/v1/{cep}"
+    try:
+        response = session.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        return {
+            'logradouro': data.get('street', ''),
+            'bairro': data.get('neighborhood', ''),
+            'localidade': data.get('city', ''),
+            'uf': data.get('state', '')
+        }, None
+    except requests.exceptions.Timeout:
+        return None, "Tempo de conexão esgotado com Brasil API."
+    except requests.exceptions.ConnectionError:
+        return None, "Não foi possível conectar ao servidor Brasil API."
+    except requests.exceptions.RequestException as e:
+        return None, f"Erro na Brasil API: {str(e)}"
+
+def _buscar_cep_postmon(cep):
+    """
+    Busca informações de endereço a partir de um CEP usando a API Postmon.
+    Retorna um dicionário com os dados do endereço e uma mensagem de erro (ou None).
+    """
+    url = f"https://api.postmon.com.br/v1/cep/{cep}"
+    try:
+        response = session.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        return {
+            'logradouro': data.get('logradouro', ''),
+            'bairro': data.get('bairro', ''),
+            'localidade': data.get('cidade', ''),
+            'uf': data.get('estado', '')
+        }, None
+    except requests.exceptions.Timeout:
+        return None, "Tempo de conexão esgotado com Postmon."
+    except requests.exceptions.ConnectionError:
+        return None, "Não foi possível conectar ao servidor Postmon."
+    except requests.exceptions.RequestException as e:
+        return None, f"Erro na Postmon: {str(e)}"
+
+def buscar_cep(cep):
+    """
+    Tenta buscar informações de endereço usando múltiplas APIs de CEP em cascata.
     Retorna um dicionário com os dados do endereço e uma mensagem de erro (ou None).
     """
     if not cep:
         return None, "Por favor, insira um CEP para buscar."
         
-    cep = cep.replace("-", "").replace(".", "").strip()  # Limpa o CEP
-    if len(cep) != 8 or not cep.isdigit():
+    cep_limpo = cep.replace("-", "").replace(".", "").strip()
+    if len(cep_limpo) != 8 or not cep_limpo.isdigit():
         return None, "CEP inválido. Por favor, insira 8 dígitos numéricos."
 
-    url = f"https://viacep.com.br/ws/{cep}/json/"
-    
-    try:
-        response = session.get(url, timeout=5) # Usa a 'session' global com retry
-        response.raise_for_status()  # Levanta erro para códigos 4xx/5xx
+    # Tentar ViaCEP primeiro
+    endereco_info, error_msg = _buscar_cep_viacep(cep_limpo)
+    if endereco_info:
+        return endereco_info, None
+    else:
+        st.warning(f"ViaCEP falhou: {error_msg}. Tentando Brasil API...")
         
-        data = response.json()
-        
-        if "erro" not in data:
-            return data, None
+        # Tentar Brasil API como fallback
+        endereco_info, error_msg = _buscar_cep_brasilapi(cep_limpo)
+        if endereco_info:
+            return endereco_info, None
         else:
-            return None, f"CEP não encontrado: {cep}"
+            st.warning(f"Brasil API falhou: {error_msg}. Tentando Postmon...")
             
-    except requests.exceptions.Timeout:
-        return None, "Tempo de conexão esgotado. Servidor pode estar indisponível."
-    except requests.exceptions.ConnectionError:
-        return None, "Não foi possível conectar ao servidor ViaCEP. Verifique sua conexão com a internet."
-    except requests.exceptions.RequestException as e:
-        return None, f"Erro ao buscar CEP: {str(e)}"
+            # Tentar Postmon como último fallback
+            endereco_info, error_msg = _buscar_cep_postmon(cep_limpo)
+            if endereco_info:
+                return endereco_info, None
+            else:
+                return None, f"Todas as APIs de CEP falharam: {error_msg}"
+
 
 def sanitize_text(text):
     """
@@ -156,38 +225,38 @@ def preencher_endereco(tipo_campo: str, cep_value: str) -> str:
             'pf': {
                 'logradouro': 'comprador_end_residencial_pf',
                 'bairro': 'comprador_bairro_pf',
-                'cidade': 'comprador_cidade_pf',
-                'estado': 'comprador_estado_pf'
+                'localidade': 'comprador_cidade_pf', # Usar 'localidade' ou 'city' dependendo da API
+                'uf': 'comprador_estado_pf' # Usar 'uf' ou 'state' dependendo da API
             },
             'conjuge_pf': {
                 'logradouro': 'conjuge_end_residencial_pf',
                 'bairro': 'conjuge_bairro_pf',
-                'cidade': 'conjuge_cidade_pf',
-                'estado': 'conjuge_estado_pf'
+                'localidade': 'conjuge_cidade_pf',
+                'uf': 'conjuge_estado_pf'
             },
             'empresa_pj': {
                 'logradouro': 'comprador_end_residencial_comercial_pj',
                 'bairro': 'comprador_bairro_pj',
-                'cidade': 'comprador_cidade_pj',
-                'estado': 'comprador_estado_pj'
+                'localidade': 'comprador_cidade_pj',
+                'uf': 'comprador_estado_pj'
             },
             'administrador_pj': {
                 'logradouro': 'representante_end_residencial_pj',
                 'bairro': 'representante_bairro_pj',
-                'cidade': 'representante_cidade_pj',
-                'estado': 'representante_estado_pj'
+                'localidade': 'representante_cidade_pj',
+                'uf': 'representante_estado_pj'
             },
             'conjuge_pj': {
                 'logradouro': 'conjuge_end_residencial_pj',
                 'bairro': 'conjuge_bairro_pj',
-                'cidade': 'conjuge_cidade_pj',
-                'estado': 'conjuge_estado_pj'
+                'localidade': 'conjuge_cidade_pj',
+                'uf': 'conjuge_estado_pj'
             },
             'pessoa_pj': { # Para pessoas vinculadas
                 'logradouro': 'endereco_pessoa_pj',
                 'bairro': 'bairro_pessoa_pj',
-                'cidade': 'cidade_pessoa_pj',
-                'estado': 'estado_pessoa_pj'
+                'localidade': 'cidade_pessoa_pj',
+                'uf': 'estado_pessoa_pj'
             }
         }
 
@@ -618,7 +687,7 @@ if ficha_tipo == "Pessoa Física":
         # Campos preenchidos automaticamente após a busca do CEP
         # Usando 'value' para refletir o session_state e 'key' para o controle do widget
         comprador_end_residencial_pf = st.text_input("Endereço Residencial", value=st.session_state.get("comprador_end_residencial_pf", ""), key="comprador_end_residencial_pf")
-        comprador_numero_pf = st.text_input("Número", key="comprador_numero_pf")
+        comprador_numero_pf = st.text_input("Número", value=st.session_state.get("comprador_numero_pf", ""), key="comprador_numero_pf")
         comprador_bairro_pf = st.text_input("Bairro", value=st.session_state.get("comprador_bairro_pf", ""), key="comprador_bairro_pf")
         comprador_cidade_pf = st.text_input("Cidade", value=st.session_state.get("comprador_cidade_pf", ""), key="comprador_cidade_pf")
         comprador_estado_pf = st.text_input("Estado", value=st.session_state.get("comprador_estado_pf", ""), key="comprador_estado_pf")
@@ -634,15 +703,12 @@ if ficha_tipo == "Pessoa Física":
 
             if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a)"):
                 if conjuge_cep_pf:
-                    endereco_conjuge, error_msg = buscar_cep(conjuge_cep_pf)
-                    if endereco_conjuge:
-                        st.session_state.conjuge_end_residencial_pf = endereco_conjuge.get("logradouro", "")
-                        st.session_state.conjuge_bairro_pf = endereco_conjuge.get("bairro", "")
-                        st.session_state.conjuge_cidade_pf = endereco_conjuge.get("localidade", "")
-                        st.session_state.conjuge_estado_pf = endereco_conjuge.get("uf", "")
+                    error_msg = preencher_endereco('conjuge_pf', conjuge_cep_pf)
+                    if error_msg:
+                        st.error(error_msg)
+                    else:
                         st.success("Endereço do cônjuge preenchido!")
-                    elif error_msg:
-                        st.error(error_msg) # Exibe a mensagem de erro específica
+                        st.rerun() # Força a atualização dos campos na UI
                 else:
                     st.warning("Por favor, digite um CEP para buscar.")
 
@@ -653,7 +719,7 @@ if ficha_tipo == "Pessoa Física":
 
         # Campos preenchidos automaticamente após a busca do CEP
         conjuge_end_residencial_pf = st.text_input("Endereço Residencial Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_end_residencial_pf", ""), key="conjuge_end_residencial_pf")
-        conjuge_numero_pf = st.text_input("Número Cônjuge/Sócio(a)", key="conjuge_numero_pf")
+        conjuge_numero_pf = st.text_input("Número Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_numero_pf", ""), key="conjuge_numero_pf")
         conjuge_bairro_pf = st.text_input("Bairro Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_bairro_pf", ""), key="conjuge_bairro_pf")
         conjuge_cidade_pf = st.text_input("Cidade Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_cidade_pf", ""), key="conjuge_cidade_pf")
         conjuge_estado_pf = st.text_input("Estado Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_estado_pf", ""), key="conjuge_estado_pf")
@@ -740,15 +806,12 @@ elif ficha_tipo == "Pessoa Jurídica":
             
             if st.form_submit_button("Buscar Endereço Comprador PJ"):
                 if comprador_cep_pj:
-                    endereco_comprador_pj, error_msg = buscar_cep(comprador_cep_pj)
-                    if endereco_comprador_pj:
-                        st.session_state.comprador_end_residencial_comercial_pj = endereco_comprador_pj.get("logradouro", "")
-                        st.session_state.comprador_bairro_pj = endereco_comprador_pj.get("bairro", "")
-                        st.session_state.comprador_cidade_pj = endereco_comprador_pj.get("localidade", "")
-                        st.session_state.comprador_estado_pj = endereco_comprador_pj.get("uf", "")
+                    error_msg = preencher_endereco('empresa_pj', comprador_cep_pj)
+                    if error_msg:
+                        st.error(error_msg)
+                    else:
                         st.success("Endereço do comprador PJ preenchido!")
-                    elif error_msg:
-                        st.error(error_msg) # Exibe a mensagem de erro específica
+                        st.rerun()
                 else:
                     st.warning("Por favor, digite um CEP para buscar.")
 
@@ -759,7 +822,7 @@ elif ficha_tipo == "Pessoa Jurídica":
             comprador_email_pj = st.text_input("E-mail", key="comprador_email_pj")
 
         comprador_end_residencial_comercial_pj = st.text_input("Endereço Residencial/Comercial", value=st.session_state.get("comprador_end_residencial_comercial_pj", ""), key="comprador_end_residencial_comercial_pj")
-        comprador_numero_pj = st.text_input("Número", key="comprador_numero_pj")
+        comprador_numero_pj = st.text_input("Número", value=st.session_state.get("comprador_numero_pj", ""), key="comprador_numero_pj")
         comprador_bairro_pj = st.text_input("Bairro", value=st.session_state.get("comprador_bairro_pj", ""), key="comprador_bairro_pj")
         comprador_cidade_pj = st.text_input("Cidade", value=st.session_state.get("comprador_cidade_pj", ""), key="comprador_cidade_pj")
         comprador_estado_pj = st.text_input("Estado", value=st.session_state.get("comprador_estado_pj", ""), key="comprador_estado_pj")
@@ -775,15 +838,12 @@ elif ficha_tipo == "Pessoa Jurídica":
             
             if st.form_submit_button("Buscar Endereço Representante"):
                 if representante_cep_pj:
-                    endereco_representante, error_msg = buscar_cep(representante_cep_pj)
-                    if endereco_representante:
-                        st.session_state.representante_end_residencial_pj = endereco_representante.get("logradouro", "")
-                        st.session_state.representante_bairro_pj = endereco_representante.get("bairro", "")
-                        st.session_state.representante_cidade_pj = endereco_representante.get("localidade", "")
-                        st.session_state.representante_estado_pj = endereco_representante.get("uf", "")
+                    error_msg = preencher_endereco('administrador_pj', representante_cep_pj)
+                    if error_msg:
+                        st.error(error_msg)
+                    else:
                         st.success("Endereço do representante preenchido!")
-                    elif error_msg:
-                        st.error(error_msg) # Exibe a mensagem de erro específica
+                        st.rerun()
                 else:
                     st.warning("Por favor, digite um CEP para buscar.")
 
@@ -793,7 +853,7 @@ elif ficha_tipo == "Pessoa Jurídica":
             representante_fone_comercial_pj = st.text_input("Fone Comercial Representante", key="representante_fone_comercial_pj")
         
         representante_end_residencial_pj = st.text_input("Endereço Residencial Representante", value=st.session_state.get("representante_end_residencial_pj", ""), key="representante_end_residencial_pj")
-        representante_numero_pj = st.text_input("Número Representante", key="representante_numero_pj")
+        representante_numero_pj = st.text_input("Número Representante", value=st.session_state.get("representante_numero_pj", ""), key="representante_numero_pj")
         representante_bairro_pj = st.text_input("Bairro Representante", value=st.session_state.get("representante_bairro_pj", ""), key="representante_bairro_pj")
         representante_cidade_pj = st.text_input("Cidade Representante", value=st.session_state.get("representante_cidade_pj", ""), key="representante_cidade_pj")
         representante_estado_pj = st.text_input("Estado Representante", value=st.session_state.get("representante_estado_pj", ""), key="representante_estado_pj")
@@ -809,15 +869,12 @@ elif ficha_tipo == "Pessoa Jurídica":
             
             if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a) PJ"):
                 if conjuge_cep_pj:
-                    endereco_conjuge_pj, error_msg = buscar_cep(conjuge_cep_pj)
-                    if endereco_conjuge_pj:
-                        st.session_state.conjuge_end_residencial_pj = endereco_conjuge_pj.get("logradouro", "")
-                        st.session_state.conjuge_bairro_pj = endereco_conjuge_pj.get("bairro", "")
-                        st.session_state.conjuge_cidade_pj = endereco_conjuge_pj.get("localidade", "")
-                        st.session_state.conjuge_estado_pj = endereco_conjuge_pj.get("uf", "")
+                    error_msg = preencher_endereco('conjuge_pj', conjuge_cep_pj)
+                    if error_msg:
+                        st.error(error_msg)
+                    else:
                         st.success("Endereço do cônjuge/sócio PJ preenchido!")
-                    elif error_msg:
-                        st.error(error_msg) # Exibe a mensagem de erro específica
+                        st.rerun()
                 else:
                     st.warning("Por favor, digite um CEP para buscar.")
 
@@ -827,7 +884,7 @@ elif ficha_tipo == "Pessoa Jurídica":
             conjuge_fone_comercial_pj = st.text_input("Fone Comercial Cônjuge/Sócio(a) PJ", key="conjuge_fone_comercial_pj")
 
         conjuge_end_residencial_pj = st.text_input("Endereço Residencial Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_end_residencial_pj", ""), key="conjuge_end_residencial_pj")
-        conjuge_numero_pj = st.text_input("Número Cônjuge/Sócio(a) PJ", key="conjuge_numero_pj")
+        conjuge_numero_pj = st.text_input("Número Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_numero_pj", ""), key="conjuge_numero_pj")
         conjuge_bairro_pj = st.text_input("Bairro Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_bairro_pj", ""), key="conjuge_bairro_pj")
         conjuge_cidade_pj = st.text_input("Cidade Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_cidade_pj", ""), key="conjuge_cidade_pj")
         conjuge_estado_pj = st.text_input("Estado Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_estado_pj", ""), key="conjuge_estado_pj")
