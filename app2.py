@@ -183,9 +183,7 @@ def gerar_pdf_pf(dados):
         pdf.cell(0, 7, f"Cidade/Estado: {sanitize_text(dados.get('comprador_cidade_pf', ''))}/{sanitize_text(dados.get('comprador_estado_pf', ''))}", 0, 1)
         pdf.cell(0, 7, f"CEP: {sanitize_text(dados.get('comprador_cep_pf', ''))}", 0, 1)
         pdf.cell(0, 7, f"Estado Civil: {sanitize_text(dados.get('comprador_estado_civil_pf', ''))}", 0, 1)
-        # Condição adicionada para imprimir a data do casamento apenas se o estado civil for "Casado(a)" e a data existir
-        if dados.get('comprador_estado_civil_pf') == "Casado(a)" and dados.get('comprador_data_casamento_pf'):
-            pdf.cell(0, 7, f"Data do Casamento: {sanitize_text(dados.get('comprador_data_casamento_pf', ''))}", 0, 1)
+        # O campo 'Data do Casamento' foi removido conforme sua solicitação.
         pdf.cell(0, 7, f"Regime de Bens: {sanitize_text(dados.get('comprador_regime_bens_pf', ''))}", 0, 1)
         pdf.cell(0, 7, f"União Estável: {sanitize_text(dados.get('comprador_uniao_estavel_pf', ''))}", 0, 1)
         pdf.ln(5)
@@ -219,6 +217,34 @@ def gerar_pdf_pf(dados):
         pdf.multi_cell(0, 5, sanitize_text("CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L")
         pdf.ln(5)
 
+        # Adiciona a seção de data e assinaturas
+        pdf.ln(10)
+        today = datetime.date.today()
+        month_names = {
+            1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril", 5: "maio", 6: "junho",
+            7: "julho", 8: "agosto", 9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
+        }
+        
+        # Cidade/Estado,___ de _________de __________
+        current_city_state = f"{sanitize_text(dados.get('comprador_cidade_pf', ''))}/{sanitize_text(dados.get('comprador_estado_pf', ''))}"
+        pdf.cell(0, 7, f"{current_city_state}, {today.day} de {month_names[today.month]} de {today.year}", 0, 1, 'C')
+        pdf.ln(10) # Espaço antes da linha de assinatura
+
+        # Assinatura do(a) Comprador(a)
+        pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
+        pdf.ln(5)
+        pdf.cell(0, 5, sanitize_text("Assinatura do(a) Comprador(a)"), 0, 1, 'C')
+        pdf.ln(10)
+
+        # Autorizado em:__________/______/__________
+        pdf.cell(0, 7, f"Autorizado em: {today.strftime('%d/%m/%Y')}", 0, 1, 'C')
+        pdf.ln(10)
+
+        # Imobiliária Celeste
+        pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
+        pdf.ln(5)
+        pdf.cell(0, 5, sanitize_text("Imobiliária Celeste"), 0, 1, 'C')
+        
         # Adicionada codificação para 'latin-1'
         pdf_output = pdf.output(dest='S').encode('latin-1')
         b64_pdf = base64.b64encode(pdf_output).decode('utf-8')
@@ -308,6 +334,36 @@ def gerar_pdf_pj(dados):
         pdf.multi_cell(0, 5, sanitize_text("DOS SÓCIOS E SEUS CÔNJUGES: CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L")
         pdf.ln(5)
 
+        # Adiciona a seção de data e assinaturas
+        pdf.ln(10)
+        today = datetime.date.today()
+        month_names = {
+            1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril", 5: "maio", 6: "junho",
+            7: "julho", 8: "agosto", 9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
+        }
+        
+        # Cidade/Estado,___ de _________de __________
+        current_city_state = f"{sanitize_text(dados.get('comprador_cidade_pj', ''))}/{sanitize_text(dados.get('comprador_estado_pj', ''))}"
+        pdf.cell(0, 7, f"{current_city_state}, {today.day} de {month_names[today.month]} de {today.year}", 0, 1, 'C')
+        pdf.ln(10) # Espaço antes da linha de assinatura
+
+        # Assinatura do(a) Comprador(a) / Representante Legal (para PJ)
+        pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
+        pdf.ln(5)
+        # Para PJ, o ideal seria "Assinatura do(a) Representante Legal" ou similar.
+        # Mantendo "Assinatura do(a) Comprador(a)" conforme solicitado genericamente.
+        pdf.cell(0, 5, sanitize_text("Assinatura do(a) Comprador(a)"), 0, 1, 'C') 
+        pdf.ln(10)
+
+        # Autorizado em:__________/______/__________
+        pdf.cell(0, 7, f"Autorizado em: {today.strftime('%d/%m/%Y')}", 0, 1, 'C')
+        pdf.ln(10)
+
+        # Imobiliária Celeste
+        pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
+        pdf.ln(5)
+        pdf.cell(0, 5, sanitize_text("Imobiliária Celeste"), 0, 1, 'C')
+
         # Adicionada codificação para 'latin-1'
         pdf_output = pdf.output(dest='S').encode('latin-1')
         b64_pdf = base64.b64encode(pdf_output).decode('utf-8')
@@ -358,12 +414,7 @@ if ficha_tipo == "Pessoa Física":
             with col_rb:
                 comprador_regime_bens_pf = st.selectbox("Regime de Bens", REGIMES_DE_BENS, key="comprador_regime_bens_pf")
 
-            comprador_data_casamento_pf = None
-            if comprador_estado_civil_pf == "Casado(a)":
-                comprador_data_casamento_pf = st.date_input("Data do Casamento", key="comprador_data_casamento_pf")
-            else:
-                # Se não for casado, zera a data para não aparecer no PDF
-                comprador_data_casamento_pf = ""
+            # O campo 'Data do Casamento' e sua lógica foram removidos daqui.
             
             st.markdown("**Condição de Convivência:**")
             comprador_uniao_estavel_pf = st.checkbox("( ) Declara conviver em união estável", key="comprador_uniao_estavel_pf")
@@ -442,11 +493,6 @@ if ficha_tipo == "Pessoa Física":
 
         submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
         if submitted_pf:
-            # Garante que a data do casamento é uma string vazia se não for um objeto datetime.date
-            comprador_data_casamento_formatted = ""
-            if isinstance(comprador_data_casamento_pf, datetime.date):
-                comprador_data_casamento_formatted = comprador_data_casamento_pf.strftime("%d/%m/%Y")
-
             dados_pf = {
                 "empreendimento_pf": empreendimento_pf.strip(),
                 "corretor_pf": corretor_pf.strip(),
@@ -469,7 +515,6 @@ if ficha_tipo == "Pessoa Física":
                 "comprador_estado_pf": comprador_estado_pf_val.strip(),
                 "comprador_cep_pf": comprador_cep_pf.strip(),
                 "comprador_estado_civil_pf": comprador_estado_civil_pf.strip(),
-                "comprador_data_casamento_pf": comprador_data_casamento_formatted,
                 "comprador_regime_bens_pf": comprador_regime_bens_pf.strip(),
                 "comprador_uniao_estavel_pf": "Sim" if comprador_uniao_estavel_pf else "Não",
                 "conjuge_nome_pf": conjuge_nome_pf.strip(),
