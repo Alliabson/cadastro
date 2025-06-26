@@ -7,6 +7,7 @@ import socket
 import time
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+import datetime # Importado para tratamento de datas
 
 # Inicializa as variáveis de estado da sessão do Streamlit,
 # garantindo que elas existam antes de serem acessadas para evitar KeyError.
@@ -90,20 +91,18 @@ def verificar_conexao_internet(host="8.8.8.8", port=53, timeout=3):
 def buscar_cep(cep):
     """
     Busca informações de endereço a partir de um CEP usando a API ViaCEP.
-    Retorna um dicionário com os dados do endereço ou None em caso de erro.
+    Retorna um dicionário com os dados do endereço e uma mensagem de erro (ou None).
     """
     if not cep:
-        return None
+        return None, "Por favor, insira um CEP para buscar."
         
     cep = cep.replace("-", "").replace(".", "").strip()  # Limpa o CEP
     if len(cep) != 8 or not cep.isdigit():
-        st.warning("CEP inválido. Por favor, insira 8 dígitos numéricos.")
-        return None
+        return None, "CEP inválido. Por favor, insira 8 dígitos numéricos."
 
     # Verifica conexão com a internet antes de tentar
     if not verificar_conexao_internet():
-        st.error("Sem conexão com a internet. Verifique sua rede.")
-        return None
+        return None, "Sem conexão com a internet. Verifique sua rede."
 
     url = f"https://viacep.com.br/ws/{cep}/json/"
     
@@ -114,20 +113,16 @@ def buscar_cep(cep):
         data = response.json()
         
         if "erro" not in data:
-            return data
+            return data, None
         else:
-            st.error(f"CEP não encontrado: {cep}")
-            return None
+            return None, f"CEP não encontrado: {cep}"
             
+    except requests.exceptions.Timeout:
+        return None, "Tempo de conexão esgotado. Servidor pode estar indisponível."
+    except requests.exceptions.ConnectionError:
+        return None, "Não foi possível conectar ao servidor. Verifique sua conexão com a internet."
     except requests.exceptions.RequestException as e:
-        # Tratamento específico para diferentes tipos de erro
-        if isinstance(e, requests.exceptions.Timeout):
-            st.error("Tempo de conexão esgotado. Servidor pode estar indisponível.")
-        elif isinstance(e, requests.exceptions.ConnectionError):
-            st.error("Não foi possível conectar ao servidor. Verifique sua conexão com a internet.")
-        else:
-            st.error(f"Erro ao buscar CEP: {str(e)}")
-        return None
+        return None, f"Erro ao buscar CEP: {str(e)}"
 
 def sanitize_text(text):
     """
@@ -378,13 +373,15 @@ if ficha_tipo == "Pessoa Física":
             
             if st.form_submit_button("Buscar Endereço Comprador"):
                 if comprador_cep_pf:
-                    endereco_comprador = buscar_cep(comprador_cep_pf)
+                    endereco_comprador, error_msg = buscar_cep(comprador_cep_pf)
                     if endereco_comprador:
                         st.session_state.comprador_end_residencial_pf = endereco_comprador.get("logradouro", "")
                         st.session_state.comprador_bairro_pf = endereco_comprador.get("bairro", "")
                         st.session_state.comprador_cidade_pf = endereco_comprador.get("localidade", "")
                         st.session_state.comprador_estado_pf = endereco_comprador.get("uf", "")
                         st.success("Endereço do comprador preenchido!")
+                    elif error_msg:
+                        st.error(error_msg) # Exibe a mensagem de erro específica
                 else:
                     st.warning("Por favor, digite um CEP para buscar.")
 
@@ -411,13 +408,15 @@ if ficha_tipo == "Pessoa Física":
 
             if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a)"):
                 if conjuge_cep_pf:
-                    endereco_conjuge = buscar_cep(conjuge_cep_pf)
+                    endereco_conjuge, error_msg = buscar_cep(conjuge_cep_pf)
                     if endereco_conjuge:
                         st.session_state.conjuge_end_residencial_pf = endereco_conjuge.get("logradouro", "")
                         st.session_state.conjuge_bairro_pf = endereco_conjuge.get("bairro", "")
                         st.session_state.conjuge_cidade_pf = endereco_conjuge.get("localidade", "")
                         st.session_state.conjuge_estado_pf = endereco_conjuge.get("uf", "")
                         st.success("Endereço do cônjuge preenchido!")
+                    elif error_msg:
+                        st.error(error_msg) # Exibe a mensagem de erro específica
                 else:
                     st.warning("Por favor, digite um CEP para buscar.")
 
@@ -443,11 +442,11 @@ if ficha_tipo == "Pessoa Física":
 
         submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
         if submitted_pf:
-            # Ao submeter o formulário, as variáveis do Streamlit (com seus valores atuais,
-            # seja do session_state ou digitados pelo usuário) são capturadas.
-            # No entanto, para os campos que usam `_display` como chave, o valor `value=`
-            # é obtido do session_state, e a entrada do usuário fica na variável `_val`.
-            # Portanto, usamos as variáveis `_val` para garantir que o valor atual do widget seja usado.
+            # Garante que a data do casamento é uma string vazia se não for um objeto datetime.date
+            comprador_data_casamento_formatted = ""
+            if isinstance(comprador_data_casamento_pf, datetime.date):
+                comprador_data_casamento_formatted = comprador_data_casamento_pf.strftime("%d/%m/%Y")
+
             dados_pf = {
                 "empreendimento_pf": empreendimento_pf.strip(),
                 "corretor_pf": corretor_pf.strip(),
@@ -463,14 +462,14 @@ if ficha_tipo == "Pessoa Física":
                 "comprador_fone_comercial_pf": comprador_fone_comercial_pf.strip(),
                 "comprador_celular_pf": comprador_celular_pf.strip(),
                 "comprador_email_pf": comprador_email_pf.strip(),
-                "comprador_end_residencial_pf": comprador_end_residencial_pf_val.strip(), # Usa a variável com _val
+                "comprador_end_residencial_pf": comprador_end_residencial_pf_val.strip(),
                 "comprador_numero_pf": comprador_numero_pf.strip(),
-                "comprador_bairro_pf": comprador_bairro_pf_val.strip(), # Usa a variável com _val
-                "comprador_cidade_pf": comprador_cidade_pf_val.strip(), # Usa a variável com _val
-                "comprador_estado_pf": comprador_estado_pf_val.strip(), # Usa a variável com _val
+                "comprador_bairro_pf": comprador_bairro_pf_val.strip(),
+                "comprador_cidade_pf": comprador_cidade_pf_val.strip(),
+                "comprador_estado_pf": comprador_estado_pf_val.strip(),
                 "comprador_cep_pf": comprador_cep_pf.strip(),
                 "comprador_estado_civil_pf": comprador_estado_civil_pf.strip(),
-                "comprador_data_casamento_pf": comprador_data_casamento_pf.strftime("%d/%m/%Y") if isinstance(comprador_data_casamento_pf, (pd.Timestamp, type(None)).__args__) else comprador_data_casamento_pf, # Garante que seja string vazia se não for data
+                "comprador_data_casamento_pf": comprador_data_casamento_formatted,
                 "comprador_regime_bens_pf": comprador_regime_bens_pf.strip(),
                 "comprador_uniao_estavel_pf": "Sim" if comprador_uniao_estavel_pf else "Não",
                 "conjuge_nome_pf": conjuge_nome_pf.strip(),
@@ -480,11 +479,11 @@ if ficha_tipo == "Pessoa Física":
                 "conjuge_fone_comercial_pf": conjuge_fone_comercial_pf.strip(),
                 "conjuge_celular_pf": conjuge_celular_pf.strip(),
                 "conjuge_email_pf": conjuge_email_pf.strip(),
-                "conjuge_end_residencial_pf": conjuge_end_residencial_pf_val.strip(), # Usa a variável com _val
+                "conjuge_end_residencial_pf": conjuge_end_residencial_pf_val.strip(),
                 "conjuge_numero_pf": conjuge_numero_pf.strip(),
-                "conjuge_bairro_pf": conjuge_bairro_pf_val.strip(), # Usa a variável com _val
-                "conjuge_cidade_pf": conjuge_cidade_pf_val.strip(), # Usa a variável com _val
-                "conjuge_estado_pf": conjuge_estado_pf_val.strip(), # Usa a variável com _val
+                "conjuge_bairro_pf": conjuge_bairro_pf_val.strip(),
+                "conjuge_cidade_pf": conjuge_cidade_pf_val.strip(),
+                "conjuge_estado_pf": conjuge_estado_pf_val.strip(),
                 "conjuge_cep_pf": conjuge_cep_pf.strip(),
                 "condomino_indicado_pf": condomino_indicado_pf.strip(),
             }
@@ -521,13 +520,15 @@ elif ficha_tipo == "Pessoa Jurídica":
             
             if st.form_submit_button("Buscar Endereço Comprador PJ"):
                 if comprador_cep_pj:
-                    endereco_comprador_pj = buscar_cep(comprador_cep_pj)
+                    endereco_comprador_pj, error_msg = buscar_cep(comprador_cep_pj)
                     if endereco_comprador_pj:
                         st.session_state.comprador_end_residencial_comercial_pj = endereco_comprador_pj.get("logradouro", "")
                         st.session_state.comprador_bairro_pj = endereco_comprador_pj.get("bairro", "")
                         st.session_state.comprador_cidade_pj = endereco_comprador_pj.get("localidade", "")
                         st.session_state.comprador_estado_pj = endereco_comprador_pj.get("uf", "")
                         st.success("Endereço do comprador PJ preenchido!")
+                    elif error_msg:
+                        st.error(error_msg) # Exibe a mensagem de erro específica
                 else:
                     st.warning("Por favor, digite um CEP para buscar.")
 
@@ -554,13 +555,15 @@ elif ficha_tipo == "Pessoa Jurídica":
             
             if st.form_submit_button("Buscar Endereço Representante"):
                 if representante_cep_pj:
-                    endereco_representante = buscar_cep(representante_cep_pj)
+                    endereco_representante, error_msg = buscar_cep(representante_cep_pj)
                     if endereco_representante:
                         st.session_state.representante_end_residencial_pj = endereco_representante.get("logradouro", "")
                         st.session_state.representante_bairro_pj = endereco_representante.get("bairro", "")
                         st.session_state.representante_cidade_pj = endereco_representante.get("localidade", "")
                         st.session_state.representante_estado_pj = endereco_representante.get("uf", "")
                         st.success("Endereço do representante preenchido!")
+                    elif error_msg:
+                        st.error(error_msg) # Exibe a mensagem de erro específica
                 else:
                     st.warning("Por favor, digite um CEP para buscar.")
 
@@ -586,13 +589,15 @@ elif ficha_tipo == "Pessoa Jurídica":
             
             if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a) PJ"):
                 if conjuge_cep_pj:
-                    endereco_conjuge_pj = buscar_cep(conjuge_cep_pj)
+                    endereco_conjuge_pj, error_msg = buscar_cep(conjuge_cep_pj)
                     if endereco_conjuge_pj:
                         st.session_state.conjuge_end_residencial_pj = endereco_conjuge_pj.get("logradouro", "")
                         st.session_state.conjuge_bairro_pj = endereco_conjuge_pj.get("bairro", "")
                         st.session_state.conjuge_cidade_pj = endereco_conjuge_pj.get("localidade", "")
                         st.session_state.conjuge_estado_pj = endereco_conjuge_pj.get("uf", "")
                         st.success("Endereço do cônjuge/sócio PJ preenchido!")
+                    elif error_msg:
+                        st.error(error_msg) # Exibe a mensagem de erro específica
                 else:
                     st.warning("Por favor, digite um CEP para buscar.")
 
@@ -618,11 +623,6 @@ elif ficha_tipo == "Pessoa Jurídica":
 
         submitted_pj = st.form_submit_button("Gerar Ficha de Pessoa Jurídica")
         if submitted_pj:
-            # Ao submeter o formulário, as variáveis do Streamlit (com seus valores atuais,
-            # seja do session_state ou digitados pelo usuário) são capturadas.
-            # No entanto, para os campos que usam `_display` como chave, o valor `value=`
-            # é obtido do session_state, e a entrada do usuário fica na variável `_val`.
-            # Portanto, usamos as variáveis `_val` para garantir que o valor atual do widget seja usado.
             dados_pj = {
                 "empreendimento_pj": empreendimento_pj.strip(),
                 "corretor_pj": corretor_pj.strip(),
@@ -638,11 +638,11 @@ elif ficha_tipo == "Pessoa Jurídica":
                 "comprador_fone_comercial_pj": comprador_fone_comercial_pj.strip(),
                 "comprador_celular_pj": comprador_celular_pj.strip(),
                 "comprador_email_pj": comprador_email_pj.strip(),
-                "comprador_end_residencial_comercial_pj": comprador_end_residencial_comercial_pj_val.strip(), # Usa a variável com _val
+                "comprador_end_residencial_comercial_pj": comprador_end_residencial_comercial_pj_val.strip(),
                 "comprador_numero_pj": comprador_numero_pj.strip(),
-                "comprador_bairro_pj": comprador_bairro_pj_val.strip(), # Usa a variável com _val
-                "comprador_cidade_pj": comprador_cidade_pj_val.strip(), # Usa a variável com _val
-                "comprador_estado_pj": comprador_estado_pj_val.strip(), # Usa a variável com _val
+                "comprador_bairro_pj": comprador_bairro_pj_val.strip(),
+                "comprador_cidade_pj": comprador_cidade_pj_val.strip(),
+                "comprador_estado_pj": comprador_estado_pj_val.strip(),
                 "comprador_cep_pj": comprador_cep_pj.strip(),
                 "representante_nome_pj": representante_nome_pj.strip(),
                 "representante_profissao_pj": representante_profissao_pj.strip(),
@@ -651,11 +651,11 @@ elif ficha_tipo == "Pessoa Jurídica":
                 "representante_fone_comercial_pj": representante_fone_comercial_pj.strip(),
                 "representante_celular_pj": representante_celular_pj.strip(),
                 "representante_email_pj": representante_email_pj.strip(),
-                "representante_end_residencial_pj": representante_end_residencial_pj_val.strip(), # Usa a variável com _val
+                "representante_end_residencial_pj": representante_end_residencial_pj_val.strip(),
                 "representante_numero_pj": representante_numero_pj.strip(),
-                "representante_bairro_pj": representante_bairro_pj_val.strip(), # Usa a variável com _val
-                "representante_cidade_pj": representante_cidade_pj_val.strip(), # Usa a variável com _val
-                "representante_estado_pj": representante_estado_pj_val.strip(), # Usa a variável com _val
+                "representante_bairro_pj": representante_bairro_pj_val.strip(),
+                "representante_cidade_pj": representante_cidade_pj_val.strip(),
+                "representante_estado_pj": representante_estado_pj_val.strip(),
                 "representante_cep_pj": representante_cep_pj.strip(),
                 "conjuge_nome_pj": conjuge_nome_pj.strip(),
                 "conjuge_profissao_pj": conjuge_profissao_pj.strip(),
@@ -664,11 +664,11 @@ elif ficha_tipo == "Pessoa Jurídica":
                 "conjuge_fone_comercial_pj": conjuge_fone_comercial_pj.strip(),
                 "conjuge_celular_pj": conjuge_celular_pj.strip(),
                 "conjuge_email_pj": conjuge_email_pj.strip(),
-                "conjuge_end_residencial_pj": conjuge_end_residencial_pj_val.strip(), # Usa a variável com _val
+                "conjuge_end_residencial_pj": conjuge_end_residencial_pj_val.strip(),
                 "conjuge_numero_pj": conjuge_numero_pj.strip(),
-                "conjuge_bairro_pj": conjuge_bairro_pj_val.strip(), # Usa a variável com _val
-                "conjuge_cidade_pj": conjuge_cidade_pj_val.strip(), # Usa a variável com _val
-                "conjuge_estado_pj": conjuge_estado_pj_val.strip(), # Usa a variável com _val
+                "conjuge_bairro_pj": conjuge_bairro_pj_val.strip(),
+                "conjuge_cidade_pj": conjuge_cidade_pj_val.strip(),
+                "conjuge_estado_pj": conjuge_estado_pj_val.strip(),
                 "conjuge_cep_pj": conjuge_cep_pj.strip(),
                 "condomino_indicado_pj": condomino_indicado_pj.strip(),
             }
