@@ -146,6 +146,7 @@ def sanitize_text(text):
         # Substitui aspas duplas direitas
         text = text.replace('\u201D', '"')
         # Adicione mais substituições se outros caracteres causarem problemas
+        text = text.strip() # Remove espaços em branco do início e fim
     return text
 
 def gerar_pdf_pf(dados):
@@ -187,7 +188,8 @@ def gerar_pdf_pf(dados):
         pdf.cell(0, 7, f"Cidade/Estado: {sanitize_text(dados.get('comprador_cidade_pf', ''))}/{sanitize_text(dados.get('comprador_estado_pf', ''))}", 0, 1)
         pdf.cell(0, 7, f"CEP: {sanitize_text(dados.get('comprador_cep_pf', ''))}", 0, 1)
         pdf.cell(0, 7, f"Estado Civil: {sanitize_text(dados.get('comprador_estado_civil_pf', ''))}", 0, 1)
-        if dados.get('comprador_data_casamento_pf'):
+        # Condição adicionada para imprimir a data do casamento apenas se o estado civil for "Casado(a)" e a data existir
+        if dados.get('comprador_estado_civil_pf') == "Casado(a)" and dados.get('comprador_data_casamento_pf'):
             pdf.cell(0, 7, f"Data do Casamento: {sanitize_text(dados.get('comprador_data_casamento_pf', ''))}", 0, 1)
         pdf.cell(0, 7, f"Regime de Bens: {sanitize_text(dados.get('comprador_regime_bens_pf', ''))}", 0, 1)
         pdf.cell(0, 7, f"União Estável: {sanitize_text(dados.get('comprador_uniao_estavel_pf', ''))}", 0, 1)
@@ -364,6 +366,9 @@ if ficha_tipo == "Pessoa Física":
             comprador_data_casamento_pf = None
             if comprador_estado_civil_pf == "Casado(a)":
                 comprador_data_casamento_pf = st.date_input("Data do Casamento", key="comprador_data_casamento_pf")
+            else:
+                # Se não for casado, zera a data para não aparecer no PDF
+                comprador_data_casamento_pf = ""
             
             st.markdown("**Condição de Convivência:**")
             comprador_uniao_estavel_pf = st.checkbox("( ) Declara conviver em união estável", key="comprador_uniao_estavel_pf")
@@ -444,44 +449,44 @@ if ficha_tipo == "Pessoa Física":
             # é obtido do session_state, e a entrada do usuário fica na variável `_val`.
             # Portanto, usamos as variáveis `_val` para garantir que o valor atual do widget seja usado.
             dados_pf = {
-                "empreendimento_pf": empreendimento_pf,
-                "corretor_pf": corretor_pf,
-                "imobiliaria_pf": imobiliaria_pf,
-                "qd_pf": qd_pf,
-                "lt_pf": lt_pf,
+                "empreendimento_pf": empreendimento_pf.strip(),
+                "corretor_pf": corretor_pf.strip(),
+                "imobiliaria_pf": imobiliaria_pf.strip(),
+                "qd_pf": qd_pf.strip(),
+                "lt_pf": lt_pf.strip(),
                 "ativo_pf": "Sim" if ativo_pf else "Não",
                 "quitado_pf": "Sim" if quitado_pf else "Não",
-                "comprador_nome_pf": comprador_nome_pf,
-                "comprador_profissao_pf": comprador_profissao_pf,
-                "comprador_nacionalidade_pf": comprador_nacionalidade_pf,
-                "comprador_fone_residencial_pf": comprador_fone_residencial_pf,
-                "comprador_fone_comercial_pf": comprador_fone_comercial_pf,
-                "comprador_celular_pf": comprador_celular_pf,
-                "comprador_email_pf": comprador_email_pf,
-                "comprador_end_residencial_pf": comprador_end_residencial_pf_val, # Usa a variável com _val
-                "comprador_numero_pf": comprador_numero_pf,
-                "comprador_bairro_pf": comprador_bairro_pf_val, # Usa a variável com _val
-                "comprador_cidade_pf": comprador_cidade_pf_val, # Usa a variável com _val
-                "comprador_estado_pf": comprador_estado_pf_val, # Usa a variável com _val
-                "comprador_cep_pf": comprador_cep_pf,
-                "comprador_estado_civil_pf": comprador_estado_civil_pf,
-                "comprador_data_casamento_pf": comprador_data_casamento_pf.strftime("%d/%m/%Y") if comprador_data_casamento_pf else "",
-                "comprador_regime_bens_pf": comprador_regime_bens_pf,
+                "comprador_nome_pf": comprador_nome_pf.strip(),
+                "comprador_profissao_pf": comprador_profissao_pf.strip(),
+                "comprador_nacionalidade_pf": comprador_nacionalidade_pf.strip(),
+                "comprador_fone_residencial_pf": comprador_fone_residencial_pf.strip(),
+                "comprador_fone_comercial_pf": comprador_fone_comercial_pf.strip(),
+                "comprador_celular_pf": comprador_celular_pf.strip(),
+                "comprador_email_pf": comprador_email_pf.strip(),
+                "comprador_end_residencial_pf": comprador_end_residencial_pf_val.strip(), # Usa a variável com _val
+                "comprador_numero_pf": comprador_numero_pf.strip(),
+                "comprador_bairro_pf": comprador_bairro_pf_val.strip(), # Usa a variável com _val
+                "comprador_cidade_pf": comprador_cidade_pf_val.strip(), # Usa a variável com _val
+                "comprador_estado_pf": comprador_estado_pf_val.strip(), # Usa a variável com _val
+                "comprador_cep_pf": comprador_cep_pf.strip(),
+                "comprador_estado_civil_pf": comprador_estado_civil_pf.strip(),
+                "comprador_data_casamento_pf": comprador_data_casamento_pf.strftime("%d/%m/%Y") if isinstance(comprador_data_casamento_pf, (pd.Timestamp, type(None)).__args__) else comprador_data_casamento_pf, # Garante que seja string vazia se não for data
+                "comprador_regime_bens_pf": comprador_regime_bens_pf.strip(),
                 "comprador_uniao_estavel_pf": "Sim" if comprador_uniao_estavel_pf else "Não",
-                "conjuge_nome_pf": conjuge_nome_pf,
-                "conjuge_profissao_pf": conjuge_profissao_pf,
-                "conjuge_nacionalidade_pf": conjuge_nacionalidade_pf,
-                "conjuge_fone_residencial_pf": conjuge_fone_residencial_pf,
-                "conjuge_fone_comercial_pf": conjuge_fone_comercial_pf,
-                "conjuge_celular_pf": conjuge_celular_pf,
-                "conjuge_email_pf": conjuge_email_pf,
-                "conjuge_end_residencial_pf": conjuge_end_residencial_pf_val, # Usa a variável com _val
-                "conjuge_numero_pf": conjuge_numero_pf,
-                "conjuge_bairro_pf": conjuge_bairro_pf_val, # Usa a variável com _val
-                "conjuge_cidade_pf": conjuge_cidade_pf_val, # Usa a variável com _val
-                "conjuge_estado_pf": conjuge_estado_pf_val, # Usa a variável com _val
-                "conjuge_cep_pf": conjuge_cep_pf,
-                "condomino_indicado_pf": condomino_indicado_pf,
+                "conjuge_nome_pf": conjuge_nome_pf.strip(),
+                "conjuge_profissao_pf": conjuge_profissao_pf.strip(),
+                "conjuge_nacionalidade_pf": conjuge_nacionalidade_pf.strip(),
+                "conjuge_fone_residencial_pf": conjuge_fone_residencial_pf.strip(),
+                "conjuge_fone_comercial_pf": conjuge_fone_comercial_pf.strip(),
+                "conjuge_celular_pf": conjuge_celular_pf.strip(),
+                "conjuge_email_pf": conjuge_email_pf.strip(),
+                "conjuge_end_residencial_pf": conjuge_end_residencial_pf_val.strip(), # Usa a variável com _val
+                "conjuge_numero_pf": conjuge_numero_pf.strip(),
+                "conjuge_bairro_pf": conjuge_bairro_pf_val.strip(), # Usa a variável com _val
+                "conjuge_cidade_pf": conjuge_cidade_pf_val.strip(), # Usa a variável com _val
+                "conjuge_estado_pf": conjuge_estado_pf_val.strip(), # Usa a variável com _val
+                "conjuge_cep_pf": conjuge_cep_pf.strip(),
+                "condomino_indicado_pf": condomino_indicado_pf.strip(),
             }
             
             pdf_b64_pf = gerar_pdf_pf(dados_pf)
@@ -619,53 +624,53 @@ elif ficha_tipo == "Pessoa Jurídica":
             # é obtido do session_state, e a entrada do usuário fica na variável `_val`.
             # Portanto, usamos as variáveis `_val` para garantir que o valor atual do widget seja usado.
             dados_pj = {
-                "empreendimento_pj": empreendimento_pj,
-                "corretor_pj": corretor_pj,
-                "imobiliaria_pj": imobiliaria_pj,
-                "qd_pj": qd_pj,
-                "lt_pj": lt_pj,
+                "empreendimento_pj": empreendimento_pj.strip(),
+                "corretor_pj": corretor_pj.strip(),
+                "imobiliaria_pj": imobiliaria_pj.strip(),
+                "qd_pj": qd_pj.strip(),
+                "lt_pj": lt_pj.strip(),
                 "ativo_pj": "Sim" if ativo_pj else "Não",
                 "quitado_pj": "Sim" if quitado_pj else "Não",
-                "comprador_razao_social_pj": comprador_razao_social_pj,
-                "comprador_nome_fantasia_pj": comprador_nome_fantasia_pj,
-                "comprador_inscricao_estadual_pj": comprador_inscricao_estadual_pj,
-                "comprador_fone_residencial_pj": comprador_fone_residencial_pj,
-                "comprador_fone_comercial_pj": comprador_fone_comercial_pj,
-                "comprador_celular_pj": comprador_celular_pj,
-                "comprador_email_pj": comprador_email_pj,
-                "comprador_end_residencial_comercial_pj": comprador_end_residencial_comercial_pj_val, # Usa a variável com _val
-                "comprador_numero_pj": comprador_numero_pj,
-                "comprador_bairro_pj": comprador_bairro_pj_val, # Usa a variável com _val
-                "comprador_cidade_pj": comprador_cidade_pj_val, # Usa a variável com _val
-                "comprador_estado_pj": comprador_estado_pj_val, # Usa a variável com _val
-                "comprador_cep_pj": comprador_cep_pj,
-                "representante_nome_pj": representante_nome_pj,
-                "representante_profissao_pj": representante_profissao_pj,
-                "representante_nacionalidade_pj": representante_nacionalidade_pj,
-                "representante_fone_residencial_pj": representante_fone_residencial_pj,
-                "representante_fone_comercial_pj": representante_fone_comercial_pj,
-                "representante_celular_pj": representante_celular_pj,
-                "representante_email_pj": representante_email_pj,
-                "representante_end_residencial_pj": representante_end_residencial_pj_val, # Usa a variável com _val
-                "representante_numero_pj": representante_numero_pj,
-                "representante_bairro_pj": representante_bairro_pj_val, # Usa a variável com _val
-                "representante_cidade_pj": representante_cidade_pj_val, # Usa a variável com _val
-                "representante_estado_pj": representante_estado_pj_val, # Usa a variável com _val
-                "representante_cep_pj": representante_cep_pj,
-                "conjuge_nome_pj": conjuge_nome_pj,
-                "conjuge_profissao_pj": conjuge_profissao_pj,
-                "conjuge_nacionalidade_pj": conjuge_nacionalidade_pj,
-                "conjuge_fone_residencial_pj": conjuge_fone_residencial_pj,
-                "conjuge_fone_comercial_pj": conjuge_fone_comercial_pj,
-                "conjuge_celular_pj": conjuge_celular_pj,
-                "conjuge_email_pj": conjuge_email_pj,
-                "conjuge_end_residencial_pj": conjuge_end_residencial_pj_val, # Usa a variável com _val
-                "conjuge_numero_pj": conjuge_numero_pj,
-                "conjuge_bairro_pj": conjuge_bairro_pj_val, # Usa a variável com _val
-                "conjuge_cidade_pj": conjuge_cidade_pj_val, # Usa a variável com _val
-                "conjuge_estado_pj": conjuge_estado_pj_val, # Usa a variável com _val
-                "conjuge_cep_pj": conjuge_cep_pj,
-                "condomino_indicado_pj": condomino_indicado_pj,
+                "comprador_razao_social_pj": comprador_razao_social_pj.strip(),
+                "comprador_nome_fantasia_pj": comprador_nome_fantasia_pj.strip(),
+                "comprador_inscricao_estadual_pj": comprador_inscricao_estadual_pj.strip(),
+                "comprador_fone_residencial_pj": comprador_fone_residencial_pj.strip(),
+                "comprador_fone_comercial_pj": comprador_fone_comercial_pj.strip(),
+                "comprador_celular_pj": comprador_celular_pj.strip(),
+                "comprador_email_pj": comprador_email_pj.strip(),
+                "comprador_end_residencial_comercial_pj": comprador_end_residencial_comercial_pj_val.strip(), # Usa a variável com _val
+                "comprador_numero_pj": comprador_numero_pj.strip(),
+                "comprador_bairro_pj": comprador_bairro_pj_val.strip(), # Usa a variável com _val
+                "comprador_cidade_pj": comprador_cidade_pj_val.strip(), # Usa a variável com _val
+                "comprador_estado_pj": comprador_estado_pj_val.strip(), # Usa a variável com _val
+                "comprador_cep_pj": comprador_cep_pj.strip(),
+                "representante_nome_pj": representante_nome_pj.strip(),
+                "representante_profissao_pj": representante_profissao_pj.strip(),
+                "representante_nacionalidade_pj": representante_nacionalidade_pj.strip(),
+                "representante_fone_residencial_pj": representante_fone_residencial_pj.strip(),
+                "representante_fone_comercial_pj": representante_fone_comercial_pj.strip(),
+                "representante_celular_pj": representante_celular_pj.strip(),
+                "representante_email_pj": representante_email_pj.strip(),
+                "representante_end_residencial_pj": representante_end_residencial_pj_val.strip(), # Usa a variável com _val
+                "representante_numero_pj": representante_numero_pj.strip(),
+                "representante_bairro_pj": representante_bairro_pj_val.strip(), # Usa a variável com _val
+                "representante_cidade_pj": representante_cidade_pj_val.strip(), # Usa a variável com _val
+                "representante_estado_pj": representante_estado_pj_val.strip(), # Usa a variável com _val
+                "representante_cep_pj": representante_cep_pj.strip(),
+                "conjuge_nome_pj": conjuge_nome_pj.strip(),
+                "conjuge_profissao_pj": conjuge_profissao_pj.strip(),
+                "conjuge_nacionalidade_pj": conjuge_nacionalidade_pj.strip(),
+                "conjuge_fone_residencial_pj": conjuge_fone_residencial_pj.strip(),
+                "conjuge_fone_comercial_pj": conjuge_fone_comercial_pj.strip(),
+                "conjuge_celular_pj": conjuge_celular_pj.strip(),
+                "conjuge_email_pj": conjuge_email_pj.strip(),
+                "conjuge_end_residencial_pj": conjuge_end_residencial_pj_val.strip(), # Usa a variável com _val
+                "conjuge_numero_pj": conjuge_numero_pj.strip(),
+                "conjuge_bairro_pj": conjuge_bairro_pj_val.strip(), # Usa a variável com _val
+                "conjuge_cidade_pj": conjuge_cidade_pj_val.strip(), # Usa a variável com _val
+                "conjuge_estado_pj": conjuge_estado_pj_val.strip(), # Usa a variável com _val
+                "conjuge_cep_pj": conjuge_cep_pj.strip(),
+                "condomino_indicado_pj": condomino_indicado_pj.strip(),
             }
             
             pdf_b64_pj = gerar_pdf_pj(dados_pj)
