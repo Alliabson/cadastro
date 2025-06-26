@@ -162,29 +162,52 @@ def gerar_pdf_pf(dados):
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do Empreendimento e Imobiliária"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        for key, value in dados.items():
-            if key in ["empreendimento_pf", "corretor_pf", "imobiliaria_pf", "qd_pf", "lt_pf", "ativo_pf", "quitado_pf"]:
-                pdf.cell(0, 6, f"{sanitize_text(key.replace('_pf', '').replace('_', ' ').title())}: {sanitize_text(str(value))}", 0, 1) # Reduzido de 7 para 6
+        # Campos do empreendimento
+        for key_suffix in ["empreendimento", "corretor", "imobiliaria", "qd", "lt", "ativo", "quitado"]:
+            key = f"{key_suffix}_pf"
+            value = dados.get(key, '')
+            if value and sanitize_text(value):
+                pdf.cell(0, 6, f"{sanitize_text(key_suffix.replace('_', ' ').title())}: {sanitize_text(str(value))}", 0, 1) # Reduzido de 7 para 6
         pdf.ln(3) # Reduzido de 5 para 3
 
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do COMPRADOR(A)"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        pdf.cell(0, 6, f"Nome Completo: {sanitize_text(dados.get('comprador_nome_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Profissão: {sanitize_text(dados.get('comprador_profissao_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Nacionalidade: {sanitize_text(dados.get('comprador_nacionalidade_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Fone Residencial: {sanitize_text(dados.get('comprador_fone_residencial_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Fone Comercial: {sanitize_text(dados.get('comprador_fone_comercial_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Celular: {sanitize_text(dados.get('comprador_celular_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"E-mail: {sanitize_text(dados.get('comprador_email_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        
-        pdf.cell(0, 6, f"Endereço Residencial: {sanitize_text(dados.get('comprador_end_residencial_pf', ''))}, Nº {sanitize_text(dados.get('comprador_numero_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Bairro: {sanitize_text(dados.get('comprador_bairro_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Cidade/Estado: {sanitize_text(dados.get('comprador_cidade_pf', ''))}/{sanitize_text(dados.get('comprador_estado_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"CEP: {sanitize_text(dados.get('comprador_cep_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Estado Civil: {sanitize_text(dados.get('comprador_estado_civil_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Regime de Bens: {sanitize_text(dados.get('comprador_regime_bens_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"União Estável: {sanitize_text(dados.get('comprador_uniao_estavel_pf', ''))}", 0, 1) # Reduzido de 7 para 6
+        # Campos do comprador
+        fields_comprador = [
+            ("Nome Completo", "comprador_nome_pf"),
+            ("Profissão", "comprador_profissao_pf"),
+            ("Nacionalidade", "comprador_nacionalidade_pf"),
+            ("Fone Residencial", "comprador_fone_residencial_pf"),
+            ("Fone Comercial", "comprador_fone_comercial_pf"),
+            ("Celular", "comprador_celular_pf"),
+            ("E-mail", "comprador_email_pf"),
+            ("Endereço Residencial", "comprador_end_residencial_pf", "comprador_numero_pf"),
+            ("Bairro", "comprador_bairro_pf"),
+            ("Cidade/Estado", "comprador_cidade_pf", "comprador_estado_pf"),
+            ("CEP", "comprador_cep_pf"),
+            ("Estado Civil", "comprador_estado_civil_pf"),
+            ("Regime de Bens", "comprador_regime_bens_pf"),
+            ("União Estável", "comprador_uniao_estavel_pf")
+        ]
+        for field_info in fields_comprador:
+            label = field_info[0]
+            if len(field_info) == 2:
+                value = dados.get(field_info[1], '')
+                if value and sanitize_text(value):
+                    pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
+            elif len(field_info) == 3: # Special case for address and city/state
+                if label == "Endereço Residencial":
+                    endereco = dados.get(field_info[1], '')
+                    numero = dados.get(field_info[2], '')
+                    if endereco and sanitize_text(endereco):
+                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(endereco)}, Nº {sanitize_text(numero)}", 0, 1)
+                elif label == "Cidade/Estado":
+                    cidade = dados.get(field_info[1], '')
+                    estado = dados.get(field_info[2], '')
+                    if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
+                         pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
+
         pdf.ln(3) # Reduzido de 5 para 3
         
         pdf.set_font("Helvetica", "B", 10)
@@ -196,18 +219,37 @@ def gerar_pdf_pf(dados):
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do CÔNJUGE/SÓCIO(A)"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        pdf.cell(0, 6, f"Nome Completo Cônjuge/Sócio(a): {sanitize_text(dados.get('conjuge_nome_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Profissão Cônjuge/Sócio(a): {sanitize_text(dados.get('conjuge_profissao_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Nacionalidade Cônjuge/Sócio(a): {sanitize_text(dados.get('conjuge_nacionalidade_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Fone Residencial Cônjuge/Sócio(a): {sanitize_text(dados.get('conjuge_fone_residencial_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Fone Comercial Cônjuge/Sócio(a): {sanitize_text(dados.get('conjuge_fone_comercial_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Celular Cônjuge/Sócio(a): {sanitize_text(dados.get('conjuge_celular_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"E-mail Cônjuge/Sócio(a): {sanitize_text(dados.get('conjuge_email_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-
-        pdf.cell(0, 6, f"Endereço Residencial: {sanitize_text(dados.get('conjuge_end_residencial_pf', ''))}, Nº {sanitize_text(dados.get('conjuge_numero_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Bairro: {sanitize_text(dados.get('conjuge_bairro_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Cidade/Estado: {sanitize_text(dados.get('conjuge_cidade_pf', ''))}/{sanitize_text(dados.get('conjuge_estado_pf', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"CEP: {sanitize_text(dados.get('conjuge_cep_pf', ''))}", 0, 1) # Reduzido de 7 para 6
+        # Campos do cônjuge/sócio
+        fields_conjuge_pf = [
+            ("Nome Completo Cônjuge/Sócio(a)", "conjuge_nome_pf"),
+            ("Profissão Cônjuge/Sócio(a)", "conjuge_profissao_pf"),
+            ("Nacionalidade Cônjuge/Sócio(a)", "conjuge_nacionalidade_pf"),
+            ("Fone Residencial Cônjuge/Sócio(a)", "conjuge_fone_residencial_pf"),
+            ("Fone Comercial Cônjuge/Sócio(a)", "conjuge_fone_comercial_pf"),
+            ("Celular Cônjuge/Sócio(a)", "conjuge_celular_pf"),
+            ("E-mail Cônjuge/Sócio(a)", "conjuge_email_pf"),
+            ("Endereço Residencial", "conjuge_end_residencial_pf", "conjuge_numero_pf"),
+            ("Bairro", "conjuge_bairro_pf"),
+            ("Cidade/Estado", "conjuge_cidade_pf", "conjuge_estado_pf"),
+            ("CEP", "conjuge_cep_pf")
+        ]
+        for field_info in fields_conjuge_pf:
+            label = field_info[0]
+            if len(field_info) == 2:
+                value = dados.get(field_info[1], '')
+                if value and sanitize_text(value):
+                    pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
+            elif len(field_info) == 3: # Special case for address and city/state
+                if label == "Endereço Residencial":
+                    endereco = dados.get(field_info[1], '')
+                    numero = dados.get(field_info[2], '')
+                    if endereco and sanitize_text(endereco):
+                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(endereco)}, Nº {sanitize_text(numero)}", 0, 1)
+                elif label == "Cidade/Estado":
+                    cidade = dados.get(field_info[1], '')
+                    estado = dados.get(field_info[2], '')
+                    if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
+                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
         pdf.ln(3) # Reduzido de 5 para 3
 
         pdf.set_font("Helvetica", "B", 10)
@@ -216,8 +258,19 @@ def gerar_pdf_pf(dados):
         pdf.multi_cell(0, 4.5, sanitize_text("CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L") # Reduzido de 5 para 4.5
         pdf.ln(3) # Reduzido de 5 para 3
 
+        # Campo adicional para condômino indicado
+        condomino_indicado = dados.get('condomino_indicado_pf', '')
+        if condomino_indicado and sanitize_text(condomino_indicado):
+            pdf.ln(5)
+            pdf.set_font("Helvetica", "B", 10)
+            pdf.cell(0, 6, sanitize_text("📌 No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a): 📌"), 0, 1, 'L')
+            pdf.set_font("Helvetica", "", 10)
+            pdf.cell(0, 6, f"➡️ Indique aqui quem será o(a) condômino(a): {sanitize_text(condomino_indicado)}", 0, 1)
+            pdf.ln(3)
+
+
         # Adiciona a seção de data e assinaturas
-        pdf.ln(7) # Reduzido de 10 para 7
+        pdf.ln(7) # Ajustado espaçamento
         today = datetime.date.today()
         month_names = {
             1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril", 5: "maio", 6: "junho",
@@ -227,17 +280,17 @@ def gerar_pdf_pf(dados):
         # Cidade/Estado,___ de _________de __________
         current_city_state = f"{sanitize_text(dados.get('comprador_cidade_pf', ''))}/{sanitize_text(dados.get('comprador_estado_pf', ''))}"
         pdf.cell(0, 6, f"{current_city_state}, {today.day} de {month_names[today.month]} de {today.year}", 0, 1, 'C') # Reduzido de 7 para 6
-        pdf.ln(7) # Reduzido de 10 para 7
+        pdf.ln(7) # Ajustado espaçamento
 
         # Assinatura do(a) Comprador(a)
         pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
         pdf.ln(3) # Reduzido de 5 para 3
         pdf.cell(0, 4, sanitize_text("Assinatura do(a) Comprador(a)"), 0, 1, 'C') # Reduzido de 5 para 4
-        pdf.ln(7) # Reduzido de 10 para 7
+        pdf.ln(7) # Ajustado espaçamento
 
         # Autorizado em:__________/______/__________
         pdf.cell(0, 6, f"Autorizado em: {today.strftime('%d/%m/%Y')}", 0, 1, 'C') # Reduzido de 7 para 6
-        pdf.ln(7) # Reduzido de 10 para 7
+        pdf.ln(7) # Ajustado espaçamento
 
         # Imobiliária Celeste
         pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
@@ -270,60 +323,120 @@ def gerar_pdf_pj(dados):
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do Empreendimento e Imobiliária"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        for key, value in dados.items():
-            if key in ["empreendimento_pj", "corretor_pj", "imobiliaria_pj", "qd_pj", "lt_pj", "ativo_pj", "quitado_pj"]:
-                pdf.cell(0, 6, f"{sanitize_text(key.replace('_pj', '').replace('_', ' ').title())}: {sanitize_text(str(value))}", 0, 1) # Reduzido de 7 para 6
+        # Campos do empreendimento
+        for key_suffix in ["empreendimento", "corretor", "imobiliaria", "qd", "lt", "ativo", "quitado"]:
+            key = f"{key_suffix}_pj"
+            value = dados.get(key, '')
+            if value and sanitize_text(value):
+                pdf.cell(0, 6, f"{sanitize_text(key_suffix.replace('_', ' ').title())}: {sanitize_text(str(value))}", 0, 1) # Reduzido de 7 para 6
         pdf.ln(3) # Reduzido de 5 para 3
 
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do COMPRADOR(A)"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        pdf.cell(0, 6, f"Razão Social: {sanitize_text(dados.get('comprador_razao_social_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Nome Fantasia: {sanitize_text(dados.get('comprador_nome_fantasia_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Inscrição Estadual: {sanitize_text(dados.get('comprador_inscricao_estadual_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Fone Residencial: {sanitize_text(dados.get('comprador_fone_residencial_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Fone Comercial: {sanitize_text(dados.get('comprador_fone_comercial_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Celular: {sanitize_text(dados.get('comprador_celular_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"E-mail: {sanitize_text(dados.get('comprador_email_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-
-        pdf.cell(0, 6, f"Endereço Residencial/Comercial: {sanitize_text(dados.get('comprador_end_residencial_comercial_pj', ''))}, Nº {sanitize_text(dados.get('comprador_numero_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Bairro: {sanitize_text(dados.get('comprador_bairro_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Cidade/Estado: {sanitize_text(dados.get('comprador_cidade_pj', ''))}/{sanitize_text(dados.get('comprador_estado_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"CEP: {sanitize_text(dados.get('comprador_cep_pj', ''))}", 0, 1) # Reduzido de 7 para 6
+        # Campos do comprador PJ
+        fields_comprador_pj = [
+            ("Razão Social", "comprador_razao_social_pj"),
+            ("Nome Fantasia", "comprador_nome_fantasia_pj"),
+            ("Inscrição Estadual", "comprador_inscricao_estadual_pj"),
+            ("Fone Residencial", "comprador_fone_residencial_pj"),
+            ("Fone Comercial", "comprador_fone_comercial_pj"),
+            ("Celular", "comprador_celular_pj"),
+            ("E-mail", "comprador_email_pj"),
+            ("Endereço Residencial/Comercial", "comprador_end_residencial_comercial_pj", "comprador_numero_pj"),
+            ("Bairro", "comprador_bairro_pj"),
+            ("Cidade/Estado", "comprador_cidade_pj", "comprador_estado_pj"),
+            ("CEP", "comprador_cep_pj")
+        ]
+        for field_info in fields_comprador_pj:
+            label = field_info[0]
+            if len(field_info) == 2:
+                value = dados.get(field_info[1], '')
+                if value and sanitize_text(value):
+                    pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
+            elif len(field_info) == 3: # Special case for address and city/state
+                if label == "Endereço Residencial/Comercial":
+                    endereco = dados.get(field_info[1], '')
+                    numero = dados.get(field_info[2], '')
+                    if endereco and sanitize_text(endereco):
+                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(endereco)}, Nº {sanitize_text(numero)}", 0, 1)
+                elif label == "Cidade/Estado":
+                    cidade = dados.get(field_info[1], '')
+                    estado = dados.get(field_info[2], '')
+                    if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
+                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
         pdf.ln(3) # Reduzido de 5 para 3
 
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do REPRESENTANTE"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        pdf.cell(0, 6, f"Nome Completo Representante: {sanitize_text(dados.get('representante_nome_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Profissão Representante: {sanitize_text(dados.get('representante_profissao_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Nacionalidade Representante: {sanitize_text(dados.get('representante_nacionalidade_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Fone Residencial Representante: {sanitize_text(dados.get('representante_fone_residencial_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Fone Comercial Representante: {sanitize_text(dados.get('representante_fone_comercial_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Celular Representante: {sanitize_text(dados.get('representante_celular_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"E-mail Representante: {sanitize_text(dados.get('representante_email_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        
-        pdf.cell(0, 6, f"Endereço Residencial: {sanitize_text(dados.get('representante_end_residencial_pj', ''))}, Nº {sanitize_text(dados.get('representante_numero_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Bairro: {sanitize_text(dados.get('representante_bairro_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Cidade/Estado: {sanitize_text(dados.get('representante_cidade_pj', ''))}/{sanitize_text(dados.get('representante_estado_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"CEP: {sanitize_text(dados.get('representante_cep_pj', ''))}", 0, 1) # Reduzido de 7 para 6
+        # Campos do representante
+        fields_representante_pj = [
+            ("Nome Completo Representante", "representante_nome_pj"),
+            ("Profissão Representante", "representante_profissao_pj"),
+            ("Nacionalidade Representante", "representante_nacionalidade_pj"),
+            ("Fone Residencial Representante", "representante_fone_residencial_pj"),
+            ("Fone Comercial Representante", "representante_fone_comercial_pj"),
+            ("Celular Representante", "representante_celular_pj"),
+            ("E-mail Representante", "representante_email_pj"),
+            ("Endereço Residencial", "representante_end_residencial_pj", "representante_numero_pj"),
+            ("Bairro", "representante_bairro_pj"),
+            ("Cidade/Estado", "representante_cidade_pj", "representante_estado_pj"),
+            ("CEP", "representante_cep_pj")
+        ]
+        for field_info in fields_representante_pj:
+            label = field_info[0]
+            if len(field_info) == 2:
+                value = dados.get(field_info[1], '')
+                if value and sanitize_text(value):
+                    pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
+            elif len(field_info) == 3: # Special case for address and city/state
+                if label == "Endereço Residencial":
+                    endereco = dados.get(field_info[1], '')
+                    numero = dados.get(field_info[2], '')
+                    if endereco and sanitize_text(endereco):
+                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(endereco)}, Nº {sanitize_text(numero)}", 0, 1)
+                elif label == "Cidade/Estado":
+                    cidade = dados.get(field_info[1], '')
+                    estado = dados.get(field_info[2], '')
+                    if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
+                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
         pdf.ln(3) # Reduzido de 5 para 3
 
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do CÔNJUGE/SÓCIO(A)"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        pdf.cell(0, 6, f"Nome Completo Cônjuge/Sócio(a) PJ: {sanitize_text(dados.get('conjuge_nome_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Profissão Cônjuge/Sócio(a) PJ: {sanitize_text(dados.get('conjuge_profissao_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Nacionalidade Cônjuge/Sócio(a) PJ: {sanitize_text(dados.get('conjuge_nacionalidade_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Fone Residencial Cônjuge/Sócio(a) PJ: {sanitize_text(dados.get('conjuge_fone_residencial_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Fone Comercial Cônjuge/Sócio(a) PJ: {sanitize_text(dados.get('conjuge_fone_comercial_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Celular Cônjuge/Sócio(a) PJ: {sanitize_text(dados.get('conjuge_celular_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"E-mail Cônjuge/Sócio(a) PJ: {sanitize_text(dados.get('conjuge_email_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        
-        pdf.cell(0, 6, f"Endereço Residencial: {sanitize_text(dados.get('conjuge_end_residencial_pj', ''))}, Nº {sanitize_text(dados.get('conjuge_numero_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Bairro: {sanitize_text(dados.get('conjuge_bairro_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"Cidade/Estado: {sanitize_text(dados.get('conjuge_cidade_pj', ''))}/{sanitize_text(dados.get('conjuge_estado_pj', ''))}", 0, 1) # Reduzido de 7 para 6
-        pdf.cell(0, 6, f"CEP: {sanitize_text(dados.get('conjuge_cep_pj', ''))}", 0, 1) # Reduzido de 7 para 6
+        # Campos do cônjuge/sócio PJ
+        fields_conjuge_pj = [
+            ("Nome Completo Cônjuge/Sócio(a) PJ", "conjuge_nome_pj"),
+            ("Profissão Cônjuge/Sócio(a) PJ", "conjuge_profissao_pj"),
+            ("Nacionalidade Cônjuge/Sócio(a) PJ", "conjuge_nacionalidade_pj"),
+            ("Fone Residencial Cônjuge/Sócio(a) PJ", "conjuge_fone_residencial_pj"),
+            ("Fone Comercial Cônjuge/Sócio(a) PJ", "conjuge_fone_comercial_pj"),
+            ("Celular Cônjuge/Sócio(a) PJ", "conjuge_celular_pj"),
+            ("E-mail Cônjuge/Sócio(a) PJ", "conjuge_email_pj"),
+            ("Endereço Residencial", "conjuge_end_residencial_pj", "conjuge_numero_pj"),
+            ("Bairro", "conjuge_bairro_pj"),
+            ("Cidade/Estado", "conjuge_cidade_pj", "conjuge_estado_pj"),
+            ("CEP", "conjuge_cep_pj")
+        ]
+        for field_info in fields_conjuge_pj:
+            label = field_info[0]
+            if len(field_info) == 2:
+                value = dados.get(field_info[1], '')
+                if value and sanitize_text(value):
+                    pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
+            elif len(field_info) == 3: # Special case for address and city/state
+                if label == "Endereço Residencial":
+                    endereco = dados.get(field_info[1], '')
+                    numero = dados.get(field_info[2], '')
+                    if endereco and sanitize_text(endereco):
+                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(endereco)}, Nº {sanitize_text(numero)}", 0, 1)
+                elif label == "Cidade/Estado":
+                    cidade = dados.get(field_info[1], '')
+                    estado = dados.get(field_info[2], '')
+                    if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
+                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
         pdf.ln(3) # Reduzido de 5 para 3
         
         pdf.set_font("Helvetica", "B", 10)
@@ -333,8 +446,18 @@ def gerar_pdf_pj(dados):
         pdf.multi_cell(0, 4.5, sanitize_text("DOS SÓCIOS E SEUS CÔNJUGES: CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L") # Reduzido de 5 para 4.5
         pdf.ln(3) # Reduzido de 5 para 3
 
+        # Campo adicional para condômino indicado
+        condomino_indicado = dados.get('condomino_indicado_pj', '')
+        if condomino_indicado and sanitize_text(condomino_indicado):
+            pdf.ln(5)
+            pdf.set_font("Helvetica", "B", 10)
+            pdf.multi_cell(0, 6, sanitize_text("📌 No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a): 📌"), 0, 'L')
+            pdf.set_font("Helvetica", "", 10)
+            pdf.cell(0, 6, f"➡️ Indique aqui quem será o(a) condômino(a): {sanitize_text(condomino_indicado)}", 0, 1)
+            pdf.ln(3)
+
         # Adiciona a seção de data e assinaturas
-        pdf.ln(7) # Reduzido de 10 para 7
+        pdf.ln(7) # Ajustado espaçamento
         today = datetime.date.today()
         month_names = {
             1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril", 5: "maio", 6: "junho",
@@ -344,7 +467,7 @@ def gerar_pdf_pj(dados):
         # Cidade/Estado,___ de _________de __________
         current_city_state = f"{sanitize_text(dados.get('comprador_cidade_pj', ''))}/{sanitize_text(dados.get('comprador_estado_pj', ''))}"
         pdf.cell(0, 6, f"{current_city_state}, {today.day} de {month_names[today.month]} de {today.year}", 0, 1, 'C') # Reduzido de 7 para 6
-        pdf.ln(7) # Reduzido de 10 para 7
+        pdf.ln(7) # Ajustado espaçamento
 
         # Assinatura do(a) Comprador(a) / Representante Legal (para PJ)
         pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
@@ -352,11 +475,11 @@ def gerar_pdf_pj(dados):
         # Para PJ, o ideal seria "Assinatura do(a) Representante Legal" ou similar.
         # Mantendo "Assinatura do(a) Comprador(a)" conforme solicitado genericamente.
         pdf.cell(0, 4, sanitize_text("Assinatura do(a) Comprador(a)"), 0, 1, 'C') # Reduzido de 5 para 4
-        pdf.ln(7) # Reduzido de 10 para 7
+        pdf.ln(7) # Ajustado espaçamento
 
         # Autorizado em:__________/______/__________
         pdf.cell(0, 6, f"Autorizado em: {today.strftime('%d/%m/%Y')}", 0, 1, 'C') # Reduzido de 7 para 6
-        pdf.ln(7) # Reduzido de 10 para 7
+        pdf.ln(7) # Ajustado espaçamento
 
         # Imobiliária Celeste
         pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
@@ -413,8 +536,6 @@ if ficha_tipo == "Pessoa Física":
             with col_rb:
                 comprador_regime_bens_pf = st.selectbox("Regime de Bens", REGIMES_DE_BENS, key="comprador_regime_bens_pf")
 
-            # O campo 'Data do Casamento' e sua lógica foram removidos daqui.
-            
             st.markdown("**Condição de Convivência:**")
             comprador_uniao_estavel_pf = st.checkbox("( ) Declara conviver em união estável", key="comprador_uniao_estavel_pf")
             st.markdown("– Apresentar comprovante de estado civil de cada um e a declaração de convivência em união estável com as assinaturas reconhecidas em Cartório.")
