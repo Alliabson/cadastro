@@ -426,16 +426,17 @@ def gerar_pdf_pf(dados, dependentes=None):
         pdf.cell(0, 6, sanitize_text("DOCUMENTOS NECESSÁRIOS:"), 0, 1) # Reduzido de 7 para 6
         pdf.set_font("Helvetica", "", 9)
         pdf.multi_cell(0, 4.5, sanitize_text("CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L") # Reduzido de 5 para 4.5
-        pdf.ln(1) # Reduzido de 5 para 3
+        pdf.ln(3) # Reduzido de 5 para 3
+
         # Campo adicional para condômino indicado
         condomino_indicado = dados.get('condomino_indicado_pf', '')
         if condomino_indicado and sanitize_text(condomino_indicado):
-            pdf.ln(1)
+            pdf.ln(5)
             pdf.set_font("Helvetica", "B", 10)
             pdf.multi_cell(0, 6, sanitize_text("No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a):"), 0, 'L')
             pdf.set_font("Helvetica", "", 10)
             pdf.cell(0, 6, f"Indique aqui quem será o(a) condômino(a): {sanitize_text(condomino_indicado)}", 0, 1)
-            pdf.ln(1)
+            pdf.ln(3)
 
 
         # Adiciona a seção de data e assinaturas
@@ -648,16 +649,17 @@ def gerar_pdf_pj(dados, dependentes=None):
         pdf.set_font("Helvetica", "", 9)
         pdf.multi_cell(0, 4.5, sanitize_text("DA EMPRESA: CONTRATO SOCIAL E ALTERAÇÕES, COMPROVANTE DE ENDEREÇO, DECLARAÇÃO DE FATURAMENTO;"), 0, "L") # Reduzido de 5 para 4.5
         pdf.multi_cell(0, 4.5, sanitize_text("DOS SÓCIOS E SEUS CÔNJUGES: CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L") # Reduzido de 5 para 4.5
-        pdf.ln(1) # Reduzido de 5 para 3
+        pdf.ln(3) # Reduzido de 5 para 3
+
         # Campo adicional para condômino indicado
         condomino_indicado = dados.get('condomino_indicado_pj', '')
         if condomino_indicado and sanitize_text(condomino_indicado):
-            pdf.ln(1)
+            pdf.ln(5)
             pdf.set_font("Helvetica", "B", 10)
             pdf.multi_cell(0, 6, sanitize_text("No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a):"), 0, 'L')
             pdf.set_font("Helvetica", "", 10)
             pdf.cell(0, 6, f"Indique aqui quem será o(a) condômino(a): {sanitize_text(condomino_indicado)}", 0, 1)
-            pdf.ln(1)
+            pdf.ln(3)
 
         # Adiciona a seção de data e assinaturas
         pdf.ln(7) # Ajustado espaçamento
@@ -770,6 +772,11 @@ def add_dependent_pj_callback():
         st.success("Dependente adicionado para PJ! Submeta o formulário principal para salvá-lo no PDF.")
     else:
         st.warning("Nome e CPF do dependente são obrigatórios para adicionar.")
+
+# Inicializa submitted_pf e submitted_pj fora dos formulários
+submitted_pf = False
+submitted_pj = False
+
 
 if ficha_tipo == "Pessoa Física":
     st.header("Ficha Cadastral Pessoa Física")
