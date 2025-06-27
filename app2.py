@@ -272,7 +272,6 @@ def preencher_endereco(tipo_campo: str, cep_value: str) -> str:
         if target_keys:
             for campo_origem, session_key in target_keys.items():
                 st.session_state[session_key] = endereco_info.get(campo_origem, '')
-            st.rerun() # Adicionado st.rerun() aqui para forçar a atualização dos campos na UI
             return None # Sem erro
         else:
             return "Tipo de campo de endereço desconhecido."
@@ -594,7 +593,7 @@ def gerar_pdf_pj(dados, dependentes=None):
             elif len(field_info) == 3: # Special case for address and city/state
                 if label == "Endereço Residencial":
                     endereco = dados.get(field_info[1], '')
-                    numero = dados.get(field_field_info[2], '')
+                    numero = dados.get(field_info[2], '')
                     if endereco and sanitize_text(endereco):
                         pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(endereco)}, Nº {sanitize_text(numero)}", 0, 1)
                 elif label == "Cidade/Estado":
@@ -1150,7 +1149,7 @@ elif ficha_tipo == "Pessoa Jurídica":
                 st.warning("Por favor, digite um CEP para buscar.")
 
         st.markdown("---")
-        st.markdown("**DOCUMENTOS NECESSÁRIOS:**")
+        st.markdown("**DOCUMENTOS NECESSÁRIAS:**")
         st.markdown("- **DA EMPRESA:** CONTRATO SOCIAL E ALTERAÇÕES, COMPROVANTE DE ENDEREÇO, DECLARAÇÃO DE FATURAMENTO;")
         st.markdown("- **DOS SÓCIOS E SEUS CÔNJUGES:** CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação.")
         st.markdown("---")
