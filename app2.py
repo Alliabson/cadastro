@@ -855,8 +855,10 @@ if ficha_tipo == "Pessoa Física":
         with col_cep_comp:
             comprador_cep_pf = st.text_input("CEP", help="Digite o CEP e clique 'Buscar Endereço' para preencher.", key="comprador_cep_pf", value=st.session_state.comprador_cep_pf)
         with col_btn_comp:
-            st.markdown("<br>", unsafe_allow_html=True) # Espaço para alinhar o botão
-            st.button("Buscar Endereço Comprador", key="btn_buscar_comp_pf_in_form", on_click=_on_cep_search_callback, args=('pf', 'comprador_cep_pf'))
+            # Use st.form_submit_button para a ação de busca dentro do formulário
+            # Isso submete o formulário e permite que o callback _on_cep_search_callback seja executado
+            # E o rerun do Streamlit preencherá os campos
+            st.form_submit_button("Buscar Endereço Comprador", on_click=_on_cep_search_callback, args=('pf', 'comprador_cep_pf'))
 
         col_end_num_bairro = st.columns([2,1,1])
         with col_end_num_bairro[0]:
@@ -909,8 +911,7 @@ if ficha_tipo == "Pessoa Física":
         with col_conjuge_cep:
             conjuge_cep_pf = st.text_input("CEP do Cônjuge/Sócio(a)", help="Digite o CEP e clique 'Buscar Endereço' para preencher.", key="conjuge_cep_pf", value=st.session_state.conjuge_cep_pf)
         with col_btn_conj:
-            st.markdown("<br>", unsafe_allow_html=True) # Espaço para alinhar o botão
-            st.button("Buscar Endereço Cônjuge/Sócio(a)", key="btn_buscar_conj_pf_in_form", on_click=_on_cep_search_callback, args=('conjuge_pf', 'conjuge_cep_pf'))
+            st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a)", on_click=_on_cep_search_callback, args=('conjuge_pf', 'conjuge_cep_pf'))
 
         col_conjuge_end_num_bairro = st.columns([2,1,1])
         with col_conjuge_end_num_bairro[0]:
@@ -1068,8 +1069,7 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_cep_comp_pj:
             comprador_cep_pj = st.text_input("CEP da Empresa", help="Digite o CEP e clique 'Buscar Endereço' para preencher.", key="comprador_cep_pj", value=st.session_state.comprador_cep_pj)
         with col_btn_comp_pj:
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.button("Buscar Endereço Empresa", key="btn_buscar_comp_pj_in_form", on_click=_on_cep_search_callback, args=('empresa_pj', 'comprador_cep_pj'))
+            st.form_submit_button("Buscar Endereço Empresa", on_click=_on_cep_search_callback, args=('empresa_pj', 'comprador_cep_pj'))
 
         col_end_num_bairro_empresa_pj = st.columns([2,1,1])
         with col_end_num_bairro_empresa_pj[0]:
@@ -1111,8 +1111,7 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_cep_rep_pj:
             representante_cep_pj = st.text_input("CEP do Representante", help="Digite o CEP e clique 'Buscar Endereço' para preencher.", key="representante_cep_pj", value=st.session_state.representante_cep_pj)
         with col_btn_rep_pj:
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.button("Buscar Endereço Representante", key="btn_buscar_rep_pj_in_form", on_click=_on_cep_search_callback, args=('administrador_pj', 'representante_cep_pj'))
+            st.form_submit_button("Buscar Endereço Representante", on_click=_on_cep_search_callback, args=('administrador_pj', 'representante_cep_pj'))
 
         col_rep_end_num_bairro = st.columns([2,1,1])
         with col_rep_end_num_bairro[0]:
@@ -1154,8 +1153,7 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_conjuge_cep_pj:
             conjuge_cep_pj = st.text_input("CEP Cônjuge/Sócio(a) PJ", help="Digite o CEP e clique 'Buscar Endereço' para preencher.", key="conjuge_cep_pj", value=st.session_state.conjuge_cep_pj)
         with col_btn_conj_pj:
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.button("Buscar Endereço Cônjuge/Sócio(a) PJ", key="btn_buscar_conj_pj_in_form", on_click=_on_cep_search_callback, args=('conjuge_pj', 'conjuge_cep_pj'))
+            st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a) PJ", on_click=_on_cep_search_callback, args=('conjuge_pj', 'conjuge_cep_pj'))
 
         col_conjuge_pj_end_num_bairro = st.columns([2,1,1])
         with col_conjuge_pj_end_num_bairro[0]:
@@ -1201,7 +1199,7 @@ elif ficha_tipo == "Pessoa Jurídica":
             dep_email_pj = st.text_input("E-mail do Dependente (PJ)", value=st.session_state.get("dep_email_pj", ""), key="dep_email_pj")
             dep_grau_parentesco_pj = st.text_input("Grau de Parentesco (PJ)", value=st.session_state.get("dep_grau_parentesco_pj", ""), key="dep_grau_parentesco_pj")
 
-            st.button("Adicionar Dependente (PJ)", key="add_dep_pj_button_out_form", on_click=add_dependent_pj_callback)
+            st.button("Adicionar Dependente", key="add_dep_pj_button_out_form", on_click=add_dependent_pj_callback)
             
             if st.session_state.dependentes_pj_temp:
                 st.markdown("---")
