@@ -96,6 +96,30 @@ if "dependentes_pf_temp" not in st.session_state:
 if "dependentes_pj_temp" not in st.session_state:
     st.session_state.dependentes_pj_temp = []
 
+# Inicialização dos novos campos da proposta
+if "proposta_valor_imovel" not in st.session_state:
+    st.session_state.proposta_valor_imovel = ""
+if "proposta_forma_pagamento_imovel" not in st.session_state:
+    st.session_state.proposta_forma_pagamento_imovel = ""
+if "proposta_valor_honorarios" not in st.session_state:
+    st.session_state.proposta_valor_honorarios = ""
+if "proposta_forma_pagamento_honorarios" not in st.session_state:
+    st.session_state.proposta_forma_pagamento_honorarios = ""
+if "proposta_conta_bancaria" not in st.session_state:
+    st.session_state.proposta_conta_bancaria = ""
+if "proposta_valor_ir" not in st.session_state:
+    st.session_state.proposta_valor_ir = ""
+if "proposta_valor_escritura" not in st.session_state:
+    st.session_state.proposta_valor_escritura = ""
+if "proposta_observacoes" not in st.session_state:
+    st.session_state.proposta_observacoes = ""
+if "proposta_corretor_angariador" not in st.session_state:
+    st.session_state.proposta_corretor_angariador = ""
+if "proposta_corretor_vendedor" not in st.session_state:
+    st.session_state.proposta_corretor_vendedor = ""
+if "proposta_data_negociacao" not in st.session_state:
+    st.session_state.proposta_data_negociacao = datetime.date.today() # Valor padrão para data
+
 # Configuração de sessão com retry para requisições HTTP
 session = requests.Session()
 retry = Retry(
@@ -329,7 +353,7 @@ def formatar_telefone(telefone: str) -> str:
     return telefone # Retorna sem formatação se não corresponder aos padrões
 
 
-def gerar_pdf_pf(dados, dependentes=None):
+def gerar_pdf_pf(dados, dependentes=None, dados_proposta=None):
     """
     Gera um arquivo PDF com os dados da Ficha Cadastral de Pessoa Física.
     """
@@ -358,45 +382,70 @@ def gerar_pdf_pf(dados, dependentes=None):
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do COMPRADOR(A)"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        # Campos do comprador
-        fields_comprador = [
-            ("Nome Completo", "comprador_nome_pf"),
-            ("Profissão", "comprador_profissao_pf"),
-            ("Nacionalidade", "comprador_nacionalidade_pf"),
-            ("Fone Residencial", "comprador_fone_residencial_pf"),
-            ("Fone Comercial", "comprador_fone_comercial_pf"),
-            ("Celular", "comprador_celular_pf"),
-            ("E-mail", "comprador_email_pf"),
-            ("Endereço Residencial", "comprador_end_residencial_pf", "comprador_numero_pf"),
-            ("Bairro", "comprador_bairro_pf"),
-            ("Cidade/Estado", "comprador_cidade_pf", "comprador_estado_pf"),
-            ("CEP", "comprador_cep_pf"),
-            ("Estado Civil", "comprador_estado_civil_pf"),
-            ("Regime de Bens", "comprador_regime_bens_pf"),
-            ("União Estável", "comprador_uniao_estavel_pf")
-        ]
-        for field_info in fields_comprador:
-            label = field_info[0]
-            if len(field_info) == 2:
-                value = dados.get(field_info[1], '')
-                if value and sanitize_text(value):
-                    # Aplica formatação de telefone se o campo for de telefone
-                    if "fone" in field_info[1] or "celular" in field_info[1]:
-                        value = formatar_telefone(value)
-                    elif "cpf" in field_info[1]:
-                        value = formatar_cpf(value)
-                    pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
-            elif len(field_info) == 3: # Special case for address and city/state
-                if label == "Endereço Residencial":
-                    endereco = dados.get(field_info[1], '')
-                    numero = dados.get(field_info[2], '')
-                    if endereco and sanitize_text(endereco):
-                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(endereco)}, Nº {sanitize_text(numero)}", 0, 1)
-                elif label == "Cidade/Estado":
-                    cidade = dados.get(field_info[1], '')
-                    estado = dados.get(field_info[2], '')
-                    if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
-                            pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
+        
+        # Nome Completo, Profissão
+        nome_comprador = dados.get('comprador_nome_pf', '')
+        profissao_comprador = dados.get('comprador_profissao_pf', '')
+        if nome_comprador or profissao_comprador:
+            pdf.cell(95, 6, f"Nome Completo: {sanitize_text(nome_comprador)}", 0, 0)
+            pdf.cell(0, 6, f"Profissão: {sanitize_text(profissao_comprador)}", 0, 1)
+
+        # Nacionalidade
+        nacionalidade_comprador = dados.get('comprador_nacionalidade_pf', '')
+        if nacionalidade_comprador:
+            pdf.cell(0, 6, f"Nacionalidade: {sanitize_text(nacionalidade_comprador)}", 0, 1)
+
+        # Fone Residencial, Fone Comercial
+        fone_residencial_comprador = dados.get('comprador_fone_residencial_pf', '')
+        fone_comercial_comprador = dados.get('comprador_fone_comercial_pf', '')
+        if fone_residencial_comprador or fone_comercial_comprador:
+            pdf.cell(95, 6, f"Fone Residencial: {sanitize_text(formatar_telefone(fone_residencial_comprador))}", 0, 0)
+            pdf.cell(0, 6, f"Fone Comercial: {sanitize_text(formatar_telefone(fone_comercial_comprador))}", 0, 1)
+
+        # Celular, E-mail
+        celular_comprador = dados.get('comprador_celular_pf', '')
+        email_comprador = dados.get('comprador_email_pf', '')
+        if celular_comprador or email_comprador:
+            pdf.cell(95, 6, f"Celular: {sanitize_text(formatar_telefone(celular_comprador))}", 0, 0)
+            pdf.cell(0, 6, f"E-mail: {sanitize_text(email_comprador)}", 0, 1)
+
+        # Endereço Residencial, Número
+        endereco_res_comprador = dados.get('comprador_end_residencial_pf', '')
+        numero_comprador = dados.get('comprador_numero_pf', '')
+        if endereco_res_comprador:
+            endereco_linha = f"Endereço Residencial: {sanitize_text(endereco_res_comprador)}"
+            if numero_comprador:
+                endereco_linha += f", Nº {sanitize_text(numero_comprador)}"
+            pdf.cell(0, 6, endereco_linha, 0, 1)
+
+        # Bairro, Cidade/Estado, CEP
+        bairro_comprador = dados.get('comprador_bairro_pf', '')
+        cidade_comprador = dados.get('comprador_cidade_pf', '')
+        estado_comprador = dados.get('comprador_estado_pf', '')
+        cep_comprador = dados.get('comprador_cep_pf', '')
+
+        if bairro_comprador or cidade_comprador or estado_comprador or cep_comprador:
+            if bairro_comprador:
+                pdf.cell(95, 6, f"Bairro: {sanitize_text(bairro_comprador)}", 0, 0)
+            if cidade_comprador and estado_comprador:
+                pdf.cell(0, 6, f"Cidade/Estado: {sanitize_text(cidade_comprador)}/{sanitize_text(estado_comprador)}", 0, 1)
+            elif bairro_comprador: # If only bairro and no city/state, force line break after bairro
+                pdf.ln(6) 
+            
+            if cep_comprador:
+                pdf.cell(0, 6, f"CEP: {sanitize_text(cep_comprador)}", 0, 1)
+
+        # Estado Civil, Regime de Bens
+        estado_civil_comprador = dados.get('comprador_estado_civil_pf', '')
+        regime_bens_comprador = dados.get('comprador_regime_bens_pf', '')
+        if estado_civil_comprador or regime_bens_comprador:
+            pdf.cell(95, 6, f"Estado Civil: {sanitize_text(estado_civil_comprador)}", 0, 0)
+            pdf.cell(0, 6, f"Regime de Bens: {sanitize_text(regime_bens_comprador)}", 0, 1)
+
+        # União Estável
+        uniao_estavel_comprador = dados.get('comprador_uniao_estavel_pf', '')
+        if uniao_estavel_comprador:
+            pdf.cell(0, 6, f"União Estável: {sanitize_text(uniao_estavel_comprador)}", 0, 1)
 
         pdf.ln(3) # Reduzido de 5 para 3
         
@@ -409,42 +458,59 @@ def gerar_pdf_pf(dados, dependentes=None):
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do CÔNJUGE/SÓCIO(A)"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        # Campos do cônjuge/sócio
-        fields_conjuge_pf = [
-            ("Nome Completo Cônjuge/Sócio(a)", "conjuge_nome_pf"),
-            ("Profissão Cônjuge/Sócio(a)", "conjuge_profissao_pf"),
-            ("Nacionalidade Cônjuge/Sócio(a)", "conjuge_nacionalidade_pf"),
-            ("Fone Residencial Cônjuge/Sócio(a)", "conjuge_fone_residencial_pf"),
-            ("Fone Comercial Cônjuge/Sócio(a)", "conjuge_fone_comercial_pf"),
-            ("Celular", "conjuge_celular_pf"),
-            ("E-mail", "conjuge_email_pf"),
-            ("Endereço Residencial", "conjuge_end_residencial_pf", "conjuge_numero_pf"),
-            ("Bairro", "conjuge_bairro_pf"),
-            ("Cidade/Estado", "conjuge_cidade_pf", "conjuge_estado_pf"),
-            ("CEP", "conjuge_cep_pf")
-        ]
-        for field_info in fields_conjuge_pf:
-            label = field_info[0]
-            if len(field_info) == 2:
-                value = dados.get(field_info[1], '')
-                if value and sanitize_text(value):
-                    # Aplica formatação de telefone se o campo for de telefone
-                    if "fone" in field_info[1] or "celular" in field_info[1]:
-                        value = formatar_telefone(value)
-                    elif "cpf" in field_info[1]:
-                        value = formatar_cpf(value)
-                    pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
-            elif len(field_info) == 3: # Special case for address and city/state
-                if label == "Endereço Residencial":
-                    endereco = dados.get(field_info[1], '')
-                    numero = dados.get(field_info[2], '')
-                    if endereco and sanitize_text(endereco):
-                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(endereco)}, Nº {sanitize_text(numero)}", 0, 1)
-                elif label == "Cidade/Estado":
-                    cidade = dados.get(field_info[1], '')
-                    estado = dados.get(field_info[2], '')
-                    if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
-                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
+        
+        # Nome Completo Cônjuge/Sócio(a), Profissão Cônjuge/Sócio(a)
+        nome_conjuge = dados.get('conjuge_nome_pf', '')
+        profissao_conjuge = dados.get('conjuge_profissao_pf', '')
+        if nome_conjuge or profissao_conjuge:
+            pdf.cell(95, 6, f"Nome Completo Cônjuge/Sócio(a): {sanitize_text(nome_conjuge)}", 0, 0)
+            pdf.cell(0, 6, f"Profissão Cônjuge/Sócio(a): {sanitize_text(profissao_conjuge)}", 0, 1)
+
+        # Nacionalidade Cônjuge/Sócio(a)
+        nacionalidade_conjuge = dados.get('conjuge_nacionalidade_pf', '')
+        if nacionalidade_conjuge:
+            pdf.cell(0, 6, f"Nacionalidade Cônjuge/Sócio(a): {sanitize_text(nacionalidade_conjuge)}", 0, 1)
+
+        # Fone Residencial Cônjuge/Sócio(a), Fone Comercial Cônjuge/Sócio(a)
+        fone_residencial_conjuge = dados.get('conjuge_fone_residencial_pf', '')
+        fone_comercial_conjuge = dados.get('conjuge_fone_comercial_pf', '')
+        if fone_residencial_conjuge or fone_comercial_conjuge:
+            pdf.cell(95, 6, f"Fone Residencial: {sanitize_text(formatar_telefone(fone_residencial_conjuge))}", 0, 0)
+            pdf.cell(0, 6, f"Fone Comercial: {sanitize_text(formatar_telefone(fone_comercial_conjuge))}", 0, 1)
+
+        # Celular Cônjuge/Sócio(a), E-mail Cônjuge/Sócio(a)
+        celular_conjuge = dados.get('conjuge_celular_pf', '')
+        email_conjuge = dados.get('conjuge_email_pf', '')
+        if celular_conjuge or email_conjuge:
+            pdf.cell(95, 6, f"Celular: {sanitize_text(formatar_telefone(celular_conjuge))}", 0, 0)
+            pdf.cell(0, 6, f"E-mail: {sanitize_text(email_conjuge)}", 0, 1)
+
+        # Endereço Residencial Cônjuge/Sócio(a), Número Cônjuge/Sócio(a)
+        endereco_res_conjuge = dados.get('conjuge_end_residencial_pf', '')
+        numero_conjuge = dados.get('conjuge_numero_pf', '')
+        if endereco_res_conjuge:
+            endereco_linha_conjuge = f"Endereço Residencial: {sanitize_text(endereco_res_conjuge)}"
+            if numero_conjuge:
+                endereco_linha_conjuge += f", Nº {sanitize_text(numero_conjuge)}"
+            pdf.cell(0, 6, endereco_linha_conjuge, 0, 1)
+        
+        # Bairro Cônjuge/Sócio(a), Cidade/Estado Cônjuge/Sócio(a), CEP Cônjuge/Sócio(a)
+        bairro_conjuge = dados.get('conjuge_bairro_pf', '')
+        cidade_conjuge = dados.get('conjuge_cidade_pf', '')
+        estado_conjuge = dados.get('conjuge_estado_pf', '')
+        cep_conjuge = dados.get('conjuge_cep_pf', '')
+
+        if bairro_conjuge or cidade_conjuge or estado_conjuge or cep_conjuge:
+            if bairro_conjuge:
+                pdf.cell(95, 6, f"Bairro: {sanitize_text(bairro_conjuge)}", 0, 0)
+            if cidade_conjuge and estado_conjuge:
+                pdf.cell(0, 6, f"Cidade/Estado: {sanitize_text(cidade_conjuge)}/{sanitize_text(estado_conjuge)}", 0, 1)
+            elif bairro_conjuge: # If only bairro and no city/state, force line break after bairro
+                pdf.ln(6) 
+            
+            if cep_conjuge:
+                pdf.cell(0, 6, f"CEP: {sanitize_text(cep_conjuge)}", 0, 1)
+        
         pdf.ln(3) # Reduzido de 5 para 3
 
         pdf.set_font("Helvetica", "B", 10)
@@ -462,6 +528,62 @@ def gerar_pdf_pf(dados, dependentes=None):
             pdf.set_font("Helvetica", "", 10)
             pdf.cell(0, 6, f"Indique aqui quem será o(a) condômino(a): {sanitize_text(condomino_indicado)}", 0, 1)
             pdf.ln(3)
+
+        # Inserir Dados da Proposta em uma nova página, se houver
+        if dados_proposta:
+            pdf.add_page()
+            pdf.set_font("Helvetica", "B", 16)
+            pdf.cell(0, 10, sanitize_text("Dados da Proposta"), 0, 1, "C")
+            pdf.ln(5)
+            pdf.set_font("Helvetica", "", 10)
+
+            # Valor do imóvel e Forma de pagamento (imóvel)
+            valor_imovel = dados_proposta.get('valor_imovel', '')
+            forma_pagamento_imovel = dados_proposta.get('forma_pagamento_imovel', '')
+            if valor_imovel or forma_pagamento_imovel:
+                pdf.cell(95, 6, f"Valor do imóvel: {sanitize_text(valor_imovel)}", 0, 0)
+                pdf.cell(0, 6, f"Forma de pagamento (Imóvel): {sanitize_text(forma_pagamento_imovel)}", 0, 1)
+
+            # Valor dos honorários e Forma de pagamento (honorários)
+            valor_honorarios = dados_proposta.get('valor_honorarios', '')
+            forma_pagamento_honorarios = dados_proposta.get('forma_pagamento_honorarios', '')
+            if valor_honorarios or forma_pagamento_honorarios:
+                pdf.cell(95, 6, f"Valor dos honorários: {sanitize_text(valor_honorarios)}", 0, 0)
+                pdf.cell(0, 6, f"Forma de pagamento (Honorários): {sanitize_text(forma_pagamento_honorarios)}", 0, 1)
+
+            # Conta Bancária para transferência
+            conta_bancaria = dados_proposta.get('conta_bancaria', '')
+            if conta_bancaria:
+                pdf.cell(0, 6, f"Conta Bancária para transferência: {sanitize_text(conta_bancaria)}", 0, 1)
+
+            # Valor para declaração de imposto de renda
+            valor_ir = dados_proposta.get('valor_ir', '')
+            if valor_ir:
+                pdf.cell(0, 6, f"Valor para declaração de imposto de renda: {sanitize_text(valor_ir)}", 0, 1)
+            
+            # Valor para escritura
+            valor_escritura = dados_proposta.get('valor_escritura', '')
+            if valor_escritura:
+                pdf.cell(0, 6, f"Valor para escritura: {sanitize_text(valor_escritura)}", 0, 1)
+
+            # Observações
+            observacoes_proposta = dados_proposta.get('observacoes', '')
+            if observacoes_proposta:
+                pdf.multi_cell(0, 6, f"Observações: {sanitize_text(observacoes_proposta)}", 0, "L")
+            
+            # Corretor(a) angariador e Corretor(a) vendedor(a)
+            corretor_angariador = dados_proposta.get('corretor_angariador', '')
+            corretor_vendedor = dados_proposta.get('corretor_vendedor', '')
+            if corretor_angariador or corretor_vendedor:
+                pdf.cell(95, 6, f"Corretor(a) angariador: {sanitize_text(corretor_angariador)}", 0, 0)
+                pdf.cell(0, 6, f"Corretor(a) vendedor(a): {sanitize_text(corretor_vendedor)}", 0, 1)
+
+            # Data da negociação
+            data_negociacao = dados_proposta.get('data_negociacao', '')
+            if data_negociacao:
+                pdf.cell(0, 6, f"Data da negociação: {sanitize_text(str(data_negociacao))}", 0, 1)
+
+            pdf.ln(5) # Espaço após dados da proposta
 
 
         # Adiciona a seção de data e assinaturas
@@ -520,7 +642,7 @@ def gerar_pdf_pf(dados, dependentes=None):
         st.error(f"Erro ao gerar PDF: {str(e)}")
         return None
 
-def gerar_pdf_pj(dados, dependentes=None):
+def gerar_pdf_pj(dados, dependentes=None, dados_proposta=None):
     """
     Gera um arquivo PDF com os dados da Ficha Cadastral de Pessoa Jurídica.
     """
@@ -549,124 +671,175 @@ def gerar_pdf_pj(dados, dependentes=None):
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do COMPRADOR(A)"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        # Campos do comprador PJ
-        fields_comprador_pj = [
-            ("Razão Social", "comprador_razao_social_pj"),
-            ("Nome Fantasia", "comprador_nome_fantasia_pj"),
-            ("Inscrição Estadual", "comprador_inscricao_estadual_pj"),
-            ("Fone Residencial", "comprador_fone_residencial_pj"),
-            ("Fone Comercial", "comprador_fone_comercial_pj"),
-            ("Celular", "comprador_celular_pj"),
-            ("E-mail", "comprador_email_pj"),
-            ("Endereço Residencial/Comercial", "comprador_end_residencial_comercial_pj", "comprador_numero_pj"),
-            ("Bairro", "comprador_bairro_pj"),
-            ("Cidade/Estado", "comprador_cidade_pj", "comprador_estado_pj"),
-            ("CEP", "comprador_cep_pj")
-        ]
-        for field_info in fields_comprador_pj:
-            label = field_info[0]
-            if len(field_info) == 2:
-                value = dados.get(field_info[1], '')
-                if value and sanitize_text(value):
-                    # Aplica formatação de telefone se o campo for de telefone
-                    if "fone" in field_info[1] or "celular" in field_info[1]:
-                        value = formatar_telefone(value)
-                    elif "cnpj" in field_info[1]:
-                        value = formatar_cnpj(value)
-                    pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
-            elif len(field_info) == 3: # Special case for address and city/state
-                if label == "Endereço Residencial/Comercial":
-                    endereco = dados.get(field_info[1], '')
-                    numero = dados.get(field_info[2], '')
-                    if endereco and sanitize_text(endereco):
-                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(endereco)}, Nº {sanitize_text(numero)}", 0, 1)
-                elif label == "Cidade/Estado":
-                    cidade = dados.get(field_info[1], '')
-                    estado = dados.get(field_info[2], '')
-                    if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
-                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
+        
+        # Razão Social, Nome Fantasia
+        razao_social_comprador_pj = dados.get('comprador_razao_social_pj', '')
+        nome_fantasia_comprador_pj = dados.get('comprador_nome_fantasia_pj', '')
+        if razao_social_comprador_pj or nome_fantasia_comprador_pj:
+            pdf.cell(95, 6, f"Razão Social: {sanitize_text(razao_social_comprador_pj)}", 0, 0)
+            pdf.cell(0, 6, f"Nome Fantasia: {sanitize_text(nome_fantasia_comprador_pj)}", 0, 1)
+        
+        # Inscrição Estadual
+        inscricao_estadual_comprador_pj = dados.get('comprador_inscricao_estadual_pj', '')
+        if inscricao_estadual_comprador_pj:
+            pdf.cell(0, 6, f"Inscrição Estadual: {sanitize_text(inscricao_estadual_comprador_pj)}", 0, 1)
+
+        # Fone Residencial, Fone Comercial
+        fone_residencial_comprador_pj = dados.get('comprador_fone_residencial_pj', '')
+        fone_comercial_comprador_pj = dados.get('comprador_fone_comercial_pj', '')
+        if fone_residencial_comprador_pj or fone_comercial_comprador_pj:
+            pdf.cell(95, 6, f"Fone Residencial: {sanitize_text(formatar_telefone(fone_residencial_comprador_pj))}", 0, 0)
+            pdf.cell(0, 6, f"Fone Comercial: {sanitize_text(formatar_telefone(fone_comercial_comprador_pj))}", 0, 1)
+
+        # Celular, E-mail
+        celular_comprador_pj = dados.get('comprador_celular_pj', '')
+        email_comprador_pj = dados.get('comprador_email_pj', '')
+        if celular_comprador_pj or email_comprador_pj:
+            pdf.cell(95, 6, f"Celular: {sanitize_text(formatar_telefone(celular_comprador_pj))}", 0, 0)
+            pdf.cell(0, 6, f"E-mail: {sanitize_text(email_comprador_pj)}", 0, 1)
+
+        # Endereço Residencial/Comercial, Número
+        endereco_res_comercial_comprador_pj = dados.get('comprador_end_residencial_comercial_pj', '')
+        numero_comprador_pj = dados.get('comprador_numero_pj', '')
+        if endereco_res_comercial_comprador_pj:
+            endereco_linha_pj = f"Endereço Residencial/Comercial: {sanitize_text(endereco_res_comercial_comprador_pj)}"
+            if numero_comprador_pj:
+                endereco_linha_pj += f", Nº {sanitize_text(numero_comprador_pj)}"
+            pdf.cell(0, 6, endereco_linha_pj, 0, 1)
+
+        # Bairro, Cidade/Estado, CEP
+        bairro_comprador_pj = dados.get('comprador_bairro_pj', '')
+        cidade_comprador_pj = dados.get('comprador_cidade_pj', '')
+        estado_comprador_pj = dados.get('comprador_estado_pj', '')
+        cep_comprador_pj = dados.get('comprador_cep_pj', '')
+
+        if bairro_comprador_pj or cidade_comprador_pj or estado_comprador_pj or cep_comprador_pj:
+            if bairro_comprador_pj:
+                pdf.cell(95, 6, f"Bairro: {sanitize_text(bairro_comprador_pj)}", 0, 0)
+            if cidade_comprador_pj and estado_comprador_pj:
+                pdf.cell(0, 6, f"Cidade/Estado: {sanitize_text(cidade_comprador_pj)}/{sanitize_text(estado_comprador_pj)}", 0, 1)
+            elif bairro_comprador_pj: # If only bairro and no city/state, force line break after bairro
+                pdf.ln(6)
+            
+            if cep_comprador_pj:
+                pdf.cell(0, 6, f"CEP: {sanitize_text(cep_comprador_pj)}", 0, 1)
+        
         pdf.ln(3) # Reduzido de 5 para 3
 
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do REPRESENTANTE"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        # Campos do representante
-        fields_representante_pj = [
-            ("Nome Completo Representante", "representante_nome_pj"),
-            ("Profissão Representante", "representante_profissao_pj"),
-            ("Nacionalidade Representante", "representante_nacionalidade_pj"),
-            ("Fone Residencial Representante", "representante_fone_residencial_pj"),
-            ("Fone Comercial Representante", "representante_fone_comercial_pj"),
-            ("Celular", "representante_celular_pj"),
-            ("E-mail", "representante_email_pj"),
-            ("Endereço Residencial", "representante_end_residencial_pj", "representante_numero_pj"),
-            ("Bairro", "representante_bairro_pj"),
-            ("Cidade/Estado", "representante_cidade_pj", "representante_estado_pj"),
-            ("CEP", "representante_cep_pj")
-        ]
-        for field_info in fields_representante_pj:
-            label = field_info[0]
-            if len(field_info) == 2:
-                value = dados.get(field_info[1], '')
-                if value and sanitize_text(value):
-                    # Aplica formatação de telefone se o campo for de telefone
-                    if "fone" in field_info[1] or "celular" in field_info[1]:
-                        value = formatar_telefone(value)
-                    elif "cpf" in field_info[1]:
-                        value = formatar_cpf(value)
-                    pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
-            elif len(field_info) == 3: # Special case for address and city/state
-                if label == "Endereço Residencial":
-                    endereco = dados.get(field_info[1], '')
-                    numero = dados.get(field_info[2], '')
-                    if endereco and sanitize_text(endereco):
-                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(endereco)}, Nº {sanitize_text(numero)}", 0, 1)
-                elif label == "Cidade/Estado":
-                    cidade = dados.get(field_info[1], '')
-                    estado = dados.get(field_info[2], '')
-                    if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
-                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
-        pdf.ln(3) # Reduzido de 5 para 3
 
+        # Nome Completo Representante, Profissão Representante
+        nome_representante = dados.get('representante_nome_pj', '')
+        profissao_representante = dados.get('representante_profissao_pj', '')
+        if nome_representante or profissao_representante:
+            pdf.cell(95, 6, f"Nome Completo Representante: {sanitize_text(nome_representante)}", 0, 0)
+            pdf.cell(0, 6, f"Profissão Representante: {sanitize_text(profissao_representante)}", 0, 1)
+
+        # Nacionalidade Representante
+        nacionalidade_representante = dados.get('representante_nacionalidade_pj', '')
+        if nacionalidade_representante:
+            pdf.cell(0, 6, f"Nacionalidade Representante: {sanitize_text(nacionalidade_representante)}", 0, 1)
+
+        # Fone Residencial Representante, Fone Comercial Representante
+        fone_residencial_representante = dados.get('representante_fone_residencial_pj', '')
+        fone_comercial_representante = dados.get('representante_fone_comercial_pj', '')
+        if fone_residencial_representante or fone_comercial_representante:
+            pdf.cell(95, 6, f"Fone Residencial: {sanitize_text(formatar_telefone(fone_residencial_representante))}", 0, 0)
+            pdf.cell(0, 6, f"Fone Comercial: {sanitize_text(formatar_telefone(fone_comercial_representante))}", 0, 1)
+
+        # Celular Representante, E-mail Representante
+        celular_representante = dados.get('representante_celular_pj', '')
+        email_representante = dados.get('representante_email_pj', '')
+        if celular_representante or email_representante:
+            pdf.cell(95, 6, f"Celular: {sanitize_text(formatar_telefone(celular_representante))}", 0, 0)
+            pdf.cell(0, 6, f"E-mail: {sanitize_text(email_representante)}", 0, 1)
+
+        # Endereço Residencial Representante, Número Representante
+        endereco_res_representante = dados.get('representante_end_residencial_pj', '')
+        numero_representante = dados.get('representante_numero_pj', '')
+        if endereco_res_representante:
+            endereco_linha_rep = f"Endereço Residencial: {sanitize_text(endereco_res_representante)}"
+            if numero_representante:
+                endereco_linha_rep += f", Nº {sanitize_text(numero_representante)}"
+            pdf.cell(0, 6, endereco_linha_rep, 0, 1)
+
+        # Bairro Representante, Cidade/Estado Representante, CEP Representante
+        bairro_representante = dados.get('representante_bairro_pj', '')
+        cidade_representante = dados.get('representante_cidade_pj', '')
+        estado_representante = dados.get('representante_estado_pj', '')
+        cep_representante = dados.get('representante_cep_pj', '')
+
+        if bairro_representante or cidade_representante or estado_representante or cep_representante:
+            if bairro_representante:
+                pdf.cell(95, 6, f"Bairro: {sanitize_text(bairro_representante)}", 0, 0)
+            if cidade_representante and estado_representante:
+                pdf.cell(0, 6, f"Cidade/Estado: {sanitize_text(cidade_representante)}/{sanitize_text(estado_representante)}", 0, 1)
+            elif bairro_representante: # If only bairro and no city/state, force line break after bairro
+                pdf.ln(6)
+            
+            if cep_representante:
+                pdf.cell(0, 6, f"CEP: {sanitize_text(cep_representante)}", 0, 1)
+        
+        pdf.ln(3) # Reduzido de 5 para 3
+        
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do CÔNJUGE/SÓCIO(A)"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        # Campos do cônjuge/sócio PJ
-        fields_conjuge_pj = [
-            ("Nome Completo Cônjuge/Sócio(a) PJ", "conjuge_nome_pj"),
-            ("Profissão Cônjuge/Sócio(a) PJ", "conjuge_profissao_pj"),
-            ("Nacionalidade Cônjuge/Sócio(a) PJ", "conjuge_nacionalidade_pj"),
-            ("Fone Residencial Cônjuge/Sócio(a) PJ", "conjuge_fone_residencial_pj"),
-            ("Fone Comercial Cônjuge/Sócio(a) PJ", "conjuge_fone_comercial_pj"),
-            ("Celular", "conjuge_celular_pj"),
-            ("E-mail", "conjuge_email_pj"),
-            ("Endereço Residencial", "conjuge_end_residencial_pj", "conjuge_numero_pj"),
-            ("Bairro", "conjuge_bairro_pj"),
-            ("Cidade/Estado", "conjuge_cidade_pj", "conjuge_estado_pj"),
-            ("CEP", "conjuge_cep_pj")
-        ]
-        for field_info in fields_conjuge_pj:
-            label = field_info[0]
-            if len(field_info) == 2:
-                value = dados.get(field_info[1], '')
-                if value and sanitize_text(value):
-                    # Aplica formatação de telefone se o campo for de telefone
-                    if "fone" in field_info[1] or "celular" in field_info[1]:
-                        value = formatar_telefone(value)
-                    elif "cpf" in field_info[1]:
-                        value = formatar_cpf(value)
-                    pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
-            elif len(field_info) == 3: # Special case for address and city/state
-                if label == "Endereço Residencial":
-                    endereco = dados.get(field_info[1], '')
-                    numero = dados.get(field_info[2], '')
-                    if endereco and sanitize_text(endereco):
-                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(endereco)}, Nº {sanitize_text(numero)}", 0, 1)
-                elif label == "Cidade/Estado":
-                    cidade = dados.get(field_info[1], '')
-                    estado = dados.get(field_info[2], '')
-                    if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
-                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
+
+        # Nome Completo Cônjuge/Sócio(a) PJ, Profissão Cônjuge/Sócio(a) PJ
+        nome_conjuge_pj = dados.get('conjuge_nome_pj', '')
+        profissao_conjuge_pj = dados.get('conjuge_profissao_pj', '')
+        if nome_conjuge_pj or profissao_conjuge_pj:
+            pdf.cell(95, 6, f"Nome Completo Cônjuge/Sócio(a) PJ: {sanitize_text(nome_conjuge_pj)}", 0, 0)
+            pdf.cell(0, 6, f"Profissão Cônjuge/Sócio(a) PJ: {sanitize_text(profissao_conjuge_pj)}", 0, 1)
+
+        # Nacionalidade Cônjuge/Sócio(a) PJ
+        nacionalidade_conjuge_pj = dados.get('conjuge_nacionalidade_pj', '')
+        if nacionalidade_conjuge_pj:
+            pdf.cell(0, 6, f"Nacionalidade Cônjuge/Sócio(a) PJ: {sanitize_text(nacionalidade_conjuge_pj)}", 0, 1)
+
+        # Fone Residencial Cônjuge/Sócio(a) PJ, Fone Comercial Cônjuge/Sócio(a) PJ
+        fone_residencial_conjuge_pj = dados.get('conjuge_fone_residencial_pj', '')
+        fone_comercial_conjuge_pj = dados.get('conjuge_fone_comercial_pj', '')
+        if fone_residencial_conjuge_pj or fone_comercial_conjuge_pj:
+            pdf.cell(95, 6, f"Fone Residencial: {sanitize_text(formatar_telefone(fone_residencial_conjuge_pj))}", 0, 0)
+            pdf.cell(0, 6, f"Fone Comercial: {sanitize_text(formatar_telefone(fone_comercial_conjuge_pj))}", 0, 1)
+
+        # Celular Cônjuge/Sócio(a) PJ, E-mail Cônjuge/Sócio(a) PJ
+        celular_conjuge_pj = dados.get('conjuge_celular_pj', '')
+        email_conjuge_pj = dados.get('conjuge_email_pj', '')
+        if celular_conjuge_pj or email_conjuge_pj:
+            pdf.cell(95, 6, f"Celular: {sanitize_text(formatar_telefone(celular_conjuge_pj))}", 0, 0)
+            pdf.cell(0, 6, f"E-mail: {sanitize_text(email_conjuge_pj)}", 0, 1)
+
+        # Endereço Residencial Cônjuge/Sócio(a) PJ, Número Cônjuge/Sócio(a) PJ
+        endereco_res_conjuge_pj = dados.get('conjuge_end_residencial_pj', '')
+        numero_conjuge_pj = dados.get('conjuge_numero_pj', '')
+        if endereco_res_conjuge_pj:
+            endereco_linha_conjuge_pj = f"Endereço Residencial: {sanitize_text(endereco_res_conjuge_pj)}"
+            if numero_conjuge_pj:
+                endereco_linha_conjuge_pj += f", Nº {sanitize_text(numero_conjuge_pj)}"
+            pdf.cell(0, 6, endereco_linha_conjuge_pj, 0, 1)
+
+        # Bairro Cônjuge/Sócio(a) PJ, Cidade/Estado Cônjuge/Sócio(a) PJ, CEP Cônjuge/Sócio(a) PJ
+        bairro_conjuge_pj = dados.get('conjuge_bairro_pj', '')
+        cidade_conjuge_pj = dados.get('conjuge_cidade_pj', '')
+        estado_conjuge_pj = dados.get('conjuge_estado_pj', '')
+        cep_conjuge_pj = dados.get('conjuge_cep_pj', '')
+
+        if bairro_conjuge_pj or cidade_conjuge_pj or estado_conjuge_pj or cep_conjuge_pj:
+            if bairro_conjuge_pj:
+                pdf.cell(95, 6, f"Bairro: {sanitize_text(bairro_conjuge_pj)}", 0, 0)
+            if cidade_conjuge_pj and estado_conjuge_pj:
+                pdf.cell(0, 6, f"Cidade/Estado: {sanitize_text(cidade_conjuge_pj)}/{sanitize_text(estado_conjuge_pj)}", 0, 1)
+            elif bairro_conjuge_pj: # If only bairro and no city/state, force line break after bairro
+                pdf.ln(6)
+            
+            if cep_conjuge_pj:
+                pdf.cell(0, 6, f"CEP: {sanitize_text(cep_conjuge_pj)}", 0, 1)
+        
         pdf.ln(3) # Reduzido de 5 para 3
         
         pdf.set_font("Helvetica", "B", 10)
@@ -685,6 +858,62 @@ def gerar_pdf_pj(dados, dependentes=None):
             pdf.set_font("Helvetica", "", 10)
             pdf.cell(0, 6, f"Indique aqui quem será o(a) condômino(a): {sanitize_text(condomino_indicado)}", 0, 1)
             pdf.ln(3)
+
+        # Inserir Dados da Proposta em uma nova página, se houver
+        if dados_proposta:
+            pdf.add_page()
+            pdf.set_font("Helvetica", "B", 16)
+            pdf.cell(0, 10, sanitize_text("Dados da Proposta"), 0, 1, "C")
+            pdf.ln(5)
+            pdf.set_font("Helvetica", "", 10)
+
+            # Valor do imóvel e Forma de pagamento (imóvel)
+            valor_imovel = dados_proposta.get('valor_imovel', '')
+            forma_pagamento_imovel = dados_proposta.get('forma_pagamento_imovel', '')
+            if valor_imovel or forma_pagamento_imovel:
+                pdf.cell(95, 6, f"Valor do imóvel: {sanitize_text(valor_imovel)}", 0, 0)
+                pdf.cell(0, 6, f"Forma de pagamento (Imóvel): {sanitize_text(forma_pagamento_imovel)}", 0, 1)
+
+            # Valor dos honorários e Forma de pagamento (honorários)
+            valor_honorarios = dados_proposta.get('valor_honorarios', '')
+            forma_pagamento_honorarios = dados_proposta.get('forma_pagamento_honorarios', '')
+            if valor_honorarios or forma_pagamento_honorarios:
+                pdf.cell(95, 6, f"Valor dos honorários: {sanitize_text(valor_honorarios)}", 0, 0)
+                pdf.cell(0, 6, f"Forma de pagamento (Honorários): {sanitize_text(forma_pagamento_honorarios)}", 0, 1)
+
+            # Conta Bancária para transferência
+            conta_bancaria = dados_proposta.get('conta_bancaria', '')
+            if conta_bancaria:
+                pdf.cell(0, 6, f"Conta Bancária para transferência: {sanitize_text(conta_bancaria)}", 0, 1)
+
+            # Valor para declaração de imposto de renda
+            valor_ir = dados_proposta.get('valor_ir', '')
+            if valor_ir:
+                pdf.cell(0, 6, f"Valor para declaração de imposto de renda: {sanitize_text(valor_ir)}", 0, 1)
+            
+            # Valor para escritura
+            valor_escritura = dados_proposta.get('valor_escritura', '')
+            if valor_escritura:
+                pdf.cell(0, 6, f"Valor para escritura: {sanitize_text(valor_escritura)}", 0, 1)
+
+            # Observações
+            observacoes_proposta = dados_proposta.get('observacoes', '')
+            if observacoes_proposta:
+                pdf.multi_cell(0, 6, f"Observações: {sanitize_text(observacoes_proposta)}", 0, "L")
+            
+            # Corretor(a) angariador e Corretor(a) vendedor(a)
+            corretor_angariador = dados_proposta.get('corretor_angariador', '')
+            corretor_vendedor = dados_proposta.get('corretor_vendedor', '')
+            if corretor_angariador or corretor_vendedor:
+                pdf.cell(95, 6, f"Corretor(a) angariador: {sanitize_text(corretor_angariador)}", 0, 0)
+                pdf.cell(0, 6, f"Corretor(a) vendedor(a): {sanitize_text(corretor_vendedor)}", 0, 1)
+
+            # Data da negociação
+            data_negociacao = dados_proposta.get('data_negociacao', '')
+            if data_negociacao:
+                pdf.cell(0, 6, f"Data da negociação: {sanitize_text(str(data_negociacao))}", 0, 1)
+
+            pdf.ln(5) # Espaço após dados da proposta
 
         # Adiciona a seção de data e assinaturas
         pdf.ln(7) # Ajustado espaçamento
@@ -855,9 +1084,6 @@ if ficha_tipo == "Pessoa Física":
         with col_cep_comp:
             comprador_cep_pf = st.text_input("CEP", help="Digite o CEP e clique 'Buscar Endereço' para preencher.", key="comprador_cep_pf", value=st.session_state.comprador_cep_pf)
         with col_btn_comp:
-            # Use st.form_submit_button para a ação de busca dentro do formulário
-            # Isso submete o formulário e permite que o callback _on_cep_search_callback seja executado
-            # E o rerun do Streamlit preencherá os campos
             st.form_submit_button("Buscar Endereço Comprador", on_click=_on_cep_search_callback, args=('pf', 'comprador_cep_pf'))
 
         col_end_num_bairro = st.columns([2,1,1])
@@ -892,9 +1118,9 @@ if ficha_tipo == "Pessoa Física":
         with col_conjuge_nome_prof_nasc[0]:
             conjuge_nome_pf = st.text_input("Nome Completo Cônjuge/Sócio(a)", key="conjuge_nome_pf")
         with col_conjuge_nome_prof_nasc[1]:
-            conjuge_profissao_pf = st.text_input("Profissão Cônjuge/Sócio(a)", key="conjuge_profissao_pf")
+            conjuge_profissao_pf = st.text_input("Profissão", key="conjuge_profissao_pf")
         with col_conjuge_nome_prof_nasc[2]:
-            conjuge_nacionalidade_pf = st.text_input("Nacionalidade Cônjuge/Sócio(a)", key="conjuge_nacionalidade_pf")
+            conjuge_nacionalidade_pf = st.text_input("Nacionalidade", key="conjuge_nacionalidade_pf")
 
         col_conjuge_fones_email = st.columns([1,1,1,1])
         with col_conjuge_fones_email[0]:
@@ -902,9 +1128,9 @@ if ficha_tipo == "Pessoa Física":
         with col_conjuge_fones_email[1]:
             conjuge_fone_comercial_pf = st.text_input("Fone Comercial Cônjuge/Sócio(a)", key="conjuge_fone_comercial_pf")
         with col_conjuge_fones_email[2]:
-            conjuge_celular_pf = st.text_input("Celular Cônjuge/Sócio(a)", key="conjuge_celular_pf")
+            conjuge_celular_pf = st.text_input("Celular", key="conjuge_celular_pf")
         with col_conjuge_fones_email[3]:
-            conjuge_email_pf = st.text_input("E-mail Cônjuge/Sócio(a)", key="conjuge_email_pf")
+            conjuge_email_pf = st.text_input("E-mail", key="conjuge_email_pf")
 
         # CEP E ENDEREÇO DO CÔNJUGE - AGORA DENTRO DO FORMULÁRIO COM on_click
         col_conjuge_cep, col_btn_conj = st.columns([0.7, 0.3])
@@ -917,15 +1143,15 @@ if ficha_tipo == "Pessoa Física":
         with col_conjuge_end_num_bairro[0]:
             conjuge_end_residencial_pf = st.text_input("Endereço Residencial Cônjuge/Sócio(a)", value=st.session_state.conjuge_end_residencial_pf, key="conjuge_end_residencial_pf")
         with col_conjuge_end_num_bairro[1]:
-            conjuge_numero_pf = st.text_input("Número Cônjuge/Sócio(a)", value=st.session_state.conjuge_numero_pf, key="conjuge_numero_pf")
+            conjuge_numero_pf = st.text_input("Número", value=st.session_state.conjuge_numero_pf, key="conjuge_numero_pf")
         with col_conjuge_end_num_bairro[2]:
-            conjuge_bairro_pf = st.text_input("Bairro Cônjuge/Sócio(a)", value=st.session_state.conjuge_bairro_pf, key="conjuge_bairro_pf")
+            conjuge_bairro_pf = st.text_input("Bairro", value=st.session_state.conjuge_bairro_pf, key="conjuge_bairro_pf")
 
         col_conjuge_cidade_estado = st.columns([2,1])
         with col_conjuge_cidade_estado[0]:
-            conjuge_cidade_pf = st.text_input("Cidade Cônjuge/Sócio(a)", value=st.session_state.conjuge_cidade_pf, key="conjuge_cidade_pf")
+            conjuge_cidade_pf = st.text_input("Cidade", value=st.session_state.conjuge_cidade_pf, key="conjuge_cidade_pf")
         with col_conjuge_cidade_estado[1]:
-            conjuge_estado_pf = st.text_input("Estado Cônjuge/Sócio(a)", value=st.session_state.conjuge_estado_pf, key="conjuge_estado_pf")
+            conjuge_estado_pf = st.text_input("Estado", value=st.session_state.conjuge_estado_pf, key="conjuge_estado_pf")
 
         st.markdown("---")
         st.markdown("**DOCUMENTOS NECESSÁRIOS:**")
@@ -942,7 +1168,54 @@ if ficha_tipo == "Pessoa Física":
         with col2_form_pf:
             imprimir_pf = st.form_submit_button("Imprimir Formulário")
 
-    # Remaining sections remain outside the form
+    # Section for Dados da Proposta (Optional, controlled by checkbox)
+    st.subheader("Dados da Proposta")
+    incluir_dados_proposta_pf = st.checkbox("Incluir Dados da Proposta", key="incluir_dados_proposta_pf_checkbox")
+
+    dados_proposta_pf = None # Initialize outside the if block
+
+    if incluir_dados_proposta_pf:
+        with st.container(border=True):
+            col_val_imovel_fp = st.columns(2)
+            with col_val_imovel_fp[0]:
+                valor_imovel_pf = st.text_input("Valor do imóvel", value=st.session_state.get("proposta_valor_imovel", ""), key="proposta_valor_imovel")
+            with col_val_imovel_fp[1]:
+                forma_pagamento_imovel_pf = st.text_input("Forma de pagamento (Imóvel)", value=st.session_state.get("proposta_forma_pagamento_imovel", ""), key="proposta_forma_pagamento_imovel")
+
+            col_val_honorarios_fp = st.columns(2)
+            with col_val_honorarios_fp[0]:
+                valor_honorarios_pf = st.text_input("Valor dos honorários", value=st.session_state.get("proposta_valor_honorarios", ""), key="proposta_valor_honorarios")
+            with col_val_honorarios_fp[1]:
+                forma_pagamento_honorarios_pf = st.text_input("Forma de pagamento (Honorários)", value=st.session_state.get("proposta_forma_pagamento_honorarios", ""), key="proposta_forma_pagamento_honorarios")
+
+            conta_bancaria_pf = st.text_input("Conta Bancária para transferência", value=st.session_state.get("proposta_conta_bancaria", ""), key="proposta_conta_bancaria")
+            valor_ir_pf = st.text_input("Valor para declaração de imposto de renda", value=st.session_state.get("proposta_valor_ir", ""), key="proposta_valor_ir")
+            valor_escritura_pf = st.text_input("Valor para escritura", value=st.session_state.get("proposta_valor_escritura", ""), key="proposta_valor_escritura")
+            observacoes_proposta_pf = st.text_area("Observações", value=st.session_state.get("proposta_observacoes", ""), key="proposta_observacoes")
+
+            col_corretores = st.columns(2)
+            with col_corretores[0]:
+                corretor_angariador_pf = st.text_input("Corretor(a) angariador", value=st.session_state.get("proposta_corretor_angariador", ""), key="proposta_corretor_angariador")
+            with col_corretores[1]:
+                corretor_vendedor_pf = st.text_input("Corretor(a) vendedor(a)", value=st.session_state.get("proposta_corretor_vendedor", ""), key="proposta_corretor_vendedor")
+            
+            data_negociacao_pf = st.date_input("Data da negociação", value=st.session_state.get("proposta_data_negociacao", datetime.date.today()), key="proposta_data_negociacao")
+            
+            dados_proposta_pf = {
+                "valor_imovel": valor_imovel_pf.strip(),
+                "forma_pagamento_imovel": forma_pagamento_imovel_pf.strip(),
+                "valor_honorarios": valor_honorarios_pf.strip(),
+                "forma_pagamento_honorarios": forma_pagamento_honorarios_pf.strip(),
+                "conta_bancaria": conta_bancaria_pf.strip(),
+                "valor_ir": valor_ir_pf.strip(),
+                "valor_escritura": valor_escritura_pf.strip(),
+                "observacoes": observacoes_proposta_pf.strip(),
+                "corretor_angariador": corretor_angariador_pf.strip(),
+                "corretor_vendedor": corretor_vendedor_pf.strip(),
+                "data_negociacao": data_negociacao_pf,
+            }
+
+
     # Seção para Dependentes (FORA DO st.form para Pessoa Física)
     st.subheader("Dependentes")
     incluir_dependentes_pf = st.checkbox("Incluir Dependentes", key="incluir_dependentes_pf_checkbox")
@@ -1014,7 +1287,9 @@ if ficha_tipo == "Pessoa Física":
             "condomino_indicado_pf": condomino_indicado_pf.strip(),
         }
         
-        pdf_b64_pf = gerar_pdf_pf(dados_pf, st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None)
+        pdf_b64_pf = gerar_pdf_pf(dados_pf, 
+                                st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None,
+                                dados_proposta_pf if incluir_dados_proposta_pf else None)
         if pdf_b64_pf:
             href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
             st.markdown(href, unsafe_allow_html=True)
@@ -1092,9 +1367,9 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_rep_nome_prof_nasc[0]:
             representante_nome_pj = st.text_input("Nome Completo Representante", key="representante_nome_pj")
         with col_rep_nome_prof_nasc[1]:
-            representante_profissao_pj = st.text_input("Profissão Representante", key="representante_profissao_pj")
+            representante_profissao_pj = st.text_input("Profissão", key="representante_profissao_pj")
         with col_rep_nome_prof_nasc[2]:
-            representante_nacionalidade_pj = st.text_input("Nacionalidade Representante", key="representante_nacionalidade_pj")
+            representante_nacionalidade_pj = st.text_input("Nacionalidade", key="representante_nacionalidade_pj")
         
         col_rep_fones_email = st.columns([1,1,1,1])
         with col_rep_fones_email[0]:
@@ -1102,9 +1377,9 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_rep_fones_email[1]:
             representante_fone_comercial_pj = st.text_input("Fone Comercial Representante", key="representante_fone_comercial_pj")
         with col_rep_fones_email[2]:
-            representante_celular_pj = st.text_input("Celular Representante", key="representante_celular_pj")
+            representante_celular_pj = st.text_input("Celular", key="representante_celular_pj")
         with col_rep_fones_email[3]:
-            representante_email_pj = st.text_input("E-mail Representante", key="representante_email_pj")
+            representante_email_pj = st.text_input("E-mail", key="representante_email_pj")
 
         # CEP E ENDEREÇO DO REPRESENTANTE - AGORA DENTRO DO FORMULÁRIO COM on_click
         col_cep_rep_pj, col_btn_rep_pj = st.columns([0.7, 0.3])
@@ -1117,9 +1392,9 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_rep_end_num_bairro[0]:
             representante_end_residencial_pj = st.text_input("Endereço Residencial Representante", value=st.session_state.representante_end_residencial_pj, key="representante_end_residencial_pj")
         with col_rep_end_num_bairro[1]:
-            representante_numero_pj = st.text_input("Número Representante", value=st.session_state.representante_numero_pj, key="representante_numero_pj")
+            representante_numero_pj = st.text_input("Número", value=st.session_state.representante_numero_pj, key="representante_numero_pj")
         with col_rep_end_num_bairro[2]:
-            representante_bairro_pj = st.text_input("Bairro Representante", value=st.session_state.representante_bairro_pj, key="representante_bairro_pj")
+            representante_bairro_pj = st.text_input("Bairro", value=st.session_state.representante_bairro_pj, key="representante_bairro_pj")
 
         col_rep_cidade_estado = st.columns([2,1])
         with col_rep_cidade_estado[0]:
@@ -1134,9 +1409,9 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_conjuge_pj_nome_prof_nasc[0]:
             conjuge_nome_pj = st.text_input("Nome Completo Cônjuge/Sócio(a) PJ", key="conjuge_nome_pj")
         with col_conjuge_pj_nome_prof_nasc[1]:
-            conjuge_profissao_pj = st.text_input("Profissão Cônjuge/Sócio(a) PJ", key="conjuge_profissao_pj")
+            conjuge_profissao_pj = st.text_input("Profissão", key="conjuge_profissao_pj")
         with col_conjuge_pj_nome_prof_nasc[2]:
-            conjuge_nacionalidade_pj = st.text_input("Nacionalidade Cônjuge/Sócio(a) PJ", key="conjuge_nacionalidade_pj")
+            conjuge_nacionalidade_pj = st.text_input("Nacionalidade", key="conjuge_nacionalidade_pj")
 
         col_conjuge_pj_fones_email = st.columns([1,1,1,1])
         with col_conjuge_pj_fones_email[0]:
@@ -1144,9 +1419,9 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_conjuge_pj_fones_email[1]:
             conjuge_fone_comercial_pj = st.text_input("Fone Comercial Cônjuge/Sócio(a) PJ", key="conjuge_fone_comercial_pj")
         with col_conjuge_pj_fones_email[2]:
-            conjuge_celular_pj = st.text_input("Celular Cônjuge/Sócio(a) PJ", key="conjuge_celular_pj")
+            conjuge_celular_pj = st.text_input("Celular", key="conjuge_celular_pj")
         with col_conjuge_pj_fones_email[3]:
-            conjuge_email_pj = st.text_input("E-mail Cônjuge/Sócio(a) PJ", key="conjuge_email_pj")
+            conjuge_email_pj = st.text_input("E-mail", key="conjuge_email_pj")
 
         # CEP E ENDEREÇO DO CÔNJUGE PJ - AGORA DENTRO DO FORMULÁRIO COM on_click
         col_conjuge_cep_pj, col_btn_conj_pj = st.columns([0.7, 0.3])
@@ -1159,15 +1434,15 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_conjuge_pj_end_num_bairro[0]:
             conjuge_end_residencial_pj = st.text_input("Endereço Residencial Cônjuge/Sócio(a) PJ", value=st.session_state.conjuge_end_residencial_pj, key="conjuge_end_residencial_pj")
         with col_conjuge_pj_end_num_bairro[1]:
-            conjuge_numero_pj = st.text_input("Número Cônjuge/Sócio(a) PJ", value=st.session_state.conjuge_numero_pj, key="conjuge_numero_pj")
+            conjuge_numero_pj = st.text_input("Número", value=st.session_state.conjuge_numero_pj, key="conjuge_numero_pj")
         with col_conjuge_pj_end_num_bairro[2]:
-            conjuge_bairro_pj = st.text_input("Bairro Cônjuge/Sócio(a) PJ", value=st.session_state.conjuge_bairro_pj, key="conjuge_bairro_pj")
+            conjuge_bairro_pj = st.text_input("Bairro", value=st.session_state.conjuge_bairro_pj, key="conjuge_bairro_pj")
 
         col_conjuge_pj_cidade_estado = st.columns([2,1])
         with col_conjuge_pj_cidade_estado[0]:
-            conjuge_cidade_pj = st.text_input("Cidade Cônjuge/Sócio(a) PJ", value=st.session_state.conjuge_cidade_pj, key="conjuge_cidade_pj")
+            conjuge_cidade_pj = st.text_input("Cidade", value=st.session_state.conjuge_cidade_pj, key="conjuge_cidade_pj")
         with col_conjuge_pj_cidade_estado[1]:
-            conjuge_estado_pj = st.text_input("Estado Cônjuge/Sócio(a) PJ", value=st.session_state.conjuge_estado_pj, key="conjuge_estado_pj")
+            conjuge_estado_pj = st.text_input("Estado", value=st.session_state.conjuge_estado_pj, key="conjuge_estado_pj")
 
         st.markdown("---")
         st.markdown("**DOCUMENTOS NECESSÁRIAS:**")
@@ -1185,6 +1460,53 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col2_form_pj:
             imprimir_pj = st.form_submit_button("Imprimir Formulário PJ")
 
+    # Section for Dados da Proposta (Optional, controlled by checkbox)
+    st.subheader("Dados da Proposta")
+    incluir_dados_proposta_pj = st.checkbox("Incluir Dados da Proposta para PJ", key="incluir_dados_proposta_pj_checkbox")
+
+    dados_proposta_pj = None # Initialize outside the if block
+
+    if incluir_dados_proposta_pj:
+        with st.container(border=True):
+            col_val_imovel_fp_pj = st.columns(2)
+            with col_val_imovel_fp_pj[0]:
+                valor_imovel_pj = st.text_input("Valor do imóvel (PJ)", value=st.session_state.get("proposta_valor_imovel", ""), key="proposta_valor_imovel_pj")
+            with col_val_imovel_fp_pj[1]:
+                forma_pagamento_imovel_pj = st.text_input("Forma de pagamento (Imóvel - PJ)", value=st.session_state.get("proposta_forma_pagamento_imovel", ""), key="proposta_forma_pagamento_imovel_pj")
+
+            col_val_honorarios_fp_pj = st.columns(2)
+            with col_val_honorarios_fp_pj[0]:
+                valor_honorarios_pj = st.text_input("Valor dos honorários (PJ)", value=st.session_state.get("proposta_valor_honorarios", ""), key="proposta_valor_honorarios_pj")
+            with col_val_honorarios_fp_pj[1]:
+                forma_pagamento_honorarios_pj = st.text_input("Forma de pagamento (Honorários - PJ)", value=st.session_state.get("proposta_forma_pagamento_honorarios", ""), key="proposta_forma_pagamento_honorarios_pj")
+
+            conta_bancaria_pj = st.text_input("Conta Bancária para transferência (PJ)", value=st.session_state.get("proposta_conta_bancaria", ""), key="proposta_conta_bancaria_pj")
+            valor_ir_pj = st.text_input("Valor para declaração de imposto de renda (PJ)", value=st.session_state.get("proposta_valor_ir", ""), key="proposta_valor_ir_pj")
+            valor_escritura_pj = st.text_input("Valor para escritura (PJ)", value=st.session_state.get("proposta_valor_escritura", ""), key="proposta_valor_escritura_pj")
+            observacoes_proposta_pj = st.text_area("Observações (PJ)", value=st.session_state.get("proposta_observacoes", ""), key="proposta_observacoes_pj")
+
+            col_corretores_pj = st.columns(2)
+            with col_corretores_pj[0]:
+                corretor_angariador_pj = st.text_input("Corretor(a) angariador (PJ)", value=st.session_state.get("proposta_corretor_angariador", ""), key="proposta_corretor_angariador_pj")
+            with col_corretores_pj[1]:
+                corretor_vendedor_pj = st.text_input("Corretor(a) vendedor(a) (PJ)", value=st.session_state.get("proposta_corretor_vendedor", ""), key="proposta_corretor_vendedor_pj")
+            
+            data_negociacao_pj = st.date_input("Data da negociação (PJ)", value=st.session_state.get("proposta_data_negociacao", datetime.date.today()), key="proposta_data_negociacao_pj")
+            
+            dados_proposta_pj = {
+                "valor_imovel": valor_imovel_pj.strip(),
+                "forma_pagamento_imovel": forma_pagamento_imovel_pj.strip(),
+                "valor_honorarios": valor_honorarios_pj.strip(),
+                "forma_pagamento_honorarios": forma_pagamento_honorarios_pj.strip(),
+                "conta_bancaria": conta_bancaria_pj.strip(),
+                "valor_ir": valor_ir_pj.strip(),
+                "valor_escritura": valor_escritura_pj.strip(),
+                "observacoes": observacoes_proposta_pj.strip(),
+                "corretor_angariador": corretor_angariador_pj.strip(),
+                "corretor_vendedor": corretor_vendedor_pj.strip(),
+                "data_negociacao": data_negociacao_pj,
+            }
+
     # Remaining sections remain outside the form
     st.subheader("Dependentes (Pessoa Jurídica)")
     incluir_dependentes_pj = st.checkbox("Incluir Dependentes para PJ", key="incluir_dependentes_pj_checkbox")
@@ -1199,7 +1521,7 @@ elif ficha_tipo == "Pessoa Jurídica":
             dep_email_pj = st.text_input("E-mail do Dependente (PJ)", value=st.session_state.get("dep_email_pj", ""), key="dep_email_pj")
             dep_grau_parentesco_pj = st.text_input("Grau de Parentesco (PJ)", value=st.session_state.get("dep_grau_parentesco_pj", ""), key="dep_grau_parentesco_pj")
 
-            st.button("Adicionar Dependente", key="add_dep_pj_button_out_form", on_click=add_dependent_pj_callback)
+            st.button("Adicionar Dependente (PJ)", key="add_dep_pj_button_out_form", on_click=add_dependent_pj_callback)
             
             if st.session_state.dependentes_pj_temp:
                 st.markdown("---")
@@ -1256,7 +1578,11 @@ elif ficha_tipo == "Pessoa Jurídica":
             "condomino_indicado_pf": condomino_indicado_pf.strip(),
         }
         
-        pdf_b64_pf = gerar_pdf_pf(dados_pf, st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None)
+        pdf_b64_pf = gerar_pdf_pf(dados_pf, 
+                                st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None,
+                                dados_proposta_pf if incluir_dados_proposta_pf else None)
+
+
         if pdf_b64_pf:
             href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
             st.markdown(href, unsafe_allow_html=True)
@@ -1313,7 +1639,10 @@ elif ficha_tipo == "Pessoa Jurídica":
             "condomino_indicado_pj": condomino_indicado_pj.strip(),
         }
         
-        pdf_b64_pj = gerar_pdf_pj(dados_pj, st.session_state.dependentes_pj_temp if incluir_dependentes_pj else None)
+        pdf_b64_pj = gerar_pdf_pj(dados_pj, 
+                                st.session_state.dependentes_pj_temp if incluir_dependentes_pj else None,
+                                dados_proposta_pj if incluir_dados_proposta_pj else None)
+
         if pdf_b64_pj:
             href = f'<a href="data:application/pdf;base64,{pdf_b64_pj}" download="Ficha_Cadastral_Pessoa_Juridica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Jurídica</a>'
             st.markdown(href, unsafe_allow_html=True)
