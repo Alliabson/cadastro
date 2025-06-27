@@ -7,74 +7,53 @@ import socket
 import time
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-import datetime # Importado para tratamento de datas
-import re # Importado para tratamento de strings e validações
+import datetime
+import re
 
-# Inicializa as variáveis de estado da sessão do Streamlit,
-# garantindo que elas existam antes de serem acessadas para evitar KeyError.
-# Isso é crucial para campos que são preenchidos por busca de CEP.
-if "comprador_end_residencial_pf" not in st.session_state:
-    st.session_state.comprador_end_residencial_pf = ""
-if "comprador_bairro_pf" not in st.session_state:
-    st.session_state.comprador_bairro_pf = ""
-if "comprador_cidade_pf" not in st.session_state:
-    st.session_state.comprador_cidade_pf = ""
-if "comprador_estado_pf" not in st.session_state:
-    st.session_state.comprador_estado_pf = ""
+# Inicializa todas as variáveis de estado necessárias
+def initialize_session_state():
+    session_vars = {
+        # PF
+        "comprador_end_residencial_pf": "",
+        "comprador_bairro_pf": "",
+        "comprador_cidade_pf": "",
+        "comprador_estado_pf": "",
+        "conjuge_end_residencial_pf": "",
+        "conjuge_bairro_pf": "",
+        "conjuge_cidade_pf": "",
+        "conjuge_estado_pf": "",
+        
+        # PJ
+        "comprador_end_residencial_comercial_pj": "",
+        "comprador_bairro_pj": "",
+        "comprador_cidade_pj": "",
+        "comprador_estado_pj": "",
+        "representante_end_residencial_pj": "",
+        "representante_bairro_pj": "",
+        "representante_cidade_pj": "",
+        "representante_estado_pj": "",
+        "conjuge_end_residencial_pj": "",
+        "conjuge_bairro_pj": "",
+        "conjuge_cidade_pj": "",
+        "conjuge_estado_pj": "",
+        
+        # Pessoas vinculadas
+        "endereco_pessoa_pj": "",
+        "bairro_pessoa_pj": "",
+        "cidade_pessoa_pj": "",
+        "estado_pessoa_pj": "",
+        
+        # Dependentes
+        "dependentes_pf_temp": [],
+        "dependentes_pj_temp": [],
+    }
+    
+    for key, value in session_vars.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
 
-if "conjuge_end_residencial_pf" not in st.session_state:
-    st.session_state.conjuge_end_residencial_pf = ""
-if "conjuge_bairro_pf" not in st.session_state:
-    st.session_state.conjuge_bairro_pf = ""
-if "conjuge_cidade_pf" not in st.session_state:
-    st.session_state.conjuge_cidade_pf = ""
-if "conjuge_estado_pf" not in st.session_state:
-    st.session_state.conjuge_estado_pf = ""
-
-if "comprador_end_residencial_comercial_pj" not in st.session_state:
-    st.session_state.comprador_end_residencial_comercial_pj = ""
-if "comprador_bairro_pj" not in st.session_state:
-    st.session_state.bairro_pj = ""
-if "comprador_cidade_pj" not in st.session_state:
-    st.session_state.cidade_pj = ""
-if "comprador_estado_pj" not in st.session_state:
-    st.session_state.estado_pj = ""
-
-if "representante_end_residencial_pj" not in st.session_state:
-    st.session_state.representante_end_residencial_pj = ""
-if "representante_bairro_pj" not in st.session_state:
-    st.session_state.representante_bairro_pj = ""
-if "representante_cidade_pj" not in st.session_state:
-    st.session_state.representante_cidade_pj = ""
-if "representante_estado_pj" not in st.session_state:
-    st.session_state.representante_estado_pj = ""
-
-if "conjuge_end_residencial_pj" not in st.session_state:
-    st.session_state.conjuge_end_residencial_pj = ""
-if "conjuge_bairro_pj" not in st.session_state:
-    st.session_state.conjuge_bairro_pj = ""
-if "conjuge_cidade_pj" not in st.session_state:
-    st.session_state.conjuge_cidade_pj = ""
-if "conjuge_estado_pj" not in st.session_state:
-    st.session_state.conjuge_estado_pj = ""
-
-# Adicionado para pessoas vinculadas
-if "endereco_pessoa_pj" not in st.session_state:
-    st.session_state.endereco_pessoa_pj = ""
-if "bairro_pessoa_pj" not in st.session_state:
-    st.session_state.bairro_pessoa_pj = ""
-if "cidade_pessoa_pj" not in st.session_state:
-    st.session_state.cidade_pessoa_pj = ""
-if "estado_pessoa_pj" not in st.session_state:
-    st.session_state.estado_pessoa_pj = ""
-
-# Adicionado para dependentes PF
-if "dependentes_pf_temp" not in st.session_state:
-    st.session_state.dependentes_pf_temp = []
-
-# Adicionado para dependentes PJ
-if "dependentes_pj_temp" not in st.session_state:
-    st.session_state.dependentes_pj_temp = []
+# Chama a função de inicialização
+initialize_session_state()
 
 # Configuração de sessão com retry para requisições HTTP
 session = requests.Session()
@@ -89,7 +68,7 @@ session.mount('https://', adapter)
 
 # Lista de regimes de bens do casamento
 REGIMES_DE_BENS = [
-    "", # Opção vazia inicial
+    "",
     "Comunhão Universal de Bens",
     "Comunhão Parcial de Bens",
     "Separação Total de Bens",
@@ -98,10 +77,7 @@ REGIMES_DE_BENS = [
 ]
 
 def _buscar_cep_viacep(cep):
-    """
-    Busca informações de endereço a partir de um CEP usando a API ViaCEP.
-    Retorna um dicionário com os dados do endereço e uma mensagem de erro (ou None).
-    """
+    """Busca informações de endereço usando a API ViaCEP."""
     url = f"https://viacep.com.br/ws/{cep}/json/"
     try:
         response = session.get(url, timeout=5)
@@ -119,10 +95,7 @@ def _buscar_cep_viacep(cep):
         return None, f"Erro na ViaCEP: {str(e)}"
 
 def _buscar_cep_brasilapi(cep):
-    """
-    Busca informações de endereço a partir de um CEP usando a API Brasil API.
-    Retorna um dicionário com os dados do endereço e uma mensagem de erro (ou None).
-    """
+    """Busca informações de endereço usando a API Brasil API."""
     url = f"https://brasilapi.com.br/api/cep/v1/{cep}"
     try:
         response = session.get(url, timeout=5)
@@ -142,10 +115,7 @@ def _buscar_cep_brasilapi(cep):
         return None, f"Erro na Brasil API: {str(e)}"
 
 def _buscar_cep_postmon(cep):
-    """
-    Busca informações de endereço a partir de um CEP usando a API Postmon.
-    Retorna um dicionário com os dados do endereço e uma mensagem de erro (ou None).
-    """
+    """Busca informações de endereço usando a API Postmon."""
     url = f"https://api.postmon.com.br/v1/cep/{cep}"
     try:
         response = session.get(url, timeout=5)
@@ -165,10 +135,7 @@ def _buscar_cep_postmon(cep):
         return None, f"Erro na Postmon: {str(e)}"
 
 def buscar_cep(cep):
-    """
-    Tenta buscar informações de endereço usando múltiplas APIs de CEP em cascata.
-    Retorna um dicionário com os dados do endereço e uma mensagem de erro (ou None).
-    """
+    """Tenta buscar informações de endereço usando múltiplas APIs de CEP."""
     if not cep:
         return None, "Por favor, insira um CEP para buscar."
         
@@ -180,102 +147,88 @@ def buscar_cep(cep):
     endereco_info, error_msg = _buscar_cep_viacep(cep_limpo)
     if endereco_info:
         return endereco_info, None
-    else:
-        st.warning(f"ViaCEP falhou: {error_msg}. Tentando Brasil API...")
         
-        # Tentar Brasil API como fallback
-        endereco_info, error_msg = _buscar_cep_brasilapi(cep_limpo)
-        if endereco_info:
-            return endereco_info, None
-        else:
-            st.warning(f"Brasil API falhou: {error_msg}. Tentando Postmon...")
-            
-            # Tentar Postmon como último fallback
-            endereco_info, error_msg = _buscar_cep_postmon(cep_limpo)
-            if endereco_info:
-                return endereco_info, None
-            else:
-                return None, f"Todas as APIs de CEP falharam: {error_msg}"
-
+    # Tentar Brasil API como fallback
+    endereco_info, error_msg = _buscar_cep_brasilapi(cep_limpo)
+    if endereco_info:
+        return endereco_info, None
+        
+    # Tentar Postmon como último fallback
+    endereco_info, error_msg = _buscar_cep_postmon(cep_limpo)
+    if endereco_info:
+        return endereco_info, None
+        
+    return None, f"Todas as APIs de CEP falharam: {error_msg}"
 
 def sanitize_text(text):
-    """
-    Substitui caracteres Unicode problemáticos (como o en dash '\u2013')
-    por equivalentes ASCII para evitar erros de codificação no FPDF.
-    Também remove caracteres que não são compatíveis com latin-1 (como emojis).
-    """
+    """Substitui caracteres Unicode problemáticos por equivalentes ASCII."""
     if isinstance(text, str):
-        # Substitui o "en dash" pelo hífen
         text = text.replace('\u2013', '-')
-        # Substitui o "em dash" por hífen duplo
         text = text.replace('\u2014', '--')
-        # Substitui aspas simples direitas
         text = text.replace('\u2019', "'")
-        # Substitui aspas duplas esquerdas
         text = text.replace('\u201C', '"')
-        # Substitui aspas duplas direitas
         text = text.replace('\u201D', '"')
-        # Remove caracteres que não podem ser codificados em latin-1 (incluindo a maioria dos emojis)
         text = text.encode('latin-1', 'ignore').decode('latin-1')
-        text = text.strip() # Remove espaços em branco do início e fim
+        text = text.strip()
     return text
 
-def _on_cep_search_callback(tipo_campo: str, cep_key: str):
-    """Callback para botões de busca de CEP."""
-    cep_value = st.session_state[cep_key]
-    if cep_value:
-        endereco_info, error_msg = buscar_cep(cep_value)
-        if endereco_info:
-            mapping = {
-                'pf': {
-                    'logradouro': 'comprador_end_residencial_pf',
-                    'bairro': 'comprador_bairro_pf',
-                    'localidade': 'comprador_cidade_pf',
-                    'uf': 'comprador_estado_pf'
-                },
-                'conjuge_pf': {
-                    'logradouro': 'conjuge_end_residencial_pf',
-                    'bairro': 'conjuge_bairro_pf',
-                    'localidade': 'conjuge_cidade_pf',
-                    'uf': 'conjuge_estado_pf'
-                },
-                'empresa_pj': {
-                    'logradouro': 'comprador_end_residencial_comercial_pj',
-                    'bairro': 'comprador_bairro_pj',
-                    'localidade': 'comprador_cidade_pj',
-                    'uf': 'comprador_estado_pj'
-                },
-                'administrador_pj': {
-                    'logradouro': 'representante_end_residencial_pj',
-                    'bairro': 'representante_bairro_pj',
-                    'localidade': 'representante_cidade_pj',
-                    'uf': 'representante_estado_pj'
-                },
-                'conjuge_pj': {
-                    'logradouro': 'conjuge_end_residencial_pj',
-                    'bairro': 'conjuge_bairro_pj',
-                    'localidade': 'conjuge_cidade_pj',
-                    'uf': 'conjuge_estado_pj'
-                },
-                'pessoa_pj': { # Para pessoas vinculadas
-                    'logradouro': 'endereco_pessoa_pj',
-                    'bairro': 'bairro_pessoa_pj',
-                    'localidade': 'cidade_pessoa_pj',
-                    'uf': 'estado_pessoa_pj'
-                }
+def preencher_endereco(tipo_campo: str, cep_value: str) -> str:
+    """Busca informações de endereço a partir de um CEP e preenche o st.session_state."""
+    endereco_info, error_msg = buscar_cep(cep_value)
+
+    if endereco_info:
+        # Mapeamento de 'tipo_campo' para as chaves corretas no session_state
+        mapping = {
+            'pf': {
+                'logradouro': 'comprador_end_residencial_pf',
+                'bairro': 'comprador_bairro_pf',
+                'localidade': 'comprador_cidade_pf',
+                'uf': 'comprador_estado_pf'
+            },
+            'conjuge_pf': {
+                'logradouro': 'conjuge_end_residencial_pf',
+                'bairro': 'conjuge_bairro_pf',
+                'localidade': 'conjuge_cidade_pf',
+                'uf': 'conjuge_estado_pf'
+            },
+            'empresa_pj': {
+                'logradouro': 'comprador_end_residencial_comercial_pj',
+                'bairro': 'comprador_bairro_pj',
+                'localidade': 'comprador_cidade_pj',
+                'uf': 'comprador_estado_pj'
+            },
+            'administrador_pj': {
+                'logradouro': 'representante_end_residencial_pj',
+                'bairro': 'representante_bairro_pj',
+                'localidade': 'representante_cidade_pj',
+                'uf': 'representante_estado_pj'
+            },
+            'conjuge_pj': {
+                'logradouro': 'conjuge_end_residencial_pj',
+                'bairro': 'conjuge_bairro_pj',
+                'localidade': 'conjuge_cidade_pj',
+                'uf': 'conjuge_estado_pj'
+            },
+            'pessoa_pj': {
+                'logradouro': 'endereco_pessoa_pj',
+                'bairro': 'bairro_pessoa_pj',
+                'localidade': 'cidade_pessoa_pj',
+                'uf': 'estado_pessoa_pj'
             }
-            target_keys = mapping.get(tipo_campo)
-            if target_keys:
-                for campo_origem, session_key in target_keys.items():
+        }
+
+        target_keys = mapping.get(tipo_campo)
+        if target_keys:
+            for campo_origem, session_key in target_keys.items():
+                if session_key in st.session_state:
                     st.session_state[session_key] = endereco_info.get(campo_origem, '')
-                st.success("Endereço preenchido!")
-            else:
-                st.error("Tipo de campo de endereço desconhecido.")
-        elif error_msg:
-            st.error(error_msg)
+                else:
+                    return f"Chave de sessão inválida: {session_key}"
+            return None
+        else:
+            return "Tipo de campo de endereço desconhecido."
     else:
-        st.warning("Por favor, digite um CEP para buscar.")
-    st.rerun() # Força o rerun após a atualização do session_state
+        return error_msg
 
 def formatar_cpf(cpf: str) -> str:
     """Formata o CPF como 000.000.000-00."""
@@ -292,47 +245,40 @@ def formatar_cnpj(cnpj: str) -> str:
     return cnpj
 
 def formatar_telefone(telefone: str) -> str:
-    """
-    Formata o telefone celular como 00-99999-0000 e telefone fixo como 00 0000-0000.
-    """
+    """Formata o telefone celular como 00-99999-0000 e telefone fixo como 00 0000-0000."""
     telefone = re.sub(r'[^0-9]', '', telefone)
-    if len(telefone) == 11 and telefone[2] == '9': # Celular com 9º dígito
+    if len(telefone) == 11 and telefone[2] == '9':
         return f"{telefone[:2]}-{telefone[2:7]}-{telefone[7:]}"
-    elif len(telefone) == 10: # Telefone fixo ou celular sem 9º dígito
+    elif len(telefone) == 10:
         return f"({telefone[:2]}) {telefone[2:6]}-{telefone[6:]}"
-    return telefone # Retorna sem formatação se não corresponder aos padrões
-
+    return telefone
 
 def gerar_pdf_pf(dados, dependentes=None):
-    """
-    Gera um arquivo PDF com os dados da Ficha Cadastral de Pessoa Física.
-    """
+    """Gera um arquivo PDF com os dados da Ficha Cadastral de Pessoa Física."""
     try:
         pdf = FPDF()
         pdf.add_page()
-        
-        # Usando fontes padrão do FPDF que suportam caracteres acentuados
         pdf.set_font('Helvetica', '', 10)
         
         pdf.set_font("Helvetica", "B", 16)
         pdf.cell(0, 10, sanitize_text("Ficha Cadastral Pessoa Física - Cessão e Transferência de Direitos"), 0, 1, "C")
-        pdf.ln(8) # Reduzido de 10 para 8
+        pdf.ln(8)
 
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do Empreendimento e Imobiliária"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        # Campos do empreendimento
+        
         for key_suffix in ["empreendimento", "corretor", "imobiliaria", "qd", "lt", "ativo", "quitado"]:
             key = f"{key_suffix}_pf"
             value = dados.get(key, '')
             if value and sanitize_text(value):
-                pdf.cell(0, 6, f"{sanitize_text(key_suffix.replace('_', ' ').title())}: {sanitize_text(str(value))}", 0, 1) # Reduzido de 7 para 6
-        pdf.ln(3) # Reduzido de 5 para 3
+                pdf.cell(0, 6, f"{sanitize_text(key_suffix.replace('_', ' ').title())}: {sanitize_text(str(value))}", 0, 1)
+        pdf.ln(3)
 
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do COMPRADOR(A)"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        # Campos do comprador
+        
         fields_comprador = [
             ("Nome Completo", "comprador_nome_pf"),
             ("Profissão", "comprador_profissao_pf"),
@@ -349,18 +295,18 @@ def gerar_pdf_pf(dados, dependentes=None):
             ("Regime de Bens", "comprador_regime_bens_pf"),
             ("União Estável", "comprador_uniao_estavel_pf")
         ]
+        
         for field_info in fields_comprador:
             label = field_info[0]
             if len(field_info) == 2:
                 value = dados.get(field_info[1], '')
                 if value and sanitize_text(value):
-                    # Aplica formatação de telefone se o campo for de telefone
                     if "fone" in field_info[1] or "celular" in field_info[1]:
                         value = formatar_telefone(value)
                     elif "cpf" in field_info[1]:
                         value = formatar_cpf(value)
                     pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
-            elif len(field_info) == 3: # Special case for address and city/state
+            elif len(field_info) == 3:
                 if label == "Endereço Residencial":
                     endereco = dados.get(field_info[1], '')
                     numero = dados.get(field_info[2], '')
@@ -370,20 +316,20 @@ def gerar_pdf_pf(dados, dependentes=None):
                     cidade = dados.get(field_info[1], '')
                     estado = dados.get(field_info[2], '')
                     if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
-                         pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
+                        pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
 
-        pdf.ln(3) # Reduzido de 5 para 3
+        pdf.ln(3)
         
         pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(0, 6, sanitize_text("Condição de Convivência:"), 0, 1) # Reduzido de 7 para 6
+        pdf.cell(0, 6, sanitize_text("Condição de Convivência:"), 0, 1)
         pdf.set_font("Helvetica", "", 9)
-        pdf.multi_cell(0, 4.5, sanitize_text("Declara conviver em união estável - Apresentar comprovante de estado civil de cada um e a declaração de convivência em união estável com as assinaturas reconhecidas em Cartório."), 0, "L") # Reduzido de 5 para 4.5
-        pdf.ln(3) # Reduzido de 5 para 3
+        pdf.multi_cell(0, 4.5, sanitize_text("Declara conviver em união estável - Apresentar comprovante de estado civil de cada um e a declaração de convivência em união estável com as assinaturas reconhecidas em Cartório."), 0, "L")
+        pdf.ln(3)
 
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do CÔNJUGE/SÓCIO(A)"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        # Campos do cônjuge/sócio
+        
         fields_conjuge_pf = [
             ("Nome Completo Cônjuge/Sócio(a)", "conjuge_nome_pf"),
             ("Profissão Cônjuge/Sócio(a)", "conjuge_profissao_pf"),
@@ -397,18 +343,18 @@ def gerar_pdf_pf(dados, dependentes=None):
             ("Cidade/Estado", "conjuge_cidade_pf", "conjuge_estado_pf"),
             ("CEP", "conjuge_cep_pf")
         ]
+        
         for field_info in fields_conjuge_pf:
             label = field_info[0]
             if len(field_info) == 2:
                 value = dados.get(field_info[1], '')
                 if value and sanitize_text(value):
-                    # Aplica formatação de telefone se o campo for de telefone
                     if "fone" in field_info[1] or "celular" in field_info[1]:
                         value = formatar_telefone(value)
                     elif "cpf" in field_info[1]:
                         value = formatar_cpf(value)
                     pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
-            elif len(field_info) == 3: # Special case for address and city/state
+            elif len(field_info) == 3:
                 if label == "Endereço Residencial":
                     endereco = dados.get(field_info[1], '')
                     numero = dados.get(field_info[2], '')
@@ -419,15 +365,15 @@ def gerar_pdf_pf(dados, dependentes=None):
                     estado = dados.get(field_info[2], '')
                     if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
                         pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
-        pdf.ln(3) # Reduzido de 5 para 3
+        
+        pdf.ln(3)
 
         pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(0, 6, sanitize_text("DOCUMENTOS NECESSÁRIOS:"), 0, 1) # Reduzido de 7 para 6
+        pdf.cell(0, 6, sanitize_text("DOCUMENTOS NECESSÁRIOS:"), 0, 1)
         pdf.set_font("Helvetica", "", 9)
-        pdf.multi_cell(0, 4.5, sanitize_text("CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L") # Reduzido de 5 para 4.5
-        pdf.ln(3) # Reduzido de 5 para 3
+        pdf.multi_cell(0, 4.5, sanitize_text("CNH; RG e CPF; Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L")
+        pdf.ln(3)
 
-        # Campo adicional para condômino indicado
         condomino_indicado = dados.get('condomino_indicado_pf', '')
         if condomino_indicado and sanitize_text(condomino_indicado):
             pdf.ln(5)
@@ -437,36 +383,29 @@ def gerar_pdf_pf(dados, dependentes=None):
             pdf.cell(0, 6, f"Indique aqui quem será o(a) condômino(a): {sanitize_text(condomino_indicado)}", 0, 1)
             pdf.ln(3)
 
-
-        # Adiciona a seção de data e assinaturas
-        pdf.ln(7) # Ajustado espaçamento
+        pdf.ln(7)
         today = datetime.date.today()
         month_names = {
             1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril", 5: "maio", 6: "junho",
             7: "julho", 8: "agosto", 9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
         }
         
-        # Cidade/Estado,___ de _________de __________
         current_city_state = f"{sanitize_text(dados.get('comprador_cidade_pf', ''))}/{sanitize_text(dados.get('comprador_estado_pf', ''))}"
-        pdf.cell(0, 6, f"{current_city_state}, {today.day} de {month_names[today.month]} de {today.year}", 0, 1, 'C') # Reduzido de 7 para 6
-        pdf.ln(7) # Ajustado espaçamento
+        pdf.cell(0, 6, f"{current_city_state}, {today.day} de {month_names[today.month]} de {today.year}", 0, 1, 'C')
+        pdf.ln(7)
 
-        # Assinatura do(a) Comprador(a)
-        pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
-        pdf.ln(3) # Reduzido de 5 para 3
-        pdf.cell(0, 4, sanitize_text("Assinatura do(a) Comprador(a)"), 0, 1, 'C') # Reduzido de 5 para 4
-        pdf.ln(7) # Ajustado espaçamento
+        pdf.cell(0, 0, "_" * 50, 0, 1, 'C')
+        pdf.ln(3)
+        pdf.cell(0, 4, sanitize_text("Assinatura do(a) Comprador(a)"), 0, 1, 'C')
+        pdf.ln(7)
 
-        # Autorizado em:__________/______/__________
-        pdf.cell(0, 6, f"Autorizado em: {today.strftime('%d/%m/%Y')}", 0, 1, 'C') # Reduzido de 7 para 6
-        pdf.ln(7) # Ajustado espaçamento
+        pdf.cell(0, 6, f"Autorizado em: {today.strftime('%d/%m/%Y')}", 0, 1, 'C')
+        pdf.ln(7)
 
-        # Imobiliária Celeste
-        pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
-        pdf.ln(3) # Reduzido de 5 para 3
-        pdf.cell(0, 4, sanitize_text("Imobiliária Celeste"), 0, 1, 'C') # Reduzido de 5 para 4
+        pdf.cell(0, 0, "_" * 50, 0, 1, 'C')
+        pdf.ln(3)
+        pdf.cell(0, 4, sanitize_text("Imobiliária Celeste"), 0, 1, 'C')
         
-        # Inserir dependentes em uma nova página, se houver
         if dependentes:
             pdf.add_page()
             pdf.set_font("Helvetica", "B", 16)
@@ -479,14 +418,13 @@ def gerar_pdf_pf(dados, dependentes=None):
                 pdf.cell(0, 6, f"DEPENDENTE {i+1}:", 0, 1, "L")
                 pdf.set_font("Helvetica", "", 9)
                 pdf.cell(0, 5, f"Nome: {sanitize_text(dep.get('nome', ''))}", 0, 1)
-                pdf.cell(0, 5, f"CPF: {sanitize_text(formatar_cpf(dep.get('cpf', '')))}", 0, 1)
-                pdf.cell(0, 5, f"Telefone Comercial: {sanitize_text(formatar_telefone(dep.get('telefone_comercial', '')))}", 0, 1)
-                pdf.cell(0, 5, f"Celular: {sanitize_text(formatar_telefone(dep.get('celular', '')))}", 0, 1)
+                pdf.cell(0, 5, f"CPF: {sanitize_text(formatar_cpf(dep.get('cpf', ''))}", 0, 1)
+                pdf.cell(0, 5, f"Telefone Comercial: {sanitize_text(formatar_telefone(dep.get('telefone_comercial', ''))}", 0, 1)
+                pdf.cell(0, 5, f"Celular: {sanitize_text(formatar_telefone(dep.get('celular', ''))}", 0, 1)
                 pdf.cell(0, 5, f"E-mail: {sanitize_text(dep.get('email', ''))}", 0, 1)
                 pdf.cell(0, 5, f"Grau de Parentesco: {sanitize_text(dep.get('grau_parentesco', ''))}", 0, 1)
-                pdf.ln(3) # Espaço entre dependentes
+                pdf.ln(3)
         
-        # Adicionada codificação para 'latin-1'
         pdf_output = pdf.output(dest='S').encode('latin-1')
         b64_pdf = base64.b64encode(pdf_output).decode('utf-8')
         return b64_pdf
@@ -495,35 +433,31 @@ def gerar_pdf_pf(dados, dependentes=None):
         return None
 
 def gerar_pdf_pj(dados, dependentes=None):
-    """
-    Gera um arquivo PDF com os dados da Ficha Cadastral de Pessoa Jurídica.
-    """
+    """Gera um arquivo PDF com os dados da Ficha Cadastral de Pessoa Jurídica."""
     try:
         pdf = FPDF()
         pdf.add_page()
-        
-        # Usando fontes padrão do FPDF que suportam caracteres acentuados
         pdf.set_font('Helvetica', '', 10)
         
         pdf.set_font("Helvetica", "B", 16)
         pdf.cell(0, 10, sanitize_text("Ficha Cadastral Pessoa Jurídica - Cessão e Transferência de Direitos"), 0, 1, "C")
-        pdf.ln(8) # Reduzido de 10 para 8
+        pdf.ln(8)
 
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do Empreendimento e Imobiliária"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        # Campos do empreendimento
+        
         for key_suffix in ["empreendimento", "corretor", "imobiliaria", "qd", "lt", "ativo", "quitado"]:
             key = f"{key_suffix}_pj"
             value = dados.get(key, '')
             if value and sanitize_text(value):
-                pdf.cell(0, 6, f"{sanitize_text(key_suffix.replace('_', ' ').title())}: {sanitize_text(str(value))}", 0, 1) # Reduzido de 7 para 6
-        pdf.ln(3) # Reduzido de 5 para 3
+                pdf.cell(0, 6, f"{sanitize_text(key_suffix.replace('_', ' ').title())}: {sanitize_text(str(value))}", 0, 1)
+        pdf.ln(3)
 
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do COMPRADOR(A)"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        # Campos do comprador PJ
+        
         fields_comprador_pj = [
             ("Razão Social", "comprador_razao_social_pj"),
             ("Nome Fantasia", "comprador_nome_fantasia_pj"),
@@ -537,18 +471,18 @@ def gerar_pdf_pj(dados, dependentes=None):
             ("Cidade/Estado", "comprador_cidade_pj", "comprador_estado_pj"),
             ("CEP", "comprador_cep_pj")
         ]
+        
         for field_info in fields_comprador_pj:
             label = field_info[0]
             if len(field_info) == 2:
                 value = dados.get(field_info[1], '')
                 if value and sanitize_text(value):
-                    # Aplica formatação de telefone se o campo for de telefone
                     if "fone" in field_info[1] or "celular" in field_info[1]:
                         value = formatar_telefone(value)
                     elif "cnpj" in field_info[1]:
                         value = formatar_cnpj(value)
                     pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
-            elif len(field_info) == 3: # Special case for address and city/state
+            elif len(field_info) == 3:
                 if label == "Endereço Residencial/Comercial":
                     endereco = dados.get(field_info[1], '')
                     numero = dados.get(field_info[2], '')
@@ -559,12 +493,13 @@ def gerar_pdf_pj(dados, dependentes=None):
                     estado = dados.get(field_info[2], '')
                     if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
                         pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
-        pdf.ln(3) # Reduzido de 5 para 3
+        
+        pdf.ln(3)
 
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do REPRESENTANTE"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        # Campos do representante
+        
         fields_representante_pj = [
             ("Nome Completo Representante", "representante_nome_pj"),
             ("Profissão Representante", "representante_profissao_pj"),
@@ -578,18 +513,18 @@ def gerar_pdf_pj(dados, dependentes=None):
             ("Cidade/Estado", "representante_cidade_pj", "representante_estado_pj"),
             ("CEP", "representante_cep_pj")
         ]
+        
         for field_info in fields_representante_pj:
             label = field_info[0]
             if len(field_info) == 2:
                 value = dados.get(field_info[1], '')
                 if value and sanitize_text(value):
-                    # Aplica formatação de telefone se o campo for de telefone
                     if "fone" in field_info[1] or "celular" in field_info[1]:
                         value = formatar_telefone(value)
                     elif "cpf" in field_info[1]:
                         value = formatar_cpf(value)
                     pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
-            elif len(field_info) == 3: # Special case for address and city/state
+            elif len(field_info) == 3:
                 if label == "Endereço Residencial":
                     endereco = dados.get(field_info[1], '')
                     numero = dados.get(field_info[2], '')
@@ -600,12 +535,13 @@ def gerar_pdf_pj(dados, dependentes=None):
                     estado = dados.get(field_info[2], '')
                     if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
                         pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
-        pdf.ln(3) # Reduzido de 5 para 3
+        
+        pdf.ln(3)
 
         pdf.set_font("Helvetica", "B", 12)
         pdf.cell(0, 10, sanitize_text("Dados do CÔNJUGE/SÓCIO(A)"), 0, 1, "L")
         pdf.set_font("Helvetica", "", 10)
-        # Campos do cônjuge/sócio PJ
+        
         fields_conjuge_pj = [
             ("Nome Completo Cônjuge/Sócio(a) PJ", "conjuge_nome_pj"),
             ("Profissão Cônjuge/Sócio(a) PJ", "conjuge_profissao_pj"),
@@ -619,18 +555,18 @@ def gerar_pdf_pj(dados, dependentes=None):
             ("Cidade/Estado", "conjuge_cidade_pj", "conjuge_estado_pj"),
             ("CEP", "conjuge_cep_pj")
         ]
+        
         for field_info in fields_conjuge_pj:
             label = field_info[0]
             if len(field_info) == 2:
                 value = dados.get(field_info[1], '')
                 if value and sanitize_text(value):
-                    # Aplica formatação de telefone se o campo for de telefone
                     if "fone" in field_info[1] or "celular" in field_info[1]:
                         value = formatar_telefone(value)
                     elif "cpf" in field_info[1]:
                         value = formatar_cpf(value)
                     pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(value)}", 0, 1)
-            elif len(field_info) == 3: # Special case for address and city/state
+            elif len(field_info) == 3:
                 if label == "Endereço Residencial":
                     endereco = dados.get(field_info[1], '')
                     numero = dados.get(field_info[2], '')
@@ -641,16 +577,16 @@ def gerar_pdf_pj(dados, dependentes=None):
                     estado = dados.get(field_info[2], '')
                     if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
                         pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
-        pdf.ln(3) # Reduzido de 5 para 3
+        
+        pdf.ln(3)
         
         pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(0, 6, sanitize_text("DOCUMENTOS NECESSÁRIOS:"), 0, 1) # Reduzido de 7 para 6
+        pdf.cell(0, 6, sanitize_text("DOCUMENTOS NECESSÁRIOS:"), 0, 1)
         pdf.set_font("Helvetica", "", 9)
-        pdf.multi_cell(0, 4.5, sanitize_text("DA EMPRESA: CONTRATO SOCIAL E ALTERAÇÕES, COMPROVANTE DE ENDEREÇO, DECLARAÇÃO DE FATURAMENTO;"), 0, "L") # Reduzido de 5 para 4.5
-        pdf.multi_cell(0, 4.5, sanitize_text("DOS SÓCIOS E SEUS CÔNJUGES: CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L") # Reduzido de 5 para 4.5
-        pdf.ln(3) # Reduzido de 5 para 3
+        pdf.multi_cell(0, 4.5, sanitize_text("DA EMPRESA: CONTRATO SOCIAL E ALTERAÇÕES, COMPROVANTE DE ENDEREÇO, DECLARAÇÃO DE FATURAMENTO;"), 0, "L")
+        pdf.multi_cell(0, 4.5, sanitize_text("DOS SÓCIOS E SEUS CÔNJUGES: CNH; RG e CPF, Comprovante do Estado Civil, Comprovante de Endereço, Comprovante de Renda, CND da Prefeitura e Nada Consta do Condomínio ou Associação."), 0, "L")
+        pdf.ln(3)
 
-        # Campo adicional para condômino indicado
         condomino_indicado = dados.get('condomino_indicado_pj', '')
         if condomino_indicado and sanitize_text(condomino_indicado):
             pdf.ln(5)
@@ -660,37 +596,29 @@ def gerar_pdf_pj(dados, dependentes=None):
             pdf.cell(0, 6, f"Indique aqui quem será o(a) condômino(a): {sanitize_text(condomino_indicado)}", 0, 1)
             pdf.ln(3)
 
-        # Adiciona a seção de data e assinaturas
-        pdf.ln(7) # Ajustado espaçamento
+        pdf.ln(7)
         today = datetime.date.today()
         month_names = {
             1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril", 5: "maio", 6: "junho",
             7: "julho", 8: "agosto", 9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
         }
         
-        # Cidade/Estado,___ de _________de __________
         current_city_state = f"{sanitize_text(dados.get('comprador_cidade_pj', ''))}/{sanitize_text(dados.get('comprador_estado_pj', ''))}"
-        pdf.cell(0, 6, f"{current_city_state}, {today.day} de {month_names[today.month]} de {today.year}", 0, 1, 'C') # Reduzido de 7 para 6
-        pdf.ln(7) # Ajustado espaçamento
+        pdf.cell(0, 6, f"{current_city_state}, {today.day} de {month_names[today.month]} de {today.year}", 0, 1, 'C')
+        pdf.ln(7)
 
-        # Assinatura do(a) Comprador(a) / Representante Legal (para PJ)
-        pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
-        pdf.ln(3) # Reduzido de 5 para 3
-        # Para PJ, o ideal seria "Assinatura do(a) Representante Legal" ou similar.
-        # Mantendo "Assinatura do(a) Comprador(a)" conforme solicitado genericamente.
-        pdf.cell(0, 4, sanitize_text("Assinatura do(a) Comprador(a)"), 0, 1, 'C') # Reduzido de 5 para 4
-        pdf.ln(7) # Ajustado espaçamento
+        pdf.cell(0, 0, "_" * 50, 0, 1, 'C')
+        pdf.ln(3)
+        pdf.cell(0, 4, sanitize_text("Assinatura do(a) Comprador(a)"), 0, 1, 'C')
+        pdf.ln(7)
 
-        # Autorizado em:__________/______/__________
-        pdf.cell(0, 6, f"Autorizado em: {today.strftime('%d/%m/%Y')}", 0, 1, 'C') # Reduzido de 7 para 6
-        pdf.ln(7) # Ajustado espaçamento
+        pdf.cell(0, 6, f"Autorizado em: {today.strftime('%d/%m/%Y')}", 0, 1, 'C')
+        pdf.ln(7)
 
-        # Imobiliária Celeste
-        pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
-        pdf.ln(3) # Reduzido de 5 para 3
-        pdf.cell(0, 4, sanitize_text("Imobiliária Celeste"), 0, 1, 'C') # Reduzido de 5 para 4
+        pdf.cell(0, 0, "_" * 50, 0, 1, 'C')
+        pdf.ln(3)
+        pdf.cell(0, 4, sanitize_text("Imobiliária Celeste"), 0, 1, 'C')
 
-        # Inserir dependentes em uma nova página, se houver
         if dependentes:
             pdf.add_page()
             pdf.set_font("Helvetica", "B", 16)
@@ -703,14 +631,13 @@ def gerar_pdf_pj(dados, dependentes=None):
                 pdf.cell(0, 6, f"DEPENDENTE {i+1}:", 0, 1, "L")
                 pdf.set_font("Helvetica", "", 9)
                 pdf.cell(0, 5, f"Nome: {sanitize_text(dep.get('nome', ''))}", 0, 1)
-                pdf.cell(0, 5, f"CPF: {sanitize_text(formatar_cpf(dep.get('cpf', '')))}", 0, 1)
-                pdf.cell(0, 5, f"Telefone Comercial: {sanitize_text(formatar_telefone(dep.get('telefone_comercial', '')))}", 0, 1)
-                pdf.cell(0, 5, f"Celular: {sanitize_text(formatar_telefone(dep.get('celular', '')))}", 0, 1)
+                pdf.cell(0, 5, f"CPF: {sanitize_text(formatar_cpf(dep.get('cpf', ''))}", 0, 1)
+                pdf.cell(0, 5, f"Telefone Comercial: {sanitize_text(formatar_telefone(dep.get('telefone_comercial', ''))}", 0, 1)
+                pdf.cell(0, 5, f"Celular: {sanitize_text(formatar_telefone(dep.get('celular', ''))}", 0, 1)
                 pdf.cell(0, 5, f"E-mail: {sanitize_text(dep.get('email', ''))}", 0, 1)
                 pdf.cell(0, 5, f"Grau de Parentesco: {sanitize_text(dep.get('grau_parentesco', ''))}", 0, 1)
-                pdf.ln(3) # Espaço entre dependentes
+                pdf.ln(3)
         
-        # Adicionada codificação para 'latin-1'
         pdf_output = pdf.output(dest='S').encode('latin-1')
         b64_pdf = base64.b64encode(pdf_output).decode('utf-8')
         return b64_pdf
@@ -727,9 +654,8 @@ st.markdown("Selecione o tipo de cadastro e preencha as informações.")
 # Seleção do tipo de ficha
 ficha_tipo = st.radio("Selecione o tipo de ficha:", ("Pessoa Física", "Pessoa Jurídica"))
 
-# --- Callback functions for adding dependents ---
+# Callback functions para adicionar dependentes
 def add_dependent_pf_callback():
-    # Verifica se o nome do dependente está preenchido (CPF não é mais obrigatório)
     if st.session_state.get("dep_nome_pf"):
         st.session_state.dependentes_pf_temp.append({
             "nome": st.session_state.dep_nome_pf,
@@ -739,7 +665,6 @@ def add_dependent_pf_callback():
             "email": st.session_state.dep_email_pf,
             "grau_parentesco": st.session_state.dep_grau_parentesco_pf,
         })
-        # Limpa os campos de entrada do dependente no session_state para que a UI seja atualizada
         st.session_state.dep_nome_pf = ""
         st.session_state.dep_cpf_pf = ""
         st.session_state.dep_tel_comercial_pf = ""
@@ -751,7 +676,6 @@ def add_dependent_pf_callback():
         st.warning("O nome do dependente é obrigatório para adicionar.")
 
 def add_dependent_pj_callback():
-    # Verifica se o nome do dependente está preenchido (CPF não é mais obrigatório)
     if st.session_state.get("dep_nome_pj"):
         st.session_state.dependentes_pj_temp.append({
             "nome": st.session_state.dep_nome_pj,
@@ -761,7 +685,6 @@ def add_dependent_pj_callback():
             "email": st.session_state.dep_email_pj,
             "grau_parentesco": st.session_state.dep_grau_parentesco_pj,
         })
-        # Limpa os campos de entrada do dependente no session_state para que a UI seja atualizada
         st.session_state.dep_nome_pj = ""
         st.session_state.dep_cpf_pj = ""
         st.session_state.dep_tel_comercial_pj = ""
@@ -772,15 +695,9 @@ def add_dependent_pj_callback():
     else:
         st.warning("O nome do dependente é obrigatório para adicionar.")
 
-# Inicializa submitted_pf e submitted_pj fora dos formulários
-submitted_pf = False
-submitted_pj = False
-
-
 if ficha_tipo == "Pessoa Física":
     st.header("Ficha Cadastral Pessoa Física")
 
-    # Início do formulário principal
     with st.form("form_pf"): 
         st.subheader("Dados do Empreendimento e Imobiliária")
         
@@ -840,11 +757,11 @@ if ficha_tipo == "Pessoa Física":
         with col_cidade_estado_cep[2]:
             comprador_cep_pf = st.text_input("CEP", help="Digite o CEP e pressione Enter para buscar o endereço.", key="comprador_cep_pf")
 
-        # Botão de busca de CEP diretamente associado ao campo CEP para comprador
-        st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Comprador"):
             if comprador_cep_pf:
-                _on_cep_search_callback('pf', 'comprador_cep_pf') # Usa a função de callback
+                error = preencher_endereco('pf', comprador_cep_pf)
+                if error:
+                    st.warning(error)
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
@@ -893,10 +810,11 @@ if ficha_tipo == "Pessoa Física":
         with col_conjuge_cidade_estado_cep[2]:
             conjuge_cep_pf = st.text_input("CEP Cônjuge/Sócio(a)", help="Digite o CEP e pressione Enter para buscar o endereço.", key="conjuge_cep_pf")
 
-        st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a)"):
             if conjuge_cep_pf:
-                _on_cep_search_callback('conjuge_pf', 'conjuge_cep_pf') # Usa a função de callback
+                error = preencher_endereco('conjuge_pf', conjuge_cep_pf)
+                if error:
+                    st.warning(error)
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
@@ -908,7 +826,6 @@ if ficha_tipo == "Pessoa Física":
         st.write("No caso de Condomínio ou Loteamento Fechado, quando a cessão for emitida para sócio(a)(s), não casados entre si e nem conviventes é necessário indicar qual dos dois será o(a) condômino(a):")
         condomino_indicado_pf = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pf")
 
-        # Botões de ação do formulário principal (permanecem dentro do st.form)
         col1, col2 = st.columns(2)
         with col1:
             submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
@@ -917,10 +834,10 @@ if ficha_tipo == "Pessoa Física":
 
     # Seção para Dependentes (FORA DO st.form para Pessoa Física)
     st.subheader("Dependentes")
-    incluir_dependentes_pf = st.checkbox("Incluir Dependentes", key="incluir_dependentes_pf_checkbox") # Renomeado key para evitar conflito
+    incluir_dependentes_pf = st.checkbox("Incluir Dependentes", key="incluir_dependentes_pf_checkbox")
 
     if incluir_dependentes_pf:
-        with st.container(border=True): # Use um container para agrupar visualmente
+        with st.container(border=True):
             st.markdown("**Adicionar Novo Dependente:**")
             dep_nome_pf = st.text_input("Nome Completo do Dependente", value=st.session_state.get("dep_nome_pf", ""), key="dep_nome_pf")
             dep_cpf_pf = st.text_input("CPF do Dependente", value=st.session_state.get("dep_cpf_pf", ""), key="dep_cpf_pf")
@@ -929,70 +846,65 @@ if ficha_tipo == "Pessoa Física":
             dep_email_pf = st.text_input("E-mail do Dependente", value=st.session_state.get("dep_email_pf", ""), key="dep_email_pf")
             dep_grau_parentesco_pf = st.text_input("Grau de Parentesco", value=st.session_state.get("dep_grau_parentesco_pf", ""), key="dep_grau_parentesco_pf")
 
-            # Botão de adicionar dependente com callback
             st.button("Adicionar Dependente", key="add_dep_pf_button_out_form", on_click=add_dependent_pf_callback)
         
-        # Exibe dependentes adicionados (se houver)
         if st.session_state.dependentes_pf_temp:
             st.markdown("---")
             st.markdown("**Dependentes Adicionados:**")
             df_dependentes_pf = pd.DataFrame(st.session_state.dependentes_pf_temp)
             st.dataframe(df_dependentes_pf)
 
-            clear_dep_pf_button = st.button("Limpar Dependentes", key="clear_dep_pf_button_out_form") # Nova key
+            clear_dep_pf_button = st.button("Limpar Dependentes", key="clear_dep_pf_button_out_form")
             if clear_dep_pf_button:
                 st.session_state.dependentes_pf_temp = []
                 st.success("Dependentes limpos.")
                 st.rerun()
 
-        # Lógica de processamento após a submissão do formulário PF
-        # Esta lógica agora é chamada APÓS o `with st.form("form_pf"):`
-        if submitted_pf: 
-            dados_pf = {
-                "empreendimento_pf": empreendimento_pf.strip(),
-                "corretor_pf": corretor_pf.strip(),
-                "imobiliaria_pf": imobiliaria_pf.strip(),
-                "qd_pf": qd_pf.strip(),
-                "lt_pf": lt_pf.strip(),
-                "ativo_pf": "Sim" if ativo_pf else "Não",
-                "quitado_pf": "Sim" if quitado_pf else "Não",
-                "comprador_nome_pf": comprador_nome_pf.strip(),
-                "comprador_profissao_pf": comprador_profissao_pf.strip(),
-                "comprador_nacionalidade_pf": comprador_nacionalidade_pf.strip(),
-                "comprador_fone_residencial_pf": comprador_fone_residencial_pf.strip(),
-                "comprador_fone_comercial_pf": comprador_fone_comercial_pf.strip(),
-                "comprador_celular_pf": comprador_celular_pf.strip(),
-                "comprador_email_pf": comprador_email_pf.strip(),
-                "comprador_end_residencial_pf": comprador_end_residencial_pf.strip(),
-                "comprador_numero_pf": comprador_numero_pf.strip(),
-                "comprador_bairro_pf": comprador_bairro_pf.strip(),
-                "comprador_cidade_pf": comprador_cidade_pf.strip(),
-                "comprador_estado_pf": comprador_estado_pf.strip(),
-                "comprador_cep_pf": comprador_cep_pf.strip(),
-                "comprador_estado_civil_pf": comprador_estado_civil_pf.strip(),
-                "comprador_regime_bens_pf": comprador_regime_bens_pf.strip(),
-                "comprador_uniao_estavel_pf": "Sim" if comprador_uniao_estavel_pf else "Não",
-                "conjuge_nome_pf": conjuge_nome_pf.strip(),
-                "conjuge_profissao_pf": conjuge_profissao_pf.strip(),
-                "conjuge_nacionalidade_pf": conjuge_nacionalidade_pf.strip(),
-                "conjuge_fone_residencial_pf": conjuge_fone_residencial_pf.strip(),
-                "conjuge_fone_comercial_pf": conjuge_fone_comercial_pf.strip(),
-                "conjuge_celular_pf": conjuge_celular_pf.strip(),
-                "conjuge_email_pf": conjuge_email_pf.strip(),
-                "conjuge_end_residencial_pf": conjuge_end_residencial_pf.strip(),
-                "conjuge_numero_pf": conjuge_numero_pf.strip(),
-                "conjuge_bairro_pf": conjuge_bairro_pf.strip(),
-                "conjuge_cidade_pf": conjuge_cidade_pf.strip(),
-                "conjuge_estado_pf": conjuge_estado_pf.strip(),
-                "conjuge_cep_pf": conjuge_cep_pf.strip(),
-                "condomino_indicado_pf": condomino_indicado_pf.strip(),
-            }
-            
-            pdf_b64_pf = gerar_pdf_pf(dados_pf, st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None)
-            if pdf_b64_pf:
-                href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
-                st.markdown(href, unsafe_allow_html=True)
-
+    if submitted_pf: 
+        dados_pf = {
+            "empreendimento_pf": empreendimento_pf.strip(),
+            "corretor_pf": corretor_pf.strip(),
+            "imobiliaria_pf": imobiliaria_pf.strip(),
+            "qd_pf": qd_pf.strip(),
+            "lt_pf": lt_pf.strip(),
+            "ativo_pf": "Sim" if ativo_pf else "Não",
+            "quitado_pf": "Sim" if quitado_pf else "Não",
+            "comprador_nome_pf": comprador_nome_pf.strip(),
+            "comprador_profissao_pf": comprador_profissao_pf.strip(),
+            "comprador_nacionalidade_pf": comprador_nacionalidade_pf.strip(),
+            "comprador_fone_residencial_pf": comprador_fone_residencial_pf.strip(),
+            "comprador_fone_comercial_pf": comprador_fone_comercial_pf.strip(),
+            "comprador_celular_pf": comprador_celular_pf.strip(),
+            "comprador_email_pf": comprador_email_pf.strip(),
+            "comprador_end_residencial_pf": comprador_end_residencial_pf.strip(),
+            "comprador_numero_pf": comprador_numero_pf.strip(),
+            "comprador_bairro_pf": comprador_bairro_pf.strip(),
+            "comprador_cidade_pf": comprador_cidade_pf.strip(),
+            "comprador_estado_pf": comprador_estado_pf.strip(),
+            "comprador_cep_pf": comprador_cep_pf.strip(),
+            "comprador_estado_civil_pf": comprador_estado_civil_pf.strip(),
+            "comprador_regime_bens_pf": comprador_regime_bens_pf.strip(),
+            "comprador_uniao_estavel_pf": "Sim" if comprador_uniao_estavel_pf else "Não",
+            "conjuge_nome_pf": conjuge_nome_pf.strip(),
+            "conjuge_profissao_pf": conjuge_profissao_pf.strip(),
+            "conjuge_nacionalidade_pf": conjuge_nacionalidade_pf.strip(),
+            "conjuge_fone_residencial_pf": conjuge_fone_residencial_pf.strip(),
+            "conjuge_fone_comercial_pf": conjuge_fone_comercial_pf.strip(),
+            "conjuge_celular_pf": conjuge_celular_pf.strip(),
+            "conjuge_email_pf": conjuge_email_pf.strip(),
+            "conjuge_end_residencial_pf": conjuge_end_residencial_pf.strip(),
+            "conjuge_numero_pf": conjuge_numero_pf.strip(),
+            "conjuge_bairro_pf": conjuge_bairro_pf.strip(),
+            "conjuge_cidade_pf": conjuge_cidade_pf.strip(),
+            "conjuge_estado_pf": conjuge_estado_pf.strip(),
+            "conjuge_cep_pf": conjuge_cep_pf.strip(),
+            "condomino_indicado_pf": condomino_indicado_pf.strip(),
+        }
+        
+        pdf_b64_pf = gerar_pdf_pf(dados_pf, st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None)
+        if pdf_b64_pf:
+            href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
+            st.markdown(href, unsafe_allow_html=True)
 
 elif ficha_tipo == "Pessoa Jurídica":
     st.header("Ficha Cadastral Pessoa Jurídica")
@@ -1054,10 +966,11 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_cidade_estado_cep_empresa_pj[2]:
             comprador_cep_pj = st.text_input("CEP", help="Digite o CEP e pressione Enter para buscar o endereço.", key="comprador_cep_pj")
         
-        st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Comprador PJ"):
             if comprador_cep_pj:
-                _on_cep_search_callback('empresa_pj', 'comprador_cep_pj') # Usa a função de callback
+                error = preencher_endereco('empresa_pj', comprador_cep_pj)
+                if error:
+                    st.warning(error)
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
@@ -1096,13 +1009,13 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_rep_cidade_estado_cep[2]:
             representante_cep_pj = st.text_input("CEP Representante", help="Digite o CEP e pressione Enter para buscar o endereço.", key="representante_cep_pj")
         
-        st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Representante"):
             if representante_cep_pj:
-                _on_cep_search_callback('administrador_pj', 'representante_cep_pj') # Usa a função de callback
+                error = preencher_endereco('administrador_pj', representante_cep_pj)
+                if error:
+                    st.warning(error)
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
-
 
         st.subheader("Dados do CÔNJUGE/SÓCIO(A)")
         col_conjuge_pj_nome_prof_nasc = st.columns([2,1,1])
@@ -1139,10 +1052,11 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_conjuge_pj_cidade_estado_cep[2]:
             conjuge_cep_pj = st.text_input("CEP Cônjuge/Sócio(a) PJ", help="Digite o CEP e pressione Enter para buscar o endereço.", key="conjuge_cep_pj")
         
-        st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a) PJ"):
             if conjuge_cep_pj:
-                _on_cep_search_callback('conjuge_pj', 'conjuge_cep_pj') # Usa a função de callback
+                error = preencher_endereco('conjuge_pj', conjuge_cep_pj)
+                if error:
+                    st.warning(error)
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
@@ -1155,16 +1069,15 @@ elif ficha_tipo == "Pessoa Jurídica":
         st.write("No caso de Condomínio ou Loteamento Fechado, quando a empresa possuir mais de um(a) sócio(a) não casados entre si e nem conviventes, é necessário indicar qual do(a)(s) sócio(a)(s) será o(a) condômino(a):")
         condomino_indicado_pj = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pj")
 
-        # Botões de ação do formulário principal
         submitted_pj = st.form_submit_button("Gerar Ficha de Pessoa Jurídica")
         imprimir_pj = st.form_submit_button("Imprimir Formulário")
 
     # Seção para Dependentes PJ (FORA DO st.form)
     st.subheader("Dependentes (Pessoa Jurídica)")
-    incluir_dependentes_pj = st.checkbox("Incluir Dependentes para PJ", key="incluir_dependentes_pj_checkbox") # Renomeado key
+    incluir_dependentes_pj = st.checkbox("Incluir Dependentes para PJ", key="incluir_dependentes_pj_checkbox")
 
     if incluir_dependentes_pj:
-        with st.container(border=True): # Use um container para agrupar visualmente
+        with st.container(border=True):
             st.markdown("**Adicionar Novo Dependente para PJ:**")
             dep_nome_pj = st.text_input("Nome Completo do Dependente (PJ)", value=st.session_state.get("dep_nome_pj", ""), key="dep_nome_pj")
             dep_cpf_pj = st.text_input("CPF do Dependente (PJ)", value=st.session_state.get("dep_cpf_pj", ""), key="dep_cpf_pj")
@@ -1173,7 +1086,7 @@ elif ficha_tipo == "Pessoa Jurídica":
             dep_email_pj = st.text_input("E-mail do Dependente (PJ)", value=st.session_state.get("dep_email_pj", ""), key="dep_email_pj")
             dep_grau_parentesco_pj = st.text_input("Grau de Parentesco (PJ)", value=st.session_state.get("dep_grau_parentesco_pj", ""), key="dep_grau_parentesco_pj")
 
-            st.button("Adicionar Dependente (PJ)", key="add_dep_pj_button_out_form", on_click=add_dependent_pj_callback) # Nova key
+            st.button("Adicionar Dependente (PJ)", key="add_dep_pj_button_out_form", on_click=add_dependent_pj_callback)
             
             if st.session_state.dependentes_pj_temp:
                 st.markdown("---")
@@ -1181,63 +1094,13 @@ elif ficha_tipo == "Pessoa Jurídica":
                 df_dependentes_pj = pd.DataFrame(st.session_state.dependentes_pj_temp)
                 st.dataframe(df_dependentes_pj)
 
-                clear_dep_pj_button = st.button("Limpar Dependentes (PJ)", key="clear_dep_pj_button_out_form") # Nova key
+                clear_dep_pj_button = st.button("Limpar Dependentes (PJ)", key="clear_dep_pj_button_out_form")
                 if clear_dep_pj_button:
                     st.session_state.dependentes_pj_temp = []
                     st.success("Dependentes limpos para PJ.")
                     st.rerun()
 
-    # Lógica de processamento após a submissão do formulário (agora fora do st.form)
-    # submitted_pf e submitted_pj são as variáveis do st.form_submit_button dos forms principais.
-    # Esta lógica precisa estar no nível superior ou ser chamada após o formulário.
-    if submitted_pf: # submitted_pf é a variável do st.form_submit_button do form principal
-        dados_pf = {
-            "empreendimento_pf": empreendimento_pf.strip(),
-            "corretor_pf": corretor_pf.strip(),
-            "imobiliaria_pf": imobiliaria_pf.strip(),
-            "qd_pf": qd_pf.strip(),
-            "lt_pf": lt_pf.strip(),
-            "ativo_pf": "Sim" if ativo_pf else "Não",
-            "quitado_pf": "Sim" if quitado_pf else "Não",
-            "comprador_nome_pf": comprador_nome_pf.strip(),
-            "comprador_profissao_pf": comprador_profissao_pf.strip(),
-            "comprador_nacionalidade_pf": comprador_nacionalidade_pf.strip(),
-            "comprador_fone_residencial_pf": comprador_fone_residencial_pf.strip(),
-            "comprador_fone_comercial_pf": comprador_fone_comercial_pf.strip(),
-            "comprador_celular_pf": comprador_celular_pf.strip(),
-            "comprador_email_pf": comprador_email_pf.strip(),
-            "comprador_end_residencial_pf": comprador_end_residencial_pf.strip(),
-            "comprador_numero_pf": comprador_numero_pf.strip(),
-            "comprador_bairro_pf": comprador_bairro_pf.strip(),
-            "comprador_cidade_pf": comprador_cidade_pf.strip(),
-            "comprador_estado_pf": comprador_estado_pf.strip(),
-            "comprador_cep_pf": comprador_cep_pf.strip(),
-            "comprador_estado_civil_pf": comprador_estado_civil_pf.strip(),
-            "comprador_regime_bens_pf": comprador_regime_bens_pf.strip(),
-            "comprador_uniao_estavel_pf": "Sim" if comprador_uniao_estavel_pf else "Não",
-            "conjuge_nome_pf": conjuge_nome_pf.strip(),
-            "conjuge_profissao_pf": conjuge_profissao_pf.strip(),
-            "conjuge_nacionalidade_pf": conjuge_nacionalidade_pf.strip(),
-            "conjuge_fone_residencial_pf": conjuge_fone_residencial_pf.strip(),
-            "conjuge_fone_comercial_pf": conjuge_fone_comercial_pf.strip(),
-            "conjuge_celular_pf": conjuge_celular_pf.strip(),
-            "conjuge_email_pf": conjuge_email_pf.strip(),
-            "conjuge_end_residencial_pf": conjuge_end_residencial_pf.strip(),
-            "conjuge_numero_pf": conjuge_numero_pf.strip(),
-            "conjuge_bairro_pf": conjuge_bairro_pf.strip(),
-            "conjuge_cidade_pf": conjuge_cidade_pf.strip(),
-            "conjuge_estado_pf": conjuge_estado_pf.strip(),
-            "conjuge_cep_pf": conjuge_cep_pf.strip(),
-            "condomino_indicado_pf": condomino_indicado_pf.strip(),
-        }
-        
-        pdf_b64_pf = gerar_pdf_pf(dados_pf, st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None)
-        if pdf_b64_pf:
-            href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
-            st.markdown(href, unsafe_allow_html=True)
-
-
-    if submitted_pj: # submitted_pj é a variável do st.form_submit_button do form principal
+    if submitted_pj:
         dados_pj = {
             "empreendimento_pj": empreendimento_pj.strip(),
             "corretor_pj": corretor_pj.strip(),
