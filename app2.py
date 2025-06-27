@@ -542,14 +542,16 @@ def gerar_pdf_pf(dados, dependentes=None, dados_proposta=None):
             forma_pagamento_imovel = dados_proposta.get('forma_pagamento_imovel', '')
             if valor_imovel or forma_pagamento_imovel:
                 pdf.cell(80, 6, f"Valor do imóvel: {sanitize_text(valor_imovel)}", 0, 0) # Adjusted width
-                pdf.cell(110, 6, f"Forma de pagamento (Imóvel): {sanitize_text(forma_pagamento_imovel)}", 0, 1) # Adjusted width
+                # Usar multi_cell para forma de pagamento para permitir quebra de linha
+                pdf.multi_cell(110, 6, f"Forma de pagamento (Imóvel): {sanitize_text(forma_pagamento_imovel)}", 0, "L") 
 
             # Valor dos honorários e Forma de pagamento (honorários)
             valor_honorarios = dados_proposta.get('valor_honorarios', '')
             forma_pagamento_honorarios = dados_proposta.get('forma_pagamento_honorarios', '')
             if valor_honorarios or forma_pagamento_honorarios:
                 pdf.cell(80, 6, f"Valor dos honorários: {sanitize_text(valor_honorarios)}", 0, 0) # Adjusted width
-                pdf.cell(110, 6, f"Forma de pagamento (Honorários): {sanitize_text(forma_pagamento_honorarios)}", 0, 1) # Adjusted width
+                # Usar multi_cell para forma de pagamento para permitir quebra de linha
+                pdf.multi_cell(110, 6, f"Forma de pagamento (Honorários): {sanitize_text(forma_pagamento_honorarios)}", 0, "L") 
 
             # Conta Bancária para transferência
             conta_bancaria = dados_proposta.get('conta_bancaria', '')
@@ -872,14 +874,16 @@ def gerar_pdf_pj(dados, dependentes=None, dados_proposta=None):
             forma_pagamento_imovel = dados_proposta.get('forma_pagamento_imovel', '')
             if valor_imovel or forma_pagamento_imovel:
                 pdf.cell(80, 6, f"Valor do imóvel: {sanitize_text(valor_imovel)}", 0, 0) # Adjusted width
-                pdf.cell(110, 6, f"Forma de pagamento (Imóvel): {sanitize_text(forma_pagamento_imovel)}", 0, 1) # Adjusted width
+                # Usar multi_cell para forma de pagamento para permitir quebra de linha
+                pdf.multi_cell(110, 6, f"Forma de pagamento (Imóvel): {sanitize_text(forma_pagamento_imovel)}", 0, "L") 
 
             # Valor dos honorários e Forma de pagamento (honorários)
             valor_honorarios = dados_proposta.get('valor_honorarios', '')
             forma_pagamento_honorarios = dados_proposta.get('forma_pagamento_honorarios', '')
             if valor_honorarios or forma_pagamento_honorarios:
                 pdf.cell(80, 6, f"Valor dos honorários: {sanitize_text(valor_honorarios)}", 0, 0) # Adjusted width
-                pdf.cell(110, 6, f"Forma de pagamento (Honorários): {sanitize_text(forma_pagamento_honorarios)}", 0, 1) # Adjusted width
+                # Usar multi_cell para forma de pagamento para permitir quebra de linha
+                pdf.multi_cell(110, 6, f"Forma de pagamento (Honorários): {sanitize_text(forma_pagamento_honorarios)}", 0, "L") 
 
             # Conta Bancária para transferência
             conta_bancaria = dados_proposta.get('conta_bancaria', '')
