@@ -23,7 +23,11 @@ if "comprador_cidade_pf" not in st.session_state:
     st.session_state.comprador_cidade_pf = ""
 if "comprador_estado_pf" not in st.session_state:
     st.session_state.comprador_estado_pf = ""
+if "comprador_numero_pf" not in st.session_state:
+    st.session_state.comprador_numero_pf = ""
 
+if "conjuge_cep_pf" not in st.session_state:
+    st.session_state.conjuge_cep_pf = ""
 if "conjuge_end_residencial_pf" not in st.session_state:
     st.session_state.conjuge_end_residencial_pf = ""
 if "conjuge_bairro_pf" not in st.session_state:
@@ -32,16 +36,24 @@ if "conjuge_cidade_pf" not in st.session_state:
     st.session_state.conjuge_cidade_pf = ""
 if "conjuge_estado_pf" not in st.session_state:
     st.session_state.conjuge_estado_pf = ""
+if "conjuge_numero_pf" not in st.session_state:
+    st.session_state.conjuge_numero_pf = ""
 
+if "comprador_cep_pj" not in st.session_state:
+    st.session_state.comprador_cep_pj = ""
 if "comprador_end_residencial_comercial_pj" not in st.session_state:
     st.session_state.comprador_end_residencial_comercial_pj = ""
 if "comprador_bairro_pj" not in st.session_state:
-    st.session_state.bairro_pj = ""
+    st.session_state.comprador_bairro_pj = "" # Corrigido: era 'bairro_pj'
 if "comprador_cidade_pj" not in st.session_state:
-    st.session_state.cidade_pj = ""
+    st.session_state.comprador_cidade_pj = "" # Corrigido: era 'cidade_pj'
 if "comprador_estado_pj" not in st.session_state:
-    st.session_state.estado_pj = ""
+    st.session_state.comprador_estado_pj = "" # Corrigido: era 'estado_pj'
+if "comprador_numero_pj" not in st.session_state:
+    st.session_state.comprador_numero_pj = ""
 
+if "representante_cep_pj" not in st.session_state:
+    st.session_state.representante_cep_pj = ""
 if "representante_end_residencial_pj" not in st.session_state:
     st.session_state.representante_end_residencial_pj = ""
 if "representante_bairro_pj" not in st.session_state:
@@ -50,7 +62,11 @@ if "representante_cidade_pj" not in st.session_state:
     st.session_state.representante_cidade_pj = ""
 if "representante_estado_pj" not in st.session_state:
     st.session_state.representante_estado_pj = ""
+if "representante_numero_pj" not in st.session_state:
+    st.session_state.representante_numero_pj = ""
 
+if "conjuge_cep_pj" not in st.session_state:
+    st.session_state.conjuge_cep_pj = ""
 if "conjuge_end_residencial_pj" not in st.session_state:
     st.session_state.conjuge_end_residencial_pj = ""
 if "conjuge_bairro_pj" not in st.session_state:
@@ -59,6 +75,8 @@ if "conjuge_cidade_pj" not in st.session_state:
     st.session_state.conjuge_cidade_pj = ""
 if "conjuge_estado_pj" not in st.session_state:
     st.session_state.conjuge_estado_pj = ""
+if "conjuge_numero_pj" not in st.session_state:
+    st.session_state.conjuge_numero_pj = ""
 
 # Adicionado para pessoas vinculadas
 if "endereco_pessoa_pj" not in st.session_state:
@@ -280,7 +298,7 @@ def _on_cep_search_callback(tipo_campo: str, cep_key: str):
             st.error(error_msg)
     else:
         st.warning("Por favor, digite um CEP para buscar.")
-    st.rerun() # Força o rerun após a atualização do session_state
+    # Removido st.rerun() daqui, pois o clique do botão já causa um rerun.
 
 def formatar_cpf(cpf: str) -> str:
     """Formata o CPF como 000.000.000-00."""
@@ -302,7 +320,7 @@ def formatar_telefone(telefone: str) -> str:
     """
     telefone = re.sub(r'[^0-9]', '', telefone)
     if len(telefone) == 11 and telefone[2] == '9': # Celular com 9º dígito
-        return f"{telefone[:2]}-{telefone[2:7]}-{telefone[7:]}"
+        return f"({telefone[:2]}) {telefone[2:7]}-{telefone[7:]}" # Adicionado parênteses para DDD
     elif len(telefone) == 10: # Telefone fixo ou celular sem 9º dígito
         return f"({telefone[:2]}) {telefone[2:6]}-{telefone[6:]}"
     return telefone # Retorna sem formatação se não corresponder aos padrões
@@ -375,7 +393,7 @@ def gerar_pdf_pf(dados, dependentes=None):
                     cidade = dados.get(field_info[1], '')
                     estado = dados.get(field_info[2], '')
                     if cidade and estado and sanitize_text(cidade) and sanitize_text(estado):
-                         pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
+                            pdf.cell(0, 6, f"{sanitize_text(label)}: {sanitize_text(cidade)}/{sanitize_text(estado)}", 0, 1)
 
         pdf.ln(3) # Reduzido de 5 para 3
         
@@ -785,8 +803,33 @@ submitted_pj = False
 if ficha_tipo == "Pessoa Física":
     st.header("Ficha Cadastral Pessoa Física")
 
+    # Campos de CEP para busca e botões de busca (FORA DO FORM)
+    col_cep_comp, col_btn_comp = st.columns([0.7, 0.3])
+    with col_cep_comp:
+        comprador_cep_pf_search = st.text_input("CEP Comprador (para buscar)", help="Digite o CEP e pressione 'Buscar Endereço Comprador' para preencher.", key="comprador_cep_pf_search", value=st.session_state.get("comprador_cep_pf", ""))
+    with col_btn_comp:
+        st.markdown("<br>", unsafe_allow_html=True) # Espaço para alinhar o botão
+        if st.button("Buscar Endereço Comprador", key="btn_buscar_comp_pf"):
+            if comprador_cep_pf_search:
+                _on_cep_search_callback('pf', 'comprador_cep_pf_search')
+            else:
+                st.warning("Por favor, digite um CEP para buscar o endereço do comprador.")
+    
+    col_cep_conj, col_btn_conj = st.columns([0.7, 0.3])
+    with col_cep_conj:
+        conjuge_cep_pf_search = st.text_input("CEP Cônjuge/Sócio(a) (para buscar)", help="Digite o CEP e pressione 'Buscar Endereço Cônjuge/Sócio(a)' para preencher.", key="conjuge_cep_pf_search", value=st.session_state.get("conjuge_cep_pf", ""))
+    with col_btn_conj:
+        st.markdown("<br>", unsafe_allow_html=True) # Espaço para alinhar o botão
+        if st.button("Buscar Endereço Cônjuge/Sócio(a)", key="btn_buscar_conj_pf"):
+            if conjuge_cep_pf_search:
+                _on_cep_search_callback('conjuge_pf', 'conjuge_cep_pf_search')
+            else:
+                st.warning("Por favor, digite um CEP para buscar o endereço do cônjuge/sócio(a).")
+
+    st.markdown("---") # Separador visual
+
     # Início do formulário principal
-    with st.form("form_pf"): 
+    with st.form("form_pf"): 
         st.subheader("Dados do Empreendimento e Imobiliária")
         
         col1, col2, col3 = st.columns([3, 1, 1])
@@ -843,15 +886,8 @@ if ficha_tipo == "Pessoa Física":
         with col_cidade_estado_cep[1]:
             comprador_estado_pf = st.text_input("Estado", value=st.session_state.get("comprador_estado_pf", ""), key="comprador_estado_pf")
         with col_cidade_estado_cep[2]:
-            comprador_cep_pf = st.text_input("CEP", help="Digite o CEP e pressione Enter para buscar o endereço.", key="comprador_cep_pf")
-
-        # Botão de busca de CEP diretamente associado ao campo CEP para comprador
-        st.markdown("<br>", unsafe_allow_html=True) # Espaço
-        if st.form_submit_button("Buscar Endereço Comprador"):
-            if comprador_cep_pf:
-                _on_cep_search_callback('pf', 'comprador_cep_pf') # Usa a função de callback
-            else:
-                st.warning("Por favor, digite um CEP para buscar.")
+            # Este CEP agora recebe o valor do campo de busca externo
+            comprador_cep_pf = st.text_input("CEP (do cadastro)", value=st.session_state.get("comprador_cep_pf_search", ""), key="comprador_cep_pf")
 
         col_estado_civil_regime = st.columns([1,1])
         with col_estado_civil_regime[0]:
@@ -896,14 +932,8 @@ if ficha_tipo == "Pessoa Física":
         with col_conjuge_cidade_estado_cep[1]:
             conjuge_estado_pf = st.text_input("Estado Cônjuge/Sócio(a)", value=st.session_state.get("conjuge_estado_pf", ""), key="conjuge_estado_pf")
         with col_conjuge_cidade_estado_cep[2]:
-            conjuge_cep_pf = st.text_input("CEP Cônjuge/Sócio(a)", help="Digite o CEP e pressione Enter para buscar o endereço.", key="conjuge_cep_pf")
-
-        st.markdown("<br>", unsafe_allow_html=True) # Espaço
-        if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a)"):
-            if conjuge_cep_pf:
-                _on_cep_search_callback('conjuge_pf', 'conjuge_cep_pf') # Usa a função de callback
-            else:
-                st.warning("Por favor, digite um CEP para buscar.")
+            # Este CEP agora recebe o valor do campo de busca externo
+            conjuge_cep_pf = st.text_input("CEP Cônjuge/Sócio(a) (do cadastro)", value=st.session_state.get("conjuge_cep_pf_search", ""), key="conjuge_cep_pf")
 
         st.markdown("---")
         st.markdown("**DOCUMENTOS NECESSÁRIOS:**")
@@ -950,57 +980,92 @@ if ficha_tipo == "Pessoa Física":
                 st.success("Dependentes limpos.")
                 st.rerun()
 
-        # Lógica de processamento após a submissão do formulário PF
-        # Esta lógica agora é chamada APÓS o `with st.form("form_pf"):`
-        if submitted_pf: 
-            dados_pf = {
-                "empreendimento_pf": empreendimento_pf.strip(),
-                "corretor_pf": corretor_pf.strip(),
-                "imobiliaria_pf": imobiliaria_pf.strip(),
-                "qd_pf": qd_pf.strip(),
-                "lt_pf": lt_pf.strip(),
-                "ativo_pf": "Sim" if ativo_pf else "Não",
-                "quitado_pf": "Sim" if quitado_pf else "Não",
-                "comprador_nome_pf": comprador_nome_pf.strip(),
-                "comprador_profissao_pf": comprador_profissao_pf.strip(),
-                "comprador_nacionalidade_pf": comprador_nacionalidade_pf.strip(),
-                "comprador_fone_residencial_pf": comprador_fone_residencial_pf.strip(),
-                "comprador_fone_comercial_pf": comprador_fone_comercial_pf.strip(),
-                "comprador_celular_pf": comprador_celular_pf.strip(),
-                "comprador_email_pf": comprador_email_pf.strip(),
-                "comprador_end_residencial_pf": comprador_end_residencial_pf.strip(),
-                "comprador_numero_pf": comprador_numero_pf.strip(),
-                "comprador_bairro_pf": comprador_bairro_pf.strip(),
-                "comprador_cidade_pf": comprador_cidade_pf.strip(),
-                "comprador_estado_pf": comprador_estado_pf.strip(),
-                "comprador_cep_pf": comprador_cep_pf.strip(),
-                "comprador_estado_civil_pf": comprador_estado_civil_pf.strip(),
-                "comprador_regime_bens_pf": comprador_regime_bens_pf.strip(),
-                "comprador_uniao_estavel_pf": "Sim" if comprador_uniao_estavel_pf else "Não",
-                "conjuge_nome_pf": conjuge_nome_pf.strip(),
-                "conjuge_profissao_pf": conjuge_profissao_pf.strip(),
-                "conjuge_nacionalidade_pf": conjuge_nacionalidade_pf.strip(),
-                "conjuge_fone_residencial_pf": conjuge_fone_residencial_pf.strip(),
-                "conjuge_fone_comercial_pf": conjuge_fone_comercial_pf.strip(),
-                "conjuge_celular_pf": conjuge_celular_pf.strip(),
-                "conjuge_email_pf": conjuge_email_pf.strip(),
-                "conjuge_end_residencial_pf": conjuge_end_residencial_pf.strip(),
-                "conjuge_numero_pf": conjuge_numero_pf.strip(),
-                "conjuge_bairro_pf": conjuge_bairro_pf.strip(),
-                "conjuge_cidade_pf": conjuge_cidade_pf.strip(),
-                "conjuge_estado_pf": conjuge_estado_pf.strip(),
-                "conjuge_cep_pf": conjuge_cep_pf.strip(),
-                "condomino_indicado_pf": condomino_indicado_pf.strip(),
-            }
-            
-            pdf_b64_pf = gerar_pdf_pf(dados_pf, st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None)
-            if pdf_b64_pf:
-                href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
-                st.markdown(href, unsafe_allow_html=True)
+    # Lógica de processamento após a submissão do formulário PF
+    if submitted_pf: # submitted_pf é a variável do st.form_submit_button do form principal
+        dados_pf = {
+            "empreendimento_pf": empreendimento_pf.strip(),
+            "corretor_pf": corretor_pf.strip(),
+            "imobiliaria_pf": imobiliaria_pf.strip(),
+            "qd_pf": qd_pf.strip(),
+            "lt_pf": lt_pf.strip(),
+            "ativo_pf": "Sim" if ativo_pf else "Não",
+            "quitado_pf": "Sim" if quitado_pf else "Não",
+            "comprador_nome_pf": comprador_nome_pf.strip(),
+            "comprador_profissao_pf": comprador_profissao_pf.strip(),
+            "comprador_nacionalidade_pf": comprador_nacionalidade_pf.strip(),
+            "comprador_fone_residencial_pf": comprador_fone_residencial_pf.strip(),
+            "comprador_fone_comercial_pf": comprador_fone_comercial_pf.strip(),
+            "comprador_celular_pf": comprador_celular_pf.strip(),
+            "comprador_email_pf": comprador_email_pf.strip(),
+            "comprador_end_residencial_pf": comprador_end_residencial_pf.strip(),
+            "comprador_numero_pf": comprador_numero_pf.strip(),
+            "comprador_bairro_pf": comprador_bairro_pf.strip(),
+            "comprador_cidade_pf": comprador_cidade_pf.strip(),
+            "comprador_estado_pf": comprador_estado_pf.strip(),
+            "comprador_cep_pf": comprador_cep_pf.strip(), # Valor já vem do session_state via st.text_input
+            "comprador_estado_civil_pf": comprador_estado_civil_pf.strip(),
+            "comprador_regime_bens_pf": comprador_regime_bens_pf.strip(),
+            "comprador_uniao_estavel_pf": "Sim" if comprador_uniao_estavel_pf else "Não",
+            "conjuge_nome_pf": conjuge_nome_pf.strip(),
+            "conjuge_profissao_pf": conjuge_profissao_pf.strip(),
+            "conjuge_nacionalidade_pf": conjuge_nacionalidade_pf.strip(),
+            "conjuge_fone_residencial_pf": conjuge_fone_residencial_pf.strip(),
+            "conjuge_fone_comercial_pf": conjuge_fone_comercial_pf.strip(),
+            "conjuge_celular_pf": conjuge_celular_pf.strip(),
+            "conjuge_email_pf": conjuge_email_pf.strip(),
+            "conjuge_end_residencial_pf": conjuge_end_residencial_pf.strip(),
+            "conjuge_numero_pf": conjuge_numero_pf.strip(),
+            "conjuge_bairro_pf": conjuge_bairro_pf.strip(),
+            "conjuge_cidade_pf": conjuge_cidade_pf.strip(),
+            "conjuge_estado_pf": conjuge_estado_pf.strip(),
+            "conjuge_cep_pf": conjuge_cep_pf.strip(), # Valor já vem do session_state via st.text_input
+            "condomino_indicado_pf": condomino_indicado_pf.strip(),
+        }
+        
+        pdf_b64_pf = gerar_pdf_pf(dados_pf, st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None)
+        if pdf_b64_pf:
+            href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
+            st.markdown(href, unsafe_allow_html=True)
 
 
 elif ficha_tipo == "Pessoa Jurídica":
     st.header("Ficha Cadastral Pessoa Jurídica")
+
+    # Campos de CEP para busca e botões de busca (FORA DO FORM)
+    col_cep_comp_pj, col_btn_comp_pj = st.columns([0.7, 0.3])
+    with col_cep_comp_pj:
+        comprador_cep_pj_search = st.text_input("CEP Empresa (para buscar)", help="Digite o CEP e pressione 'Buscar Endereço Empresa' para preencher.", key="comprador_cep_pj_search", value=st.session_state.get("comprador_cep_pj", ""))
+    with col_btn_comp_pj:
+        st.markdown("<br>", unsafe_allow_html=True) # Espaço para alinhar o botão
+        if st.button("Buscar Endereço Empresa", key="btn_buscar_comp_pj"):
+            if comprador_cep_pj_search:
+                _on_cep_search_callback('empresa_pj', 'comprador_cep_pj_search')
+            else:
+                st.warning("Por favor, digite um CEP para buscar o endereço da empresa.")
+
+    col_cep_rep_pj, col_btn_rep_pj = st.columns([0.7, 0.3])
+    with col_cep_rep_pj:
+        representante_cep_pj_search = st.text_input("CEP Representante (para buscar)", help="Digite o CEP e pressione 'Buscar Endereço Representante' para preencher.", key="representante_cep_pj_search", value=st.session_state.get("representante_cep_pj", ""))
+    with col_btn_rep_pj:
+        st.markdown("<br>", unsafe_allow_html=True) # Espaço para alinhar o botão
+        if st.button("Buscar Endereço Representante", key="btn_buscar_rep_pj"):
+            if representante_cep_pj_search:
+                _on_cep_search_callback('administrador_pj', 'representante_cep_pj_search')
+            else:
+                st.warning("Por favor, digite um CEP para buscar o endereço do representante.")
+    
+    col_cep_conj_pj, col_btn_conj_pj = st.columns([0.7, 0.3])
+    with col_cep_conj_pj:
+        conjuge_cep_pj_search = st.text_input("CEP Cônjuge/Sócio(a) PJ (para buscar)", help="Digite o CEP e pressione 'Buscar Endereço Cônjuge/Sócio(a) PJ' para preencher.", key="conjuge_cep_pj_search", value=st.session_state.get("conjuge_cep_pj", ""))
+    with col_btn_conj_pj:
+        st.markdown("<br>", unsafe_allow_html=True) # Espaço para alinhar o botão
+        if st.button("Buscar Endereço Cônjuge/Sócio(a) PJ", key="btn_buscar_conj_pj"):
+            if conjuge_cep_pj_search:
+                _on_cep_search_callback('conjuge_pj', 'conjuge_cep_pj_search')
+            else:
+                st.warning("Por favor, digite um CEP para buscar o endereço do cônjuge/sócio(a) PJ.")
+    
+    st.markdown("---") # Separador visual
 
     with st.form("form_pj"):
         st.subheader("Dados do Empreendimento e Imobiliária")
@@ -1057,15 +1122,9 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_cidade_estado_cep_empresa_pj[1]:
             comprador_estado_pj = st.text_input("Estado", value=st.session_state.get("comprador_estado_pj", ""), key="comprador_estado_pj")
         with col_cidade_estado_cep_empresa_pj[2]:
-            comprador_cep_pj = st.text_input("CEP", help="Digite o CEP e pressione Enter para buscar o endereço.", key="comprador_cep_pj")
+            # Este CEP agora recebe o valor do campo de busca externo
+            comprador_cep_pj = st.text_input("CEP (do cadastro)", value=st.session_state.get("comprador_cep_pj_search", ""), key="comprador_cep_pj")
         
-        st.markdown("<br>", unsafe_allow_html=True) # Espaço
-        if st.form_submit_button("Buscar Endereço Comprador PJ"):
-            if comprador_cep_pj:
-                _on_cep_search_callback('empresa_pj', 'comprador_cep_pj') # Usa a função de callback
-            else:
-                st.warning("Por favor, digite um CEP para buscar.")
-
         st.subheader("Dados do REPRESENTANTE")
         col_rep_nome_prof_nasc = st.columns([2,1,1])
         with col_rep_nome_prof_nasc[0]:
@@ -1099,16 +1158,9 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_rep_cidade_estado_cep[1]:
             representante_estado_pj = st.text_input("Estado Representante", value=st.session_state.get("representante_estado_pj", ""), key="representante_estado_pj")
         with col_rep_cidade_estado_cep[2]:
-            representante_cep_pj = st.text_input("CEP Representante", help="Digite o CEP e pressione Enter para buscar o endereço.", key="representante_cep_pj")
+            # Este CEP agora recebe o valor do campo de busca externo
+            representante_cep_pj = st.text_input("CEP Representante (do cadastro)", value=st.session_state.get("representante_cep_pj_search", ""), key="representante_cep_pj")
         
-        st.markdown("<br>", unsafe_allow_html=True) # Espaço
-        if st.form_submit_button("Buscar Endereço Representante"):
-            if representante_cep_pj:
-                _on_cep_search_callback('administrador_pj', 'representante_cep_pj') # Usa a função de callback
-            else:
-                st.warning("Por favor, digite um CEP para buscar.")
-
-
         st.subheader("Dados do CÔNJUGE/SÓCIO(A)")
         col_conjuge_pj_nome_prof_nasc = st.columns([2,1,1])
         with col_conjuge_pj_nome_prof_nasc[0]:
@@ -1142,15 +1194,9 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_conjuge_pj_cidade_estado_cep[1]:
             conjuge_estado_pj = st.text_input("Estado Cônjuge/Sócio(a) PJ", value=st.session_state.get("conjuge_estado_pj", ""), key="conjuge_estado_pj")
         with col_conjuge_pj_cidade_estado_cep[2]:
-            conjuge_cep_pj = st.text_input("CEP Cônjuge/Sócio(a) PJ", help="Digite o CEP e pressione Enter para buscar o endereço.", key="conjuge_cep_pj")
+            # Este CEP agora recebe o valor do campo de busca externo
+            conjuge_cep_pj = st.text_input("CEP Cônjuge/Sócio(a) PJ (do cadastro)", value=st.session_state.get("conjuge_cep_pj_search", ""), key="conjuge_cep_pj")
         
-        st.markdown("<br>", unsafe_allow_html=True) # Espaço
-        if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a) PJ"):
-            if conjuge_cep_pj:
-                _on_cep_search_callback('conjuge_pj', 'conjuge_cep_pj') # Usa a função de callback
-            else:
-                st.warning("Por favor, digite um CEP para buscar.")
-
         st.markdown("---")
         st.markdown("**DOCUMENTOS NECESSÁRIAS:**")
         st.markdown("- **DA EMPRESA:** CONTRATO SOCIAL E ALTERAÇÕES, COMPROVANTE DE ENDEREÇO, DECLARAÇÃO DE FATURAMENTO;")
@@ -1161,8 +1207,11 @@ elif ficha_tipo == "Pessoa Jurídica":
         condomino_indicado_pj = st.text_input("Indique aqui quem será o(a) condômino(a)", key="condomino_indicado_pj")
 
         # Botões de ação do formulário principal
-        submitted_pj = st.form_submit_button("Gerar Ficha de Pessoa Jurídica")
-        imprimir_pj = st.form_submit_button("Imprimir Formulário")
+        col1_pj, col2_pj = st.columns(2)
+        with col1_pj:
+            submitted_pj = st.form_submit_button("Gerar Ficha de Pessoa Jurídica")
+        with col2_pj:
+            imprimir_pj = st.form_submit_button("Imprimir Formulário PJ") # Renomeado key para evitar conflito
 
     # Seção para Dependentes PJ (FORA DO st.form)
     st.subheader("Dependentes (Pessoa Jurídica)")
@@ -1195,53 +1244,6 @@ elif ficha_tipo == "Pessoa Jurídica":
     # Lógica de processamento após a submissão do formulário (agora fora do st.form)
     # submitted_pf e submitted_pj são as variáveis do st.form_submit_button dos forms principais.
     # Esta lógica precisa estar no nível superior ou ser chamada após o formulário.
-    if submitted_pf: # submitted_pf é a variável do st.form_submit_button do form principal
-        dados_pf = {
-            "empreendimento_pf": empreendimento_pf.strip(),
-            "corretor_pf": corretor_pf.strip(),
-            "imobiliaria_pf": imobiliaria_pf.strip(),
-            "qd_pf": qd_pf.strip(),
-            "lt_pf": lt_pf.strip(),
-            "ativo_pf": "Sim" if ativo_pf else "Não",
-            "quitado_pf": "Sim" if quitado_pf else "Não",
-            "comprador_nome_pf": comprador_nome_pf.strip(),
-            "comprador_profissao_pf": comprador_profissao_pf.strip(),
-            "comprador_nacionalidade_pf": comprador_nacionalidade_pf.strip(),
-            "comprador_fone_residencial_pf": comprador_fone_residencial_pf.strip(),
-            "comprador_fone_comercial_pf": comprador_fone_comercial_pf.strip(),
-            "comprador_celular_pf": comprador_celular_pf.strip(),
-            "comprador_email_pf": comprador_email_pf.strip(),
-            "comprador_end_residencial_pf": comprador_end_residencial_pf.strip(),
-            "comprador_numero_pf": comprador_numero_pf.strip(),
-            "comprador_bairro_pf": comprador_bairro_pf.strip(),
-            "comprador_cidade_pf": comprador_cidade_pf.strip(),
-            "comprador_estado_pf": comprador_estado_pf.strip(),
-            "comprador_cep_pf": comprador_cep_pf.strip(),
-            "comprador_estado_civil_pf": comprador_estado_civil_pf.strip(),
-            "comprador_regime_bens_pf": comprador_regime_bens_pf.strip(),
-            "comprador_uniao_estavel_pf": "Sim" if comprador_uniao_estavel_pf else "Não",
-            "conjuge_nome_pf": conjuge_nome_pf.strip(),
-            "conjuge_profissao_pf": conjuge_profissao_pf.strip(),
-            "conjuge_nacionalidade_pf": conjuge_nacionalidade_pf.strip(),
-            "conjuge_fone_residencial_pf": conjuge_fone_residencial_pf.strip(),
-            "conjuge_fone_comercial_pf": conjuge_fone_comercial_pf.strip(),
-            "conjuge_celular_pf": conjuge_celular_pf.strip(),
-            "conjuge_email_pf": conjuge_email_pf.strip(),
-            "conjuge_end_residencial_pf": conjuge_end_residencial_pf.strip(),
-            "conjuge_numero_pf": conjuge_numero_pf.strip(),
-            "conjuge_bairro_pf": conjuge_bairro_pf.strip(),
-            "conjuge_cidade_pf": conjuge_cidade_pf.strip(),
-            "conjuge_estado_pf": conjuge_estado_pf.strip(),
-            "conjuge_cep_pf": conjuge_cep_pf.strip(),
-            "condomino_indicado_pf": condomino_indicado_pf.strip(),
-        }
-        
-        pdf_b64_pf = gerar_pdf_pf(dados_pf, st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None)
-        if pdf_b64_pf:
-            href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
-            st.markdown(href, unsafe_allow_html=True)
-
-
     if submitted_pj: # submitted_pj é a variável do st.form_submit_button do form principal
         dados_pj = {
             "empreendimento_pj": empreendimento_pj.strip(),
