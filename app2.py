@@ -1411,7 +1411,7 @@ elif ficha_tipo == "Pessoa Jurídica":
         with col_rep_cidade_estado[0]:
             representante_cidade_pj = st.text_input("Cidade Representante", value=st.session_state.representante_cidade_pj, key="representante_cidade_pj")
         with col_rep_cidade_estado[1]:
-            representante_estado_pj = st.text_input("Estado Representante", value=st.session_state.representante_estado_pj, key="representante_estado_pj")
+            representante_estado_pj = st.text_input("Estado", value=st.session_state.representante_estado_pj, key="representante_estado_pj")
 
         st.markdown("---") # Separador visual
         
