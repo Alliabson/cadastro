@@ -272,6 +272,7 @@ def preencher_endereco(tipo_campo: str, cep_value: str) -> str:
         if target_keys:
             for campo_origem, session_key in target_keys.items():
                 st.session_state[session_key] = endereco_info.get(campo_origem, '')
+            st.rerun() # Adicionado st.rerun() aqui para forçar a atualização dos campos na UI
             return None # Sem erro
         else:
             return "Tipo de campo de endereço desconhecido."
@@ -845,12 +846,8 @@ if ficha_tipo == "Pessoa Física":
         st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Comprador"):
             if comprador_cep_pf:
-                error_msg = preencher_endereco('pf', comprador_cep_pf)
-                if error_msg:
-                    st.error(error_msg)
-                else:
-                    st.success("Endereço do comprador preenchido!")
-                    st.rerun() # Força a atualização dos campos na UI
+                # O preencher_endereco agora já faz o rerun.
+                preencher_endereco('pf', comprador_cep_pf) 
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
@@ -902,12 +899,7 @@ if ficha_tipo == "Pessoa Física":
         st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a)"):
             if conjuge_cep_pf:
-                error_msg = preencher_endereco('conjuge_pf', conjuge_cep_pf)
-                if error_msg:
-                    st.error(error_msg)
-                else:
-                    st.success("Endereço do cônjuge preenchido!")
-                    st.rerun() # Força a atualização dos campos na UI
+                preencher_endereco('conjuge_pf', conjuge_cep_pf)
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
@@ -1068,12 +1060,7 @@ elif ficha_tipo == "Pessoa Jurídica":
         st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Comprador PJ"):
             if comprador_cep_pj:
-                error_msg = preencher_endereco('empresa_pj', comprador_cep_pj)
-                if error_msg:
-                    st.error(error_msg)
-                else:
-                    st.success("Endereço do comprador PJ preenchido!")
-                    st.rerun()
+                preencher_endereco('empresa_pj', comprador_cep_pj)
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
@@ -1115,12 +1102,7 @@ elif ficha_tipo == "Pessoa Jurídica":
         st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Representante"):
             if representante_cep_pj:
-                error_msg = preencher_endereco('administrador_pj', representante_cep_pj)
-                if error_msg:
-                    st.error(error_msg)
-                else:
-                    st.success("Endereço do representante preenchido!")
-                    st.rerun()
+                preencher_endereco('administrador_pj', representante_cep_pj)
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
@@ -1163,12 +1145,7 @@ elif ficha_tipo == "Pessoa Jurídica":
         st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a) PJ"):
             if conjuge_cep_pj:
-                error_msg = preencher_endereco('conjuge_pj', conjuge_cep_pj)
-                if error_msg:
-                    st.error(error_msg)
-                else:
-                    st.success("Endereço do cônjuge/sócio PJ preenchido!")
-                    st.rerun()
+                preencher_endereco('conjuge_pj', conjuge_cep_pj)
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
