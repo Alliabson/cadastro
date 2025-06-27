@@ -13,6 +13,8 @@ import re # Importado para tratamento de strings e validações
 # Inicializa as variáveis de estado da sessão do Streamlit,
 # garantindo que elas existam antes de serem acessadas para evitar KeyError.
 # Isso é crucial para campos que são preenchidos por busca de CEP.
+if "comprador_cep_pf" not in st.session_state:
+    st.session_state.comprador_cep_pf = ""
 if "comprador_end_residencial_pf" not in st.session_state:
     st.session_state.comprador_end_residencial_pf = ""
 if "comprador_bairro_pf" not in st.session_state:
@@ -179,12 +181,6 @@ def buscar_cep(cep):
     # Tentar ViaCEP primeiro
     endereco_info, error_msg = _buscar_cep_viacep(cep_limpo)
     if endereco_info:
-        endereco_info = {
-            'logradouro': endereco_info.get('logradouro', ''),
-            'bairro': endereco_info.get('bairro', ''),
-            'localidade': endereco_info.get('localidade', ''),
-            'uf': endereco_info.get('uf', '')
-        }
         return endereco_info, None
     else:
         st.warning(f"ViaCEP falhou: {error_msg}. Tentando Brasil API...")
@@ -192,12 +188,6 @@ def buscar_cep(cep):
         # Tentar Brasil API como fallback
         endereco_info, error_msg = _buscar_cep_brasilapi(cep_limpo)
         if endereco_info:
-            endereco_info = {
-                'logradouro': endereco_info.get('logradouro', ''),
-                'bairro': endereco_info.get('bairro', ''),
-                'localidade': endereco_info.get('localidade', ''),
-                'uf': endereco_info.get('uf', '')
-            }
             return endereco_info, None
         else:
             st.warning(f"Brasil API falhou: {error_msg}. Tentando Postmon...")
@@ -205,12 +195,6 @@ def buscar_cep(cep):
             # Tentar Postmon como último fallback
             endereco_info, error_msg = _buscar_cep_postmon(cep_limpo)
             if endereco_info:
-                endereco_info = {
-                    'logradouro': endereco_info.get('logradouro', ''),
-                    'bairro': endereco_info.get('bairro', ''),
-                    'localidade': endereco_info.get('localidade', ''),
-                    'uf': endereco_info.get('uf', '')
-                }
                 return endereco_info, None
             else:
                 return None, f"Todas as APIs de CEP falharam: {error_msg}"
@@ -244,12 +228,6 @@ def _on_cep_search_callback(tipo_campo: str, cep_key: str):
     if cep_value:
         endereco_info, error_msg = buscar_cep(cep_value)
         if endereco_info:
-            endereco_info = {
-                'logradouro': endereco_info.get('logradouro', ''),
-                'bairro': endereco_info.get('bairro', ''),
-                'localidade': endereco_info.get('localidade', ''),
-                'uf': endereco_info.get('uf', '')
-            }
             mapping = {
                 'pf': {
                     'logradouro': 'comprador_end_residencial_pf',
@@ -291,7 +269,10 @@ def _on_cep_search_callback(tipo_campo: str, cep_key: str):
             target_keys = mapping.get(tipo_campo)
             if target_keys:
                 for campo_origem, session_key in target_keys.items():
-                    st.session_state[session_key] = endereco_info.get(campo_origem, '')
+                    try:
+                        st.session_state[session_key] = endereco_info.get(campo_origem, '')
+                    except Exception as e:
+                        st.warning(f"Erro ao definir o valor de {session_key}: {str(e)}")
                 st.success("Endereço preenchido!")
             else:
                 st.error("Tipo de campo de endereço desconhecido.")
