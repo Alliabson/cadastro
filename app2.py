@@ -179,14 +179,12 @@ def buscar_cep(cep):
     # Tentar ViaCEP primeiro
     endereco_info, error_msg = _buscar_cep_viacep(cep_limpo)
     if endereco_info:
-    # Garante que todos os campos estejam presentes mesmo que vazios
-    endereco_info = {
-        'logradouro': endereco_info.get('logradouro', ''),
-        'bairro': endereco_info.get('bairro', ''),
-        'localidade': endereco_info.get('localidade', ''),
-        'uf': endereco_info.get('uf', '')
-    }
-
+        endereco_info = {
+            'logradouro': endereco_info.get('logradouro', ''),
+            'bairro': endereco_info.get('bairro', ''),
+            'localidade': endereco_info.get('localidade', ''),
+            'uf': endereco_info.get('uf', '')
+        }
         return endereco_info, None
     else:
         st.warning(f"ViaCEP falhou: {error_msg}. Tentando Brasil API...")
@@ -194,14 +192,12 @@ def buscar_cep(cep):
         # Tentar Brasil API como fallback
         endereco_info, error_msg = _buscar_cep_brasilapi(cep_limpo)
         if endereco_info:
-    # Garante que todos os campos estejam presentes mesmo que vazios
-    endereco_info = {
-        'logradouro': endereco_info.get('logradouro', ''),
-        'bairro': endereco_info.get('bairro', ''),
-        'localidade': endereco_info.get('localidade', ''),
-        'uf': endereco_info.get('uf', '')
-    }
-
+            endereco_info = {
+                'logradouro': endereco_info.get('logradouro', ''),
+                'bairro': endereco_info.get('bairro', ''),
+                'localidade': endereco_info.get('localidade', ''),
+                'uf': endereco_info.get('uf', '')
+            }
             return endereco_info, None
         else:
             st.warning(f"Brasil API falhou: {error_msg}. Tentando Postmon...")
@@ -209,14 +205,12 @@ def buscar_cep(cep):
             # Tentar Postmon como último fallback
             endereco_info, error_msg = _buscar_cep_postmon(cep_limpo)
             if endereco_info:
-    # Garante que todos os campos estejam presentes mesmo que vazios
-    endereco_info = {
-        'logradouro': endereco_info.get('logradouro', ''),
-        'bairro': endereco_info.get('bairro', ''),
-        'localidade': endereco_info.get('localidade', ''),
-        'uf': endereco_info.get('uf', '')
-    }
-
+                endereco_info = {
+                    'logradouro': endereco_info.get('logradouro', ''),
+                    'bairro': endereco_info.get('bairro', ''),
+                    'localidade': endereco_info.get('localidade', ''),
+                    'uf': endereco_info.get('uf', '')
+                }
                 return endereco_info, None
             else:
                 return None, f"Todas as APIs de CEP falharam: {error_msg}"
@@ -250,14 +244,12 @@ def _on_cep_search_callback(tipo_campo: str, cep_key: str):
     if cep_value:
         endereco_info, error_msg = buscar_cep(cep_value)
         if endereco_info:
-    # Garante que todos os campos estejam presentes mesmo que vazios
-    endereco_info = {
-        'logradouro': endereco_info.get('logradouro', ''),
-        'bairro': endereco_info.get('bairro', ''),
-        'localidade': endereco_info.get('localidade', ''),
-        'uf': endereco_info.get('uf', '')
-    }
-
+            endereco_info = {
+                'logradouro': endereco_info.get('logradouro', ''),
+                'bairro': endereco_info.get('bairro', ''),
+                'localidade': endereco_info.get('localidade', ''),
+                'uf': endereco_info.get('uf', '')
+            }
             mapping = {
                 'pf': {
                     'logradouro': 'comprador_end_residencial_pf',
