@@ -220,63 +220,62 @@ def sanitize_text(text):
         text = text.strip() # Remove espaços em branco do início e fim
     return text
 
-def preencher_endereco(tipo_campo: str, cep_value: str) -> str:
-    """
-    Busca informações de endereço a partir de um CEP e preenche o st.session_state.
-    Retorna uma mensagem de erro se houver, ou None se bem-sucedido.
-    """
-    endereco_info, error_msg = buscar_cep(cep_value)
-
-    if endereco_info:
-        # Mapeamento de 'tipo_campo' para as chaves corretas no session_state
-        mapping = {
-            'pf': {
-                'logradouro': 'comprador_end_residencial_pf',
-                'bairro': 'comprador_bairro_pf',
-                'localidade': 'comprador_cidade_pf', # Usar 'localidade' ou 'city' dependendo da API
-                'uf': 'comprador_estado_pf' # Usar 'uf' ou 'state' dependendo da API
-            },
-            'conjuge_pf': {
-                'logradouro': 'conjuge_end_residencial_pf',
-                'bairro': 'conjuge_bairro_pf',
-                'localidade': 'conjuge_cidade_pf',
-                'uf': 'conjuge_estado_pf'
-            },
-            'empresa_pj': {
-                'logradouro': 'comprador_end_residencial_comercial_pj',
-                'bairro': 'comprador_bairro_pj',
-                'localidade': 'comprador_cidade_pj',
-                'uf': 'comprador_estado_pj'
-            },
-            'administrador_pj': {
-                'logradouro': 'representante_end_residencial_pj',
-                'bairro': 'representante_bairro_pj',
-                'localidade': 'representante_cidade_pj',
-                'uf': 'representante_estado_pj'
-            },
-            'conjuge_pj': {
-                'logradouro': 'conjuge_end_residencial_pj',
-                'bairro': 'conjuge_bairro_pj',
-                'localidade': 'conjuge_cidade_pj',
-                'uf': 'conjuge_estado_pj'
-            },
-            'pessoa_pj': { # Para pessoas vinculadas
-                'logradouro': 'endereco_pessoa_pj',
-                'bairro': 'bairro_pessoa_pj',
-                'localidade': 'cidade_pessoa_pj',
-                'uf': 'estado_pessoa_pj'
+def _on_cep_search_callback(tipo_campo: str, cep_key: str):
+    """Callback para botões de busca de CEP."""
+    cep_value = st.session_state[cep_key]
+    if cep_value:
+        endereco_info, error_msg = buscar_cep(cep_value)
+        if endereco_info:
+            mapping = {
+                'pf': {
+                    'logradouro': 'comprador_end_residencial_pf',
+                    'bairro': 'comprador_bairro_pf',
+                    'localidade': 'comprador_cidade_pf',
+                    'uf': 'comprador_estado_pf'
+                },
+                'conjuge_pf': {
+                    'logradouro': 'conjuge_end_residencial_pf',
+                    'bairro': 'conjuge_bairro_pf',
+                    'localidade': 'conjuge_cidade_pf',
+                    'uf': 'conjuge_estado_pf'
+                },
+                'empresa_pj': {
+                    'logradouro': 'comprador_end_residencial_comercial_pj',
+                    'bairro': 'comprador_bairro_pj',
+                    'localidade': 'comprador_cidade_pj',
+                    'uf': 'comprador_estado_pj'
+                },
+                'administrador_pj': {
+                    'logradouro': 'representante_end_residencial_pj',
+                    'bairro': 'representante_bairro_pj',
+                    'localidade': 'representante_cidade_pj',
+                    'uf': 'representante_estado_pj'
+                },
+                'conjuge_pj': {
+                    'logradouro': 'conjuge_end_residencial_pj',
+                    'bairro': 'conjuge_bairro_pj',
+                    'localidade': 'conjuge_cidade_pj',
+                    'uf': 'conjuge_estado_pj'
+                },
+                'pessoa_pj': { # Para pessoas vinculadas
+                    'logradouro': 'endereco_pessoa_pj',
+                    'bairro': 'bairro_pessoa_pj',
+                    'localidade': 'cidade_pessoa_pj',
+                    'uf': 'estado_pessoa_pj'
+                }
             }
-        }
-
-        target_keys = mapping.get(tipo_campo)
-        if target_keys:
-            for campo_origem, session_key in target_keys.items():
-                st.session_state[session_key] = endereco_info.get(campo_origem, '')
-            return None # Sem erro
-        else:
-            return "Tipo de campo de endereço desconhecido."
+            target_keys = mapping.get(tipo_campo)
+            if target_keys:
+                for campo_origem, session_key in target_keys.items():
+                    st.session_state[session_key] = endereco_info.get(campo_origem, '')
+                st.success("Endereço preenchido!")
+            else:
+                st.error("Tipo de campo de endereço desconhecido.")
+        elif error_msg:
+            st.error(error_msg)
     else:
-        return error_msg # Retorna a mensagem de erro da função buscar_cep
+        st.warning("Por favor, digite um CEP para buscar.")
+    st.rerun() # Força o rerun após a atualização do session_state
 
 def formatar_cpf(cpf: str) -> str:
     """Formata o CPF como 000.000.000-00."""
@@ -845,8 +844,7 @@ if ficha_tipo == "Pessoa Física":
         st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Comprador"):
             if comprador_cep_pf:
-                # O preencher_endereco agora já faz o rerun.
-                preencher_endereco('pf', comprador_cep_pf) 
+                _on_cep_search_callback('pf', 'comprador_cep_pf') # Usa a função de callback
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
@@ -898,7 +896,7 @@ if ficha_tipo == "Pessoa Física":
         st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a)"):
             if conjuge_cep_pf:
-                preencher_endereco('conjuge_pf', conjuge_cep_pf)
+                _on_cep_search_callback('conjuge_pf', 'conjuge_cep_pf') # Usa a função de callback
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
@@ -1059,7 +1057,7 @@ elif ficha_tipo == "Pessoa Jurídica":
         st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Comprador PJ"):
             if comprador_cep_pj:
-                preencher_endereco('empresa_pj', comprador_cep_pj)
+                _on_cep_search_callback('empresa_pj', 'comprador_cep_pj') # Usa a função de callback
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
@@ -1101,7 +1099,7 @@ elif ficha_tipo == "Pessoa Jurídica":
         st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Representante"):
             if representante_cep_pj:
-                preencher_endereco('administrador_pj', representante_cep_pj)
+                _on_cep_search_callback('administrador_pj', 'representante_cep_pj') # Usa a função de callback
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
@@ -1144,7 +1142,7 @@ elif ficha_tipo == "Pessoa Jurídica":
         st.markdown("<br>", unsafe_allow_html=True) # Espaço
         if st.form_submit_button("Buscar Endereço Cônjuge/Sócio(a) PJ"):
             if conjuge_cep_pj:
-                preencher_endereco('conjuge_pj', conjuge_cep_pj)
+                _on_cep_search_callback('conjuge_pj', 'conjuge_cep_pj') # Usa a função de callback
             else:
                 st.warning("Por favor, digite um CEP para buscar.")
 
