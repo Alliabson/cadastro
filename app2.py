@@ -109,7 +109,7 @@ if "proposta_conta_bancaria" not in st.session_state:
     st.session_state.proposta_conta_bancaria = ""
 if "proposta_valor_ir" not in st.session_state:
     st.session_state.proposta_valor_ir = ""
-if "proposta_valor_escritura" not in st.session_state:
+if "proposta_valor_escritura" not in st.session_state: # Corrigido: era 'proposta_escritura'
     st.session_state.proposta_valor_escritura = ""
 if "proposta_observacoes" not in st.session_state:
     st.session_state.proposta_observacoes = ""
@@ -541,15 +541,15 @@ def gerar_pdf_pf(dados, dependentes=None, dados_proposta=None):
             valor_imovel = dados_proposta.get('valor_imovel', '')
             forma_pagamento_imovel = dados_proposta.get('forma_pagamento_imovel', '')
             if valor_imovel or forma_pagamento_imovel:
-                pdf.cell(95, 6, f"Valor do imóvel: {sanitize_text(valor_imovel)}", 0, 0)
-                pdf.cell(0, 6, f"Forma de pagamento (Imóvel): {sanitize_text(forma_pagamento_imovel)}", 0, 1)
+                pdf.cell(80, 6, f"Valor do imóvel: {sanitize_text(valor_imovel)}", 0, 0) # Adjusted width
+                pdf.cell(110, 6, f"Forma de pagamento (Imóvel): {sanitize_text(forma_pagamento_imovel)}", 0, 1) # Adjusted width
 
             # Valor dos honorários e Forma de pagamento (honorários)
             valor_honorarios = dados_proposta.get('valor_honorarios', '')
             forma_pagamento_honorarios = dados_proposta.get('forma_pagamento_honorarios', '')
             if valor_honorarios or forma_pagamento_honorarios:
-                pdf.cell(95, 6, f"Valor dos honorários: {sanitize_text(valor_honorarios)}", 0, 0)
-                pdf.cell(0, 6, f"Forma de pagamento (Honorários): {sanitize_text(forma_pagamento_honorarios)}", 0, 1)
+                pdf.cell(80, 6, f"Valor dos honorários: {sanitize_text(valor_honorarios)}", 0, 0) # Adjusted width
+                pdf.cell(110, 6, f"Forma de pagamento (Honorários): {sanitize_text(forma_pagamento_honorarios)}", 0, 1) # Adjusted width
 
             # Conta Bancária para transferência
             conta_bancaria = dados_proposta.get('conta_bancaria', '')
@@ -871,15 +871,15 @@ def gerar_pdf_pj(dados, dependentes=None, dados_proposta=None):
             valor_imovel = dados_proposta.get('valor_imovel', '')
             forma_pagamento_imovel = dados_proposta.get('forma_pagamento_imovel', '')
             if valor_imovel or forma_pagamento_imovel:
-                pdf.cell(95, 6, f"Valor do imóvel: {sanitize_text(valor_imovel)}", 0, 0)
-                pdf.cell(0, 6, f"Forma de pagamento (Imóvel): {sanitize_text(forma_pagamento_imovel)}", 0, 1)
+                pdf.cell(80, 6, f"Valor do imóvel: {sanitize_text(valor_imovel)}", 0, 0) # Adjusted width
+                pdf.cell(110, 6, f"Forma de pagamento (Imóvel): {sanitize_text(forma_pagamento_imovel)}", 0, 1) # Adjusted width
 
             # Valor dos honorários e Forma de pagamento (honorários)
             valor_honorarios = dados_proposta.get('valor_honorarios', '')
             forma_pagamento_honorarios = dados_proposta.get('forma_pagamento_honorarios', '')
             if valor_honorarios or forma_pagamento_honorarios:
-                pdf.cell(95, 6, f"Valor dos honorários: {sanitize_text(valor_honorarios)}", 0, 0)
-                pdf.cell(0, 6, f"Forma de pagamento (Honorários): {sanitize_text(forma_pagamento_honorarios)}", 0, 1)
+                pdf.cell(80, 6, f"Valor dos honorários: {sanitize_text(valor_honorarios)}", 0, 0) # Adjusted width
+                pdf.cell(110, 6, f"Forma de pagamento (Honorários): {sanitize_text(forma_pagamento_honorarios)}", 0, 1) # Adjusted width
 
             # Conta Bancária para transferência
             conta_bancaria = dados_proposta.get('conta_bancaria', '')
@@ -1165,8 +1165,7 @@ if ficha_tipo == "Pessoa Física":
         col1_form_pf, col2_form_pf = st.columns(2)
         with col1_form_pf:
             submitted_pf = st.form_submit_button("Gerar Ficha de Pessoa Física")
-        with col2_form_pf:
-            imprimir_pf = st.form_submit_button("Imprimir Formulário")
+        # Removed "Imprimir Formulário" st.form_submit_button here
 
     # Section for Dados da Proposta (Optional, controlled by checkbox)
     st.subheader("Dados da Proposta")
@@ -1290,9 +1289,21 @@ if ficha_tipo == "Pessoa Física":
         pdf_b64_pf = gerar_pdf_pf(dados_pf, 
                                 st.session_state.dependentes_pf_temp if incluir_dependentes_pf else None,
                                 dados_proposta_pf if incluir_dados_proposta_pf else None)
+
+
         if pdf_b64_pf:
-            href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
-            st.markdown(href, unsafe_allow_html=True)
+            # O link de download original pode ser mantido se preferir uma opção de texto
+            # href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
+            # st.markdown(href, unsafe_allow_html=True)
+            
+            # Botão de download explícito (novo)
+            st.download_button(
+                label="Imprimir Formulário (PDF)", # Texto do botão
+                data=base64.b64decode(pdf_b64_pf), # Dados do PDF decodificados
+                file_name="Ficha_Cadastral_Pessoa_Fisica.pdf", # Nome do arquivo ao baixar
+                mime="application/pdf", # Tipo MIME do arquivo
+                key="download_pf_form" # Chave única para o botão
+            )
 
 
 elif ficha_tipo == "Pessoa Jurídica":
@@ -1457,8 +1468,7 @@ elif ficha_tipo == "Pessoa Jurídica":
         col1_form_pj, col2_form_pj = st.columns(2)
         with col1_form_pj:
             submitted_pj = st.form_submit_button("Gerar Ficha de Pessoa Jurídica")
-        with col2_form_pj:
-            imprimir_pj = st.form_submit_button("Imprimir Formulário PJ")
+        # Removed "Imprimir Formulário PJ" st.form_submit_button here
 
     # Section for Dados da Proposta (Optional, controlled by checkbox)
     st.subheader("Dados da Proposta")
@@ -1584,8 +1594,18 @@ elif ficha_tipo == "Pessoa Jurídica":
 
 
         if pdf_b64_pf:
-            href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
-            st.markdown(href, unsafe_allow_html=True)
+            # O link de download original pode ser mantido se preferir uma opção de texto
+            # href = f'<a href="data:application/pdf;base64,{pdf_b64_pf}" download="Ficha_Cadastral_Pessoa_Fisica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Física</a>'
+            # st.markdown(href, unsafe_allow_html=True)
+            
+            # Botão de download explícito (novo)
+            st.download_button(
+                label="Imprimir Formulário (PDF)", # Texto do botão
+                data=base64.b64decode(pdf_b64_pf), # Dados do PDF decodificados
+                file_name="Ficha_Cadastral_Pessoa_Fisica.pdf", # Nome do arquivo ao baixar
+                mime="application/pdf", # Tipo MIME do arquivo
+                key="download_pf_form" # Chave única para o botão
+            )
 
 
     if submitted_pj: # submitted_pj é a variável do st.form_submit_button do form principal
@@ -1646,3 +1666,11 @@ elif ficha_tipo == "Pessoa Jurídica":
         if pdf_b64_pj:
             href = f'<a href="data:application/pdf;base64,{pdf_b64_pj}" download="Ficha_Cadastral_Pessoa_Juridica.pdf">Clique aqui para baixar a Ficha Cadastral de Pessoa Jurídica</a>'
             st.markdown(href, unsafe_allow_html=True)
+            # Adicionado o botão de download explícito após a geração do PDF
+            st.download_button(
+                label="Imprimir Formulário PJ (PDF)", # Texto do botão
+                data=base64.b64decode(pdf_b64_pj), # Dados do PDF decodificados
+                file_name="Ficha_Cadastral_Pessoa_Juridica.pdf", # Nome do arquivo ao baixar
+                mime="application/pdf", # Tipo MIME do arquivo
+                key="download_pj_form" # Chave única para o botão
+            )
