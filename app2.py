@@ -611,10 +611,10 @@ def gerar_pdf_pf(dados, dependentes=None, dados_proposta=None):
         pdf.cell(0, 6, f"Autorizado em: {today.strftime('%d/%m/%Y')}", 0, 1, 'C') # Reduzido de 7 para 6
         pdf.ln(7) # Ajustado espaçamento
 
-        # Sistema Imobiliário
+        # Formulário Imobiliário
         pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
         pdf.ln(3) # Reduzido de 5 para 3
-        pdf.cell(0, 4, sanitize_text("Sistema Imobiliário"), 0, 1, 'C') # Reduzido de 5 para 4
+        pdf.cell(0, 4, sanitize_text("Formulário Imobiliário"), 0, 1, 'C') # Reduzido de 5 para 4
         
         # Inserir dependentes em uma nova página, se houver
         if dependentes:
@@ -944,10 +944,10 @@ def gerar_pdf_pj(dados, dependentes=None, dados_proposta=None):
         pdf.cell(0, 6, f"Autorizado em: {today.strftime('%d/%m/%Y')}", 0, 1, 'C') # Reduzido de 7 para 6
         pdf.ln(7) # Ajustado espaçamento
 
-        # Sistema Imobiliário
+        # Formulário Imobiliário
         pdf.cell(0, 0, "_" * 50, 0, 1, 'C') # Linha para assinatura
         pdf.ln(3) # Reduzido de 5 para 3
-        pdf.cell(0, 4, sanitize_text("Sistema Imobiliário"), 0, 1, 'C') # Reduzido de 5 para 4
+        pdf.cell(0, 4, sanitize_text("Formulário Imobiliário"), 0, 1, 'C') # Reduzido de 5 para 4
 
         # Inserir dependentes em uma nova página, se houver
         if dependentes:
@@ -980,7 +980,7 @@ def gerar_pdf_pj(dados, dependentes=None, dados_proposta=None):
 # Configuração da página Streamlit
 st.set_page_config(layout="wide", page_title="Ficha Cadastral")
 
-st.title("Ficha Cadastral - Sistema Imobiliário")
+st.title("Ficha Cadastral - Formulário Imobiliário")
 st.markdown("Selecione o tipo de cadastro e preencha as informações.")
 
 # Seleção do tipo de ficha
